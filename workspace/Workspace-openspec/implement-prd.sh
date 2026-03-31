@@ -12,7 +12,7 @@ if [ ! -f "$PRD_FILE" ]; then
 fi
 
 echo "========================================"
-echo "OpenSpec Workspace - PRD Implementation"
+echo "OpenSpec workspace - PRD Implementation"
 echo "方法论: /opsx:propose → /opsx:apply → /opsx:archive"
 echo "模型: $MODEL"
 echo "========================================"
@@ -32,5 +32,5 @@ opencode run -m "$MODEL" "请使用 /opsx:archive 命令归档完成的功能"
 
 echo ""
 echo "========================================"
-echo "OpenSpec Workspace 实现完成!"
+echo "OpenSpec workspace 实现完成!"
 echo "========================================"

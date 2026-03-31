@@ -12,7 +12,7 @@ if [ ! -f "$PRD_FILE" ]; then
 fi
 
 echo "========================================"
-echo "Planning With Files Workspace - PRD Implementation"
+echo "Planning With Files workspace - PRD Implementation"
 echo "方法论: 3-File Pattern (task_plan.md + findings.md + progress.md)"
 echo "模型: $MODEL"
 echo "========================================"
@@ -36,5 +36,5 @@ opencode run -m "$MODEL" "使用 3-file 模式的完成检查。在 task_plan.md
 
 echo ""
 echo "========================================"
-echo "Planning With Files Workspace 实现完成!"
+echo "Planning With Files workspace 实现完成!"
 echo "========================================"

@@ -3,16 +3,16 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MODEL="${1:-opencode/minimax-m2.5-free}"
 WORKSPACES=(
-    "workspace/Workspace-openspec"
-    "workspace/Workspace-speckit"
-    "workspace/Workspace-superpowers"
-    "workspace/Workspace-everything-claude-code"
-    "workspace/Workspace-planning-with-files"
-    "workspace/Workspace-gstack"
+    "workspace/workspace-openspec"
+    "workspace/workspace-speckit"
+    "workspace/workspace-superpowers"
+    "workspace/workspace-everything-claude-code"
+    "workspace/workspace-planning-with-files"
+    "workspace/workspace-gstack"
 )
 
 echo "========================================"
-echo "Running PRD Implementation for All Workspaces"
+echo "Running PRD Implementation for All workspaces"
 echo "模型: $MODEL"
 echo "========================================"
 echo ""
@@ -34,5 +34,5 @@ for workspace in "${WORKSPACES[@]}"; do
 done
 
 echo "========================================"
-echo "All Workspaces Complete!"
+echo "All workspaces Complete!"
 echo "========================================"

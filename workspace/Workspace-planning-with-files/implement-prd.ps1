@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$WorkspaceDir = Split-Path -Parent $ScriptDir
-$PrdFile = Join-Path $WorkspaceDir "..\PRD.md"
+$workspaceDir = Split-Path -Parent $ScriptDir
+$PrdFile = Join-Path $workspaceDir "..\PRD.md"
 
 $Model = if ($args.Count -gt 0) { $args[0] } else { "opencode/minimax-m2.5-free" }
 
@@ -11,7 +11,7 @@ if (-not (Test-Path $PrdFile)) {
 }
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Planning With Files Workspace - PRD Implementation" -ForegroundColor Cyan
+Write-Host "Planning With Files workspace - PRD Implementation" -ForegroundColor Cyan
 Write-Host "方法论: 3-File Pattern (task_plan.md + findings.md + progress.md)" -ForegroundColor Yellow
 Write-Host "模型: $Model" -ForegroundColor Yellow
 Write-Host "========================================" -ForegroundColor Cyan
@@ -35,5 +35,5 @@ opencode run -m "$Model" "使用 3-file 模式的完成检查。在 task_plan.md
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Planning With Files Workspace 实现完成!" -ForegroundColor Green
+Write-Host "Planning With Files workspace 实现完成!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan

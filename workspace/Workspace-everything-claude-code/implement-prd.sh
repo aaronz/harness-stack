@@ -12,7 +12,7 @@ if [ ! -f "$PRD_FILE" ]; then
 fi
 
 echo "========================================"
-echo "Everything Claude Code Workspace - PRD Implementation"
+echo "Everything Claude Code workspace - PRD Implementation"
 echo "方法论: /plan → /tdd → /code-review → /verify → /security-scan"
 echo "模型: $MODEL"
 echo "========================================"
@@ -36,5 +36,5 @@ opencode run -m "$MODEL" "请使用 /security-scan 命令进行安全审计。�
 
 echo ""
 echo "========================================"
-echo "Everything Claude Code Workspace 实现完成!"
+echo "Everything Claude Code workspace 实现完成!"
 echo "========================================"

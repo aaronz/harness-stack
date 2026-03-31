@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$WorkspaceDir = Split-Path -Parent $ScriptDir
-$PrdFile = Join-Path $WorkspaceDir "..\PRD.md"
+$workspaceDir = Split-Path -Parent $ScriptDir
+$PrdFile = Join-Path $workspaceDir "..\PRD.md"
 
 $Model = if ($args.Count -gt 0) { $args[0] } else { "opencode/minimax-m2.5-free" }
 
@@ -11,7 +11,7 @@ if (-not (Test-Path $PrdFile)) {
 }
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Everything Claude Code Workspace - PRD Implementation" -ForegroundColor Cyan
+Write-Host "Everything Claude Code workspace - PRD Implementation" -ForegroundColor Cyan
 Write-Host "方法论: /plan -> /tdd -> /code-review -> /verify -> /security-scan" -ForegroundColor Yellow
 Write-Host "模型: $Model" -ForegroundColor Yellow
 Write-Host "========================================" -ForegroundColor Cyan
@@ -35,5 +35,5 @@ opencode run -m "$Model" "请使用 /security-scan 命令进行安全审计。�
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Everything Claude Code Workspace 实现完成!" -ForegroundColor Green
+Write-Host "Everything Claude Code workspace 实现完成!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan

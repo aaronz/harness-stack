@@ -12,7 +12,7 @@ if [ ! -f "$PRD_FILE" ]; then
 fi
 
 echo "========================================"
-echo "Superpowers Workspace - PRD Implementation"
+echo "Superpowers workspace - PRD Implementation"
 echo "方法论: brainstorming → writing-plans → subagent-driven-development → verification → finishing"
 echo "模型: $MODEL"
 echo "========================================"
@@ -40,5 +40,5 @@ opencode run -m "$MODEL" "请使用 finishing-a-development-branch skill 完成�
 
 echo ""
 echo "========================================"
-echo "Superpowers Workspace 实现完成!"
+echo "Superpowers workspace 实现完成!"
 echo "========================================"

@@ -3,22 +3,22 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 $Model = if ($args.Count -gt 0) { $args[0] } else { "opencode/minimax-m2.5-free" }
 
-$Workspaces = @(
-    "workspace\Workspace-openspec",
-    "workspace\Workspace-speckit",
-    "workspace\Workspace-superpowers",
-    "workspace\Workspace-everything-claude-code",
-    "workspace\Workspace-planning-with-files",
-    "workspace\Workspace-gstack"
+$workspaces = @(
+    "workspace\workspace-openspec",
+    "workspace\workspace-speckit",
+    "workspace\workspace-superpowers",
+    "workspace\workspace-everything-claude-code",
+    "workspace\workspace-planning-with-files",
+    "workspace\workspace-gstack"
 )
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Running PRD Implementation for All Workspaces" -ForegroundColor Cyan
+Write-Host "Running PRD Implementation for All workspaces" -ForegroundColor Cyan
 Write-Host "模型: $Model" -ForegroundColor Yellow
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-foreach ($workspace in $Workspaces) {
+foreach ($workspace in $workspaces) {
     $workspacePath = Join-Path $ScriptDir $workspace
     $scriptPath = Join-Path $workspacePath "implement-prd.ps1"
     
@@ -36,5 +36,5 @@ foreach ($workspace in $Workspaces) {
 }
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "All Workspaces Complete!" -ForegroundColor Green
+Write-Host "All workspaces Complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan

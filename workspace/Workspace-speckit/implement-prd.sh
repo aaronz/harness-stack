@@ -12,7 +12,7 @@ if [ ! -f "$PRD_FILE" ]; then
 fi
 
 echo "========================================"
-echo "Spec Kit Workspace - PRD Implementation"
+echo "Spec Kit workspace - PRD Implementation"
 echo "方法论: /speckit.constitution → /speckit.specify → /speckit.plan → /speckit.tasks → /speckit.implement"
 echo "模型: $MODEL"
 echo "========================================"
@@ -40,5 +40,5 @@ opencode run -m "$MODEL" "请使用 /speckit.implement 命令执行所有任务�
 
 echo ""
 echo "========================================"
-echo "Spec Kit Workspace 实现完成!"
+echo "Spec Kit workspace 实现完成!"
 echo "========================================"

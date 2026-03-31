@@ -12,7 +12,7 @@ if [ ! -f "$PRD_FILE" ]; then
 fi
 
 echo "========================================"
-echo "GStack Workspace - PRD Implementation"
+echo "GStack workspace - PRD Implementation"
 echo "方法论: Think → Plan → Build → Review → Test → Ship → Reflect"
 echo "模型: $MODEL"
 echo "========================================"
@@ -48,5 +48,5 @@ opencode run -m "$MODEL" "请使用 /retro 命令进行回顾。每周总结: �
 
 echo ""
 echo "========================================"
-echo "GStack Workspace 实现完成!"
+echo "GStack workspace 实现完成!"
 echo "========================================"

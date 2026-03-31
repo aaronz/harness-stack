@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$WorkspaceDir = Split-Path -Parent $ScriptDir
-$PrdFile = Join-Path $WorkspaceDir "..\PRD.md"
+$workspaceDir = Split-Path -Parent $ScriptDir
+$PrdFile = Join-Path $workspaceDir "..\PRD.md"
 
 $Model = if ($args.Count -gt 0) { $args[0] } else { "opencode/minimax-m2.5-free" }
 
@@ -11,7 +11,7 @@ if (-not (Test-Path $PrdFile)) {
 }
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "GStack Workspace - PRD Implementation" -ForegroundColor Cyan
+Write-Host "GStack workspace - PRD Implementation" -ForegroundColor Cyan
 Write-Host "方法论: Think -> Plan -> Build -> Review -> Test -> Ship -> Reflect" -ForegroundColor Yellow
 Write-Host "模型: $Model" -ForegroundColor Yellow
 Write-Host "========================================" -ForegroundColor Cyan
@@ -47,5 +47,5 @@ opencode run -m "$Model" "请使用 /retro 命令进行回顾。每周总结: �
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "GStack Workspace 实现完成!" -ForegroundColor Green
+Write-Host "GStack workspace 实现完成!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
