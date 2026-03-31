@@ -4,6 +4,7 @@
 **创建日期**：2026-03-31  
 **评估对象**：开发需求（Development Requirements）  
 **评估视角**：AI Coding可完美实现性  
+**技术栈**：TypeScript (Node.js + React/Next.js)  
 
 ---
 
@@ -18,6 +19,23 @@
 - **技术负责人**：判断哪些需求适合交给AI实现，哪些必须人工介入
 - **产品经理/需求分析师**：优化需求描述，提升AI生成成功率
 - **AI Coding平台运营方**：建立需求准入标准，降低模型失败率
+
+### 1.3 技术栈（轻量极简版）
+- **前端**：Next.js 14 + TypeScript 5（单仓库）
+- **后端**：Node.js + Express + TypeScript
+- **数据库**：SQLite（文件型，无需部署）
+- **AI集成**：支持多LLM提供商（可配置切换）
+  - OpenAI API（GPT-4o/GPT-4o-mini）
+  - Anthropic API（Claude 3.5/3.0）
+  - Google Gemini API
+  - 本地模型（Ollama / LM Studio）
+- **部署**：Railway / Vercel（直接部署）
+
+### 1.4 LLM配置灵活性
+系统支持**运行时动态切换**LLM提供商，用户可根据成本/效果/合规需求选择：
+- 默认优先使用GPT-4o进行评估
+- 支持按需求选择不同模型（如复杂需求用强模型，简单需求用轻量模型）
+- 本地部署模式可满足数据隐私要求
 
 ---
 
