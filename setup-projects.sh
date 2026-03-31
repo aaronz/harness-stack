@@ -56,36 +56,63 @@ for project in "${PROJECTS[@]}"; do
 done
 
 echo ""
-echo "=== Creating workspaces with skills ==="
+echo "=== Creating workspaces with skills, agents, and commands ==="
 
 for project in "${PROJECTS[@]}"; do
     IFS=':' read -r repo_name repo_url <<< "$project"
     
-    workspace_name="Workspace-$repo_name"
+    workspace_name="workspace-$repo_name"
     workspace_path="$WORKSPACE/$WORKSPACE_DIR/$workspace_name"
     repo_path="$WORKSPACE/$SKILL_SOURCE_DIR/$repo_name"
     
     echo ""
     echo "--- Setting up $workspace_name ---"
     
+    # Create directories for skills, agents, and commands
     mkdir -p "$workspace_path/.opencode/skills"
+    mkdir -p "$workspace_path/.opencode/agents"
+    mkdir -p "$workspace_path/.opencode/commands"
     
-    found_skills=false
+    found_assets=false
     
     if [ -d "$repo_path/.opencode/skills" ]; then
         echo "Found skills in $repo_path/.opencode/skills"
         cp -r "$repo_path/.opencode/skills"/* "$workspace_path/.opencode/skills/" 2>/dev/null || true
-        found_skills=true
+        found_assets=true
     fi
     
     if [ -d "$repo_path/skills" ]; then
         echo "Found skills in $repo_path/skills"
         cp -r "$repo_path/skills"/* "$workspace_path/.opencode/skills/" 2>/dev/null || true
-        found_skills=true
+        found_assets=true
     fi
     
-    if [ "$found_skills" = false ]; then
-        echo "No skills found in repo, using default skill sources"
+    if [ -d "$repo_path/.opencode/agents" ]; then
+        echo "Found agents in $repo_path/.opencode/agents"
+        cp -r "$repo_path/.opencode/agents"/* "$workspace_path/.opencode/agents/" 2>/dev/null || true
+        found_assets=true
+    fi
+    
+    if [ -d "$repo_path/agents" ]; then
+        echo "Found agents in $repo_path/agents"
+        cp -r "$repo_path/agents"/* "$workspace_path/.opencode/agents/" 2>/dev/null || true
+        found_assets=true
+    fi
+    
+    if [ -d "$repo_path/.opencode/commands" ]; then
+        echo "Found commands in $repo_path/.opencode/commands"
+        cp -r "$repo_path/.opencode/commands"/* "$workspace_path/.opencode/commands/" 2>/dev/null || true
+        found_assets=true
+    fi
+    
+    if [ -d "$repo_path/commands" ]; then
+        echo "Found commands in $repo_path/commands"
+        cp -r "$repo_path/commands"/* "$workspace_path/.opencode/commands/" 2>/dev/null || true
+        found_assets=true
+    fi
+    
+    if [ "$found_assets" = false ]; then
+        echo "No skills/agents/commands found in repo, using default skill sources"
         
         if [ -d "$SKILLS_SOURCE_DIR" ]; then
             cp -r "$SKILLS_SOURCE_DIR"/* "$workspace_path/.opencode/skills/" 2>/dev/null || true
