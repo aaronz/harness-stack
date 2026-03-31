@@ -14,6 +14,31 @@ $OpencodeConfigSkills = "$env:USERPROFILE\.config\opencode\skills"
 $SkillSourceDir = "skill-source"
 $workspaceDir = "workspace"
 
+function Fix-YamlTools {
+    param([string]$FilePath)
+    
+    if (-not (Test-Path $FilePath)) { return }
+    
+    $content = Get-Content $FilePath -Raw
+    if ($content -match '^\s*tools:\s+[A-Z]') {
+        $newContent = $content -replace '^\s*tools:\s+(.+)$', {
+            $tools = $args[0].Groups[1].Value -split ',\s*' | ForEach-Object { "`"$_`"" }
+            "tools: [$($tools -join ', ')]"
+        }
+        Set-Content -Path $FilePath -Value $newContent -NoNewline
+    }
+}
+
+function Validate-Agents {
+    param([string]$AgentDir)
+    
+    if (-not (Test-Path $AgentDir)) { return }
+    
+    Get-ChildItem -Path $AgentDir -Filter "*.md" | ForEach-Object {
+        Fix-YamlTools -FilePath $_.FullName
+    }
+}
+
 $workspace = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $workspace
 
@@ -144,6 +169,8 @@ foreach ($project in $Projects) {
     }
 
     Write-Host "$workspaceName ready at $workspacePath" -ForegroundColor Green
+    
+    Validate-Agents -AgentDir $agentsDir
 }
 
 Write-Host ""

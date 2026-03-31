@@ -19,6 +19,29 @@ SETUP_SCRIPT="$0"
 
 WORKSPACE="$(cd "$(dirname "$0")" && pwd)"
 
+fix_yaml_tools() {
+    local file="$1"
+    if [ ! -f "$file" ]; then
+        return
+    fi
+    if grep -q "^tools: [A-Z]" "$file" 2>/dev/null; then
+        sed -i '' 's/^tools: \(.*\)$/tools: [\1]/' "$file"
+        sed -i '' 's/\[/["/g; s/\]/"]/g; s/, /", "/g' "$file"
+    fi
+}
+
+validate_agents() {
+    local agent_dir="$1"
+    if [ ! -d "$agent_dir" ]; then
+        return
+    fi
+    
+    for agent_file in "$agent_dir"/*.md; do
+        [ -f "$agent_file" ] || continue
+        fix_yaml_tools "$agent_file"
+    done
+}
+
 echo "=== Initializing git repository in $WORKSPACE ==="
 cd "$WORKSPACE"
 
@@ -52,7 +75,8 @@ for project in "${PROJECTS[@]}"; do
     rsync -av "$temp_clone/" "$target_dir/" 2>/dev/null || cp -r "$temp_clone"/* "$target_dir/" 2>/dev/null || true
     rm -rf "$temp_clone"
     
-    echo "$repo_name ready at $target_dir ($(ls -1 "$target_dir" | wc -l) files)"
+    file_count=$(ls -1 "$target_dir" | wc -l)
+    echo "$repo_name ready at $target_dir ($file_count files)"
 done
 
 echo ""
@@ -68,7 +92,6 @@ for project in "${PROJECTS[@]}"; do
     echo ""
     echo "--- Setting up $workspace_name ---"
     
-    # Create directories for skills, agents, and commands
     mkdir -p "$workspace_path/.opencode/skills"
     mkdir -p "$workspace_path/.opencode/agents"
     mkdir -p "$workspace_path/.opencode/commands"
@@ -122,6 +145,8 @@ for project in "${PROJECTS[@]}"; do
             cp -r "$OPENCODE_CONFIG_SKILLS"/* "$workspace_path/.opencode/skills/" 2>/dev/null || true
         fi
     fi
+    
+    validate_agents "$workspace_path/.opencode/agents"
     
     echo "$workspace_name ready at $workspace_path"
 done
