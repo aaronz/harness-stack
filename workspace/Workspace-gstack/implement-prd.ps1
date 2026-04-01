@@ -1,7 +1,6 @@
 ﻿$ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$workspaceDir = Split-Path -Parent $ScriptDir
-$PrdFile = Join-Path $workspaceDir "..\PRD.md"
+$PrdFile = Join-Path $ScriptDir "..\..\PRD.md"
 
 $Model = if ($args.Count -gt 0) { $args[0] } else { "opencode/minimax-m2.5-free" }
 
@@ -18,7 +17,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "PRD: $PrdFile"
 Write-Host ""
 
-$OutputDir = Join-Path $workspaceDir "outputs"
+$OutputDir = Join-Path $ScriptDir "outputs"
 New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 
 $DesignFile = Join-Path $OutputDir "design.md"
