@@ -131,7 +131,7 @@ foreach ($project in $Projects) {
             if (Test-Path $skillFile) {
                 $destDir = Join-Path $skillsDir $_.Name
                 New-Item -ItemType Directory -Path $destDir -Force | Out-Null
-                Copy-Item -Path $_.FullName\* -Destination $destDir -Recurse -Force
+                Copy-Item -Path "$($_.FullName)\*" -Destination $destDir -Recurse -Force
                 $foundAssets = $true
             }
         }
