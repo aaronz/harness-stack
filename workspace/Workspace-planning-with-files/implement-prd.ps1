@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $workspaceDir = Split-Path -Parent $ScriptDir
 $PrdFile = Join-Path $workspaceDir "..\PRD.md"

@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 $Model = if ($args.Count -gt 0) { $args[0] } else { "opencode/minimax-m2.5-free" }

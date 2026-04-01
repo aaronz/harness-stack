@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $Projects = @(
     "speckit:https://github.com/github/spec-kit.git",
