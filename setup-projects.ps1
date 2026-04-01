@@ -56,9 +56,9 @@ Write-Host ""
 Write-Host "=== Cloning repos into $SkillSourceDir ===" -ForegroundColor Cyan
 
 foreach ($project in $Projects) {
-    $parts = $project -split ':'
-    $repoName = $parts[0]
-    $repoUrl = $parts[1]
+    $colonIndex = $project.IndexOf(':')
+    $repoName = $project.Substring(0, $colonIndex)
+    $repoUrl = $project.Substring($colonIndex + 1)
     $targetDir = Join-Path $workspace "$SkillSourceDir\$repoName"
 
     Write-Host ""
@@ -90,9 +90,9 @@ Write-Host ""
 Write-Host "=== Creating workspaces with skills and commands ===" -ForegroundColor Cyan
 
 foreach ($project in $Projects) {
-    $parts = $project -split ':'
-    $repoName = $parts[0]
-    $repoUrl = $parts[1]
+    $colonIndex = $project.IndexOf(':')
+    $repoName = $project.Substring(0, $colonIndex)
+    $repoUrl = $project.Substring($colonIndex + 1)
 
     $workspaceName = "workspace-$repoName"
     $workspacePath = Join-Path $workspace "$workspaceDir\$workspaceName"
