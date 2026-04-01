@@ -14,6 +14,13 @@ $OpencodeConfigSkills = "$env:USERPROFILE\.config\opencode\skills"
 $SkillSourceDir = "skill-source"
 $workspaceDir = "workspace"
 
+$CliInitProjects = @("openspec", "speckit")
+
+function Needs-CliInit {
+    param([string]$RepoName)
+    return $CliInitProjects -contains $RepoName
+}
+
 function Fix-YamlTools {
     param([string]$FilePath)
     
@@ -143,6 +150,30 @@ foreach ($project in $Projects) {
     }
 
     Write-Host "$workspaceName ready at $workspacePath" -ForegroundColor Green
+    
+    if (Needs-CliInit -RepoName $repoName) {
+        Write-Host "Running CLI init for $repoName..." -ForegroundColor Yellow
+        switch ($repoName) {
+            "openspec" {
+                if (Get-Command openspec -ErrorAction SilentlyContinue) {
+                    Push-Location $workspacePath
+                    try { openspec init . --tools opencode --force 2>$null } catch { }
+                    Pop-Location
+                } else {
+                    Write-Host "openspec CLI not found, skipping init" -ForegroundColor Yellow
+                }
+            }
+            "speckit" {
+                if (Get-Command specify -ErrorAction SilentlyContinue) {
+                    Push-Location $workspacePath
+                    try { specify init . --ai opencode --here --force 2>$null } catch { }
+                    Pop-Location
+                } else {
+                    Write-Host "specify CLI not found, skipping init" -ForegroundColor Yellow
+                }
+            }
+        }
+    }
 }
 
 Write-Host ""

@@ -11,6 +11,18 @@ PROJECTS=(
     "gstack:https://github.com/garrytan/gstack.git"
 )
 
+CLI_INIT_PROJECTS=("openspec" "speckit")
+
+needs_cli_init() {
+    local repo_name="$1"
+    for cli_proj in "${CLI_INIT_PROJECTS[@]}"; do
+        if [ "$repo_name" = "$cli_proj" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 SKILLS_SOURCE_DIR="$HOME/.cache/opencode/node_modules/superpowers/skills"
 OPENCODE_CONFIG_SKILLS="$HOME/.config/opencode/skills"
 SKILL_SOURCE_DIR="skill-source"
@@ -122,6 +134,26 @@ for project in "${PROJECTS[@]}"; do
     fi
     
     echo "$workspace_name ready at $workspace_path"
+    
+    if needs_cli_init "$repo_name"; then
+        echo "Running CLI init for $repo_name..."
+        case "$repo_name" in
+            openspec)
+                if command -v openspec &> /dev/null; then
+                    cd "$workspace_path" && openspec init . --tools opencode --force 2>/dev/null || true
+                else
+                    echo "openspec CLI not found, skipping init"
+                fi
+                ;;
+            speckit)
+                if command -v specify &> /dev/null; then
+                    cd "$workspace_path" && specify init . --ai opencode --here --force 2>/dev/null || true
+                else
+                    echo "specify CLI not found, skipping init"
+                fi
+                ;;
+        esac
+    fi
 done
 
 echo ""

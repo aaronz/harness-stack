@@ -19,24 +19,108 @@ echo "========================================"
 echo "PRD: $PRD_FILE"
 echo ""
 
+OUTPUT_DIR="$WORKSPACE_DIR/outputs"
+mkdir -p "$OUTPUT_DIR"
+
+CONSTITUTION_FILE="$OUTPUT_DIR/constitution.md"
+SPEC_FILE="$OUTPUT_DIR/spec.md"
+PLAN_FILE="$OUTPUT_DIR/plan.md"
+TASKS_FILE="$OUTPUT_DIR/tasks.md"
+
 echo "[Step 1/5] Constitution - 建立项目原则..."
-opencode run -m "$MODEL" "请使用 /speckit.constitution 命令创建项目开发原则。原则应聚焦于: 代码质量标准、测试覆盖率要求(80%+)、用户体验一致性、性能要求。确保这些原则指导所有后续技术决策。"
+CONSTITUTION_PROMPT="请使用 /speckit.constitution 命令创建项目开发原则。
+
+## PRD内容
+$PRD_FILE
+
+## 核心需求
+- AI Coding可落地性评估系统
+- 评估维度: 上下文完备性(25%)、逻辑原子性(25%)、边界明确性(20%)、可验证性(15%)、技术约束清晰度(15%)
+- 评分算法: AI就绪分 = Σ(维度得分×权重) × 复杂度惩罚系数
+
+## 原则要求
+原则应聚焦于:
+- 代码质量标准
+- 测试覆盖率要求(80%+)
+- 用户体验一致性
+- 性能要求
+
+## 输出
+请将原则保存到: $CONSTITUTION_FILE"
+opencode run -m "$MODEL" "$CONSTITUTION_PROMPT"
 
 echo ""
 echo "[Step 2/5] Specify - 定义需求规范..."
-opencode run -m "$MODEL" "请使用 /speckit.specify 命令基于 PRD.md 定义需求规范。PRD内容: AI Coding可落地性评估系统。核心要点: 五大评估维度(上下文完备性25%、逻辑原子性25%、边界明确性20%、可验证性15%、技术约束清晰度15%)、评分算法、AI就绪等级(S/A/B/C级)"
+SPECIFY_PROMPT="请使用 /speckit.specify 命令基于 PRD.md 定义需求规范。
+
+## 项目原则
+$CONSTITUTION_FILE
+
+## PRD内容
+$PRD_FILE
+
+## 核心要点
+- 五大评估维度(上下文完备性25%、逻辑原子性25%、边界明确性20%、可验证性15%、技术约束清晰度15%)
+- 评分算法
+- AI就绪等级(S/A/B/C级)
+
+## 输出
+请将规范保存到: $SPEC_FILE"
+opencode run -m "$MODEL" "$SPECIFY_PROMPT"
 
 echo ""
 echo "[Step 3/5] Plan - 创建技术实现计划..."
-opencode run -m "$MODEL" "请使用 /speckit.plan 命令创建技术实现计划。技术栈: 根据现有项目选择。架构: 模块化设计。计划应包含: 评估引擎模块、评分计算器、报告生成器、数据模型设计"
+PLAN_PROMPT="请使用 /speckit.plan 命令创建技术实现计划。
+
+## 需求规范
+$SPEC_FILE
+
+## 技术栈
+根据现有项目选择(Next.js + Express + SQLite)
+
+## 架构
+模块化设计
+
+## 计划内容
+- 评估引擎模块
+- 评分计算器
+- 报告生成器
+- 数据模型设计
+
+## 输出
+请将计划保存到: $PLAN_FILE"
+opencode run -m "$MODEL" "$PLAN_PROMPT"
 
 echo ""
 echo "[Step 4/5] Tasks - 生成任务清单..."
-opencode run -m "$MODEL" "请使用 /speckit.tasks 命令生成可执行的任务清单。从技术计划中分解出具体的开发任务，每个任务应有明确的验收标准"
+TASKS_PROMPT="请使用 /speckit.tasks 命令生成可执行的任务清单。
+
+## 技术计划
+$PLAN_FILE
+
+## 任务要求
+从技术计划中分解出具体的开发任务，每个任务应有明确的验收标准
+
+## 输出
+请将任务清单保存到: $TASKS_FILE"
+opencode run -m "$MODEL" "$TASKS_PROMPT"
 
 echo ""
 echo "[Step 5/5] Implement - 执行实现..."
-opencode run -m "$MODEL" "请使用 /speckit.implement 命令执行所有任务。实现内容: 评估维度模型、评分算法、S/A/B/C等级报告生成器、风险热力图功能"
+IMPLEMENT_PROMPT="请使用 /speckit.implement 命令执行所有任务。
+
+## 任务清单
+$TASKS_FILE
+
+## 实现内容
+- 评估维度模型
+- 评分算法
+- S/A/B/C等级报告生成器
+- 风险热力图功能
+
+## 输出
+确保满足PRD成功指标: AI代码采纳率>80%、评估效率<2分钟"
+opencode run -m "$MODEL" "$IMPLEMENT_PROMPT"
 
 echo ""
 echo "========================================"
