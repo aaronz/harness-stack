@@ -29,16 +29,6 @@ function Fix-YamlTools {
     }
 }
 
-function Validate-Agents {
-    param([string]$AgentDir)
-    
-    if (-not (Test-Path $AgentDir)) { return }
-    
-    Get-ChildItem -Path $AgentDir -Filter "*.md" | ForEach-Object {
-        Fix-YamlTools -FilePath $_.FullName
-    }
-}
-
 $workspace = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $workspace
 
@@ -90,7 +80,7 @@ foreach ($project in $Projects) {
 }
 
 Write-Host ""
-Write-Host "=== Creating workspaces with skills, agents, and commands ===" -ForegroundColor Cyan
+Write-Host "=== Creating workspaces with skills and commands ===" -ForegroundColor Cyan
 
 foreach ($project in $Projects) {
     $parts = $project -split ':'
@@ -105,11 +95,9 @@ foreach ($project in $Projects) {
     Write-Host "--- Setting up $workspaceName ---" -ForegroundColor Yellow
 
     $skillsDir = Join-Path $workspacePath ".opencode\skills"
-    $agentsDir = Join-Path $workspacePath ".opencode\agents"
     $commandsDir = Join-Path $workspacePath ".opencode\commands"
 
     New-Item -ItemType Directory -Path $skillsDir -Force | Out-Null
-    New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
     New-Item -ItemType Directory -Path $commandsDir -Force | Out-Null
 
     $foundAssets = $false
@@ -128,20 +116,6 @@ foreach ($project in $Projects) {
         $foundAssets = $true
     }
 
-    # Copy agents
-    $opencodeAgents = Join-Path $repoPath ".opencode\agents"
-    if (Test-Path $opencodeAgents) {
-        Write-Host "Found agents in $opencodeAgents" -ForegroundColor Green
-        Copy-Item -Path "$opencodeAgents\*" -Destination $agentsDir -Recurse -Force
-        $foundAssets = $true
-    }
-
-    if (Test-Path (Join-Path $repoPath "agents")) {
-        Write-Host "Found agents in $($repoPath)\agents" -ForegroundColor Green
-        Copy-Item -Path "$repoPath\agents\*" -Destination $agentsDir -Recurse -Force
-        $foundAssets = $true
-    }
-
     # Copy commands
     $opencodeCommands = Join-Path $repoPath ".opencode\commands"
     if (Test-Path $opencodeCommands) {
@@ -157,7 +131,7 @@ foreach ($project in $Projects) {
     }
 
     if (-not $foundAssets) {
-        Write-Host "No skills/agents/commands found in repo, using default skill sources" -ForegroundColor Yellow
+        Write-Host "No skills/commands found in repo, using default skill sources" -ForegroundColor Yellow
 
         if (Test-Path $SkillsSourceDir) {
             Copy-Item -Path "$SkillsSourceDir\*" -Destination $skillsDir -Recurse -Force
@@ -169,8 +143,6 @@ foreach ($project in $Projects) {
     }
 
     Write-Host "$workspaceName ready at $workspacePath" -ForegroundColor Green
-    
-    Validate-Agents -AgentDir $agentsDir
 }
 
 Write-Host ""
@@ -187,10 +159,9 @@ Write-Host "=== Setup complete! ===" -ForegroundColor Green
 Write-Host ""
 Write-Host "Structure:" -ForegroundColor Cyan
 Write-Host "  $SkillSourceDir\          - Cloned repositories"
-Write-Host "  $workspaceDir\            - workspaces with skills"
+Write-Host "  $workspaceDir\            - workspaces with skills and commands"
 Write-Host "    workspace-<name>\"
 Write-Host "      .opencode\skills\     - Skills for each project"
-Write-Host "      .opencode\agents\     - Agents for each project"
 Write-Host "      .opencode\commands\   - Commands for each project"
 Write-Host ""
 Write-Host "To work on a project:" -ForegroundColor Cyan

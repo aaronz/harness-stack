@@ -30,18 +30,6 @@ fix_yaml_tools() {
     fi
 }
 
-validate_agents() {
-    local agent_dir="$1"
-    if [ ! -d "$agent_dir" ]; then
-        return
-    fi
-    
-    for agent_file in "$agent_dir"/*.md; do
-        [ -f "$agent_file" ] || continue
-        fix_yaml_tools "$agent_file"
-    done
-}
-
 echo "=== Initializing git repository in $WORKSPACE ==="
 cd "$WORKSPACE"
 
@@ -80,7 +68,7 @@ for project in "${PROJECTS[@]}"; do
 done
 
 echo ""
-echo "=== Creating workspaces with skills, agents, and commands ==="
+echo "=== Creating workspaces with skills and commands ==="
 
 for project in "${PROJECTS[@]}"; do
     IFS=':' read -r repo_name repo_url <<< "$project"
@@ -93,7 +81,6 @@ for project in "${PROJECTS[@]}"; do
     echo "--- Setting up $workspace_name ---"
     
     mkdir -p "$workspace_path/.opencode/skills"
-    mkdir -p "$workspace_path/.opencode/agents"
     mkdir -p "$workspace_path/.opencode/commands"
     
     found_assets=false
@@ -110,18 +97,6 @@ for project in "${PROJECTS[@]}"; do
         found_assets=true
     fi
     
-    if [ -d "$repo_path/.opencode/agents" ]; then
-        echo "Found agents in $repo_path/.opencode/agents"
-        cp -r "$repo_path/.opencode/agents"/* "$workspace_path/.opencode/agents/" 2>/dev/null || true
-        found_assets=true
-    fi
-    
-    if [ -d "$repo_path/agents" ]; then
-        echo "Found agents in $repo_path/agents"
-        cp -r "$repo_path/agents"/* "$workspace_path/.opencode/agents/" 2>/dev/null || true
-        found_assets=true
-    fi
-    
     if [ -d "$repo_path/.opencode/commands" ]; then
         echo "Found commands in $repo_path/.opencode/commands"
         cp -r "$repo_path/.opencode/commands"/* "$workspace_path/.opencode/commands/" 2>/dev/null || true
@@ -135,7 +110,7 @@ for project in "${PROJECTS[@]}"; do
     fi
     
     if [ "$found_assets" = false ]; then
-        echo "No skills/agents/commands found in repo, using default skill sources"
+        echo "No skills/commands found in repo, using default skill sources"
         
         if [ -d "$SKILLS_SOURCE_DIR" ]; then
             cp -r "$SKILLS_SOURCE_DIR"/* "$workspace_path/.opencode/skills/" 2>/dev/null || true
@@ -145,8 +120,6 @@ for project in "${PROJECTS[@]}"; do
             cp -r "$OPENCODE_CONFIG_SKILLS"/* "$workspace_path/.opencode/skills/" 2>/dev/null || true
         fi
     fi
-    
-    validate_agents "$workspace_path/.opencode/agents"
     
     echo "$workspace_name ready at $workspace_path"
 done
@@ -162,9 +135,10 @@ echo "=== Setup complete! ==="
 echo ""
 echo "Structure:"
 echo "  $SKILL_SOURCE_DIR/          - Cloned repositories"
-echo "  $WORKSPACE_DIR/            - workspaces with skills"
+echo "  $WORKSPACE_DIR/            - workspaces with skills and commands"
 echo "    workspace-<name>/"
 echo "      .opencode/skills/      - Skills for each project"
+echo "      .opencode/commands/    - Commands for each project"
 echo ""
 echo "To work on a project:"
 echo "  cd $SKILL_SOURCE_DIR/<project>    # View source"
