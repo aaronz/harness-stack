@@ -123,6 +123,20 @@ foreach ($project in $Projects) {
         $foundAssets = $true
     }
 
+    # gstack has skills in root folder
+    if ($repoName -eq "gstack") {
+        Write-Host "Copying gstack skills from repo root" -ForegroundColor Green
+        Get-ChildItem -Path $repoPath -Directory | ForEach-Object {
+            $skillFile = Join-Path $_.FullName "SKILL.md"
+            if (Test-Path $skillFile) {
+                $destDir = Join-Path $skillsDir $_.Name
+                New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+                Copy-Item -Path $_.FullName\* -Destination $destDir -Recurse -Force
+                $foundAssets = $true
+            }
+        }
+    }
+
     # Copy commands
     $opencodeCommands = Join-Path $repoPath ".opencode\commands"
     if (Test-Path $opencodeCommands) {
@@ -138,15 +152,7 @@ foreach ($project in $Projects) {
     }
 
     if (-not $foundAssets) {
-        Write-Host "No skills/commands found in repo, using default skill sources" -ForegroundColor Yellow
-
-        if (Test-Path $SkillsSourceDir) {
-            Copy-Item -Path "$SkillsSourceDir\*" -Destination $skillsDir -Recurse -Force
-        }
-
-        if (Test-Path $OpencodeConfigSkills) {
-            Copy-Item -Path "$OpencodeConfigSkills\*" -Destination $skillsDir -Recurse -Force
-        }
+        Write-Host "No skills/commands found in repo" -ForegroundColor Yellow
     }
 
     Write-Host "$workspaceName ready at $workspacePath" -ForegroundColor Green

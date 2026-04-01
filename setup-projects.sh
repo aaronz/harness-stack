@@ -108,6 +108,19 @@ for project in "${PROJECTS[@]}"; do
         cp -r "$repo_path/skills"/* "$workspace_path/.opencode/skills/" 2>/dev/null || true
         found_assets=true
     fi
+
+    # gstack has skills in root folder
+    if [ "$repo_name" = "gstack" ]; then
+        echo "Copying gstack skills from repo root"
+        for dir in "$repo_path"/*/; do
+            if [ -f "$dir/SKILL.md" ]; then
+                dir_name=$(basename "$dir")
+                mkdir -p "$workspace_path/.opencode/skills/$dir_name"
+                cp -r "$dir"* "$workspace_path/.opencode/skills/$dir_name/" 2>/dev/null || true
+                found_assets=true
+            fi
+        done
+    fi
     
     if [ -d "$repo_path/.opencode/commands" ]; then
         echo "Found commands in $repo_path/.opencode/commands"
@@ -122,15 +135,7 @@ for project in "${PROJECTS[@]}"; do
     fi
     
     if [ "$found_assets" = false ]; then
-        echo "No skills/commands found in repo, using default skill sources"
-        
-        if [ -d "$SKILLS_SOURCE_DIR" ]; then
-            cp -r "$SKILLS_SOURCE_DIR"/* "$workspace_path/.opencode/skills/" 2>/dev/null || true
-        fi
-        
-        if [ -d "$OPENCODE_CONFIG_SKILLS" ]; then
-            cp -r "$OPENCODE_CONFIG_SKILLS"/* "$workspace_path/.opencode/skills/" 2>/dev/null || true
-        fi
+        echo "No skills/commands found in repo"
     fi
     
     echo "$workspace_name ready at $workspace_path"
