@@ -17,15 +17,5 @@ skill-source/
 **/.vercel/
 **/.vercel_build_cache/
 
-**/frontend/
-**/backend/
-**/server/
-**/client/
-**/src/
-**/app/
-**/public/
-tsconfig.json
+**/outputs/
 
-progress.md
-task_plan.md
-findings.md
