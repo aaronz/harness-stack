@@ -9,6 +9,8 @@ if (-not (Test-Path $PrdFile)) {
     exit 1
 }
 
+$PrdContent = Get-Content $PrdFile -Raw
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "GStack workspace - PRD Implementation" -ForegroundColor Cyan
 Write-Host "方法论: Think -> Plan -> Build -> Review -> Test -> Ship -> Reflect" -ForegroundColor Yellow
@@ -30,15 +32,8 @@ Write-Host "[Step 1/7] Office Hours - 需求理解..." -ForegroundColor Green
 $OfficePrompt = @"
 请使用 /office-hours 命令开始。
 
-## PRD文件
-$PrdFile
-
-## 项目
-AI Coding可落地性评估系统
-
-## 核心需求
-- 评估维度: 上下文完备性(25%)、逻辑原子性(25%)、边界明确性(20%)、可验证性(15%)、技术约束清晰度(15%)
-- 评分算法: AI就绪分 = Σ(维度得分×权重) × 复杂度惩罚系数
+## Requirements Document
+$PrdContent
 
 ## 流程
 将提出6个强制问题来重新审视产品，挑战前提，生成多种实现方案
@@ -87,11 +82,8 @@ $ImplementPrompt = "使用 gstack 的实现模式执行。
 ## 工程审查
 $EngReview
 
-## 实现内容
-- 评估维度模型(上下文完备性25%、逻辑原子性25%、边界明确性20%、可验证性15%、技术约束清晰度15%)
-- 评分算法(S/A/B/C级)
-- 报告生成器
-- 风险热力图"
+## Requirements Document
+$PrdContent"
 opencode run -m "$Model" $ImplementPrompt
 
 Write-Host ""

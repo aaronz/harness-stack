@@ -11,6 +11,8 @@ if [ ! -f "$PRD_FILE" ]; then
     exit 1
 fi
 
+PRD_CONTENT=$(cat "$PRD_FILE")
+
 echo "========================================"
 echo "OpenSpec workspace - PRD Implementation"
 echo "方法论: /opsx:propose → /opsx:apply → /opsx:archive"
@@ -19,7 +21,7 @@ echo "========================================"
 echo "PRD: $PRD_FILE"
 echo ""
 
-OUTPUT_DIR="$WORKSPACE_DIR/outputs"
+OUTPUT_DIR="$SCRIPT_DIR/outputs"
 mkdir -p "$OUTPUT_DIR"
 
 PROPOSAL_DIR="$OUTPUT_DIR/proposal"
@@ -27,14 +29,8 @@ PROPOSAL_DIR="$OUTPUT_DIR/proposal"
 echo "[Step 1/3] Propose - 创建需求提案..."
 PROPOSE_PROMPT="请使用 /opsx:propose ai-ready-evaluator 命令基于 PRD.md 创建需求提案。
 
-## PRD内容
-$PRD_FILE
-
-## 核心需求
-- AI Coding可落地性评估系统
-- 评估维度: 上下文完备性(25%)、逻辑原子性(25%)、边界明确性(20%)、可验证性(15%)、技术约束清晰度(15%)
-- 评分算法: AI就绪分 = Σ(维度得分×权重) × 复杂度惩罚系数
-- AI就绪等级: S级(90-100)、A级(75-89)、B级(60-74)、C级(<60)
+## Requirements Document
+$PRD_CONTENT
 
 ## 输出要求
 请将产出保存到: $PROPOSAL_DIR
@@ -51,10 +47,8 @@ APPLY_PROMPT="请使用 /opsx:apply 命令执行 ai-ready-evaluator 的实现。
 ## 提案产出参考
 $PROPOSAL_DIR
 
-## PRD核心要求
-- 评估维度模型: 上下文完备性、逻辑原子性、边界明确性、可验证性、技术约束清晰度
-- 评分算法: 加权求和 + 复杂度惩罚
-- 报告生成器: S/A/B/C等级、风险热力图
+## Requirements Document
+$PRD_CONTENT
 
 ## 输出要求
 将实现代码保存到项目目录，确保与proposal中的设计一致"

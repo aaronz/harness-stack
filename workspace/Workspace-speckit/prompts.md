@@ -1,52 +1,27 @@
-#!/bin/bash
-set -e
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-WORKSPACE_DIR="$(dirname "$SCRIPT_DIR")"
-PRD_FILE="$WORKSPACE_DIR/../PRD.md"
+# SpecKit Step-by-Step Prompts
 
-MODEL="${1:-opencode/minimax-m2.5-free}"
+Execute these prompts in sequence to implement a PRD using the SpecKit methodology.
 
-if [ ! -f "$PRD_FILE" ]; then
-    echo "Error: PRD.md not found at $PRD_FILE"
-    exit 1
-fi
+---
 
-PRD_CONTENT=$(cat "$PRD_FILE")
+## Prerequisites
 
-echo "========================================"
-echo "Spec Kit workspace - PRD Implementation"
-echo "方法论: constitution → specify → plan → tasks → implement"
-echo "模型: $MODEL"
-echo "========================================"
-echo "PRD: $PRD_FILE"
-echo ""
+- A `PRD.md` file in your workspace root
+- OpenCode CLI installed (`opencode run -m <model> "<prompt>"`)
+- Directory structure: `.specify/memory/`, `.specify/templates/`, `.specify/specs/`
 
-OUTPUT_DIR="$SCRIPT_DIR/outputs"
-mkdir -p "$OUTPUT_DIR"
+---
 
-CONSTITUTION_FILE="$OUTPUT_DIR/constitution.md"
-SPEC_FILE="$OUTPUT_DIR/spec.md"
-PLAN_FILE="$OUTPUT_DIR/plan.md"
-TASKS_FILE="$OUTPUT_DIR/tasks.md"
+## Step 1: Constitution - 建立项目原则
 
-mkdir -p "$WORKSPACE_DIR/.specify/memory"
-mkdir -p "$WORKSPACE_DIR/.specify/templates"
-mkdir -p "$WORKSPACE_DIR/.specify/specs"
-
-if [ ! -f "$WORKSPACE_DIR/.specify/memory/constitution.md" ]; then
-    if [ -f "$WORKSPACE_DIR/.specify/templates/constitution-template.md" ]; then
-        cp "$WORKSPACE_DIR/.specify/templates/constitution-template.md" "$WORKSPACE_DIR/.specify/memory/constitution.md"
-    fi
-fi
-
-echo "[Step 1/5] Constitution - 建立项目原则..."
-CONSTITUTION_PROMPT="You are creating a project constitution.
+```bash
+opencode run -m "opencode/minimax-m2.5-free" "You are creating a project constitution.
 
 ## Task
 Update the project constitution at \`.specify/memory/constitution.md\`. This file is a TEMPLATE containing placeholder tokens in square brackets (e.g. \`[PROJECT_NAME]\`, \`[PRINCIPLE_1_NAME]\`). Your job is to (a) collect/derive concrete values, (b) fill the template precisely, and (c) propagate any amendments across dependent artifacts.
 
 ## Requirements Document
-$PRD_CONTENT
+$(cat PRD.md)
 
 ## Execution Steps
 1. Load the existing constitution at \`.specify/memory/constitution.md\`
@@ -57,22 +32,24 @@ $PRD_CONTENT
 6. Write the completed constitution to \`.specify/memory/constitution.md\`
 
 ## Output
-Save the final constitution to: $CONSTITUTION_FILE"
+Save the final constitution to: ./outputs/constitution.md"
+```
 
-opencode run -m "$MODEL" "$CONSTITUTION_PROMPT"
+---
 
-echo ""
-echo "[Step 2/5] Specify - 定义需求规范..."
-SPECIFY_PROMPT="You are creating a feature specification.
+## Step 2: Specify - 定义需求规范
+
+```bash
+opencode run -m "opencode/minimax-m2.5-free" "You are creating a feature specification.
 
 ## Task
 Create a detailed specification based on the requirements document, focusing on WHAT users need and WHY (not HOW to implement).
 
 ## Requirements Document
-$PRD_CONTENT
+$(cat PRD.md)
 
 ## Constitution
-$(cat "$WORKSPACE_DIR/.specify/memory/constitution.md" 2>/dev/null || echo "Not yet created")
+$(cat .specify/memory/constitution.md 2>/dev/null || echo "Not yet created")
 
 ## Execution Steps
 1. Generate a concise short name for the feature based on the requirements
@@ -83,22 +60,24 @@ $(cat "$WORKSPACE_DIR/.specify/memory/constitution.md" 2>/dev/null || echo "Not 
 6. Identify Key Entities involved
 
 ## Output
-Save the specification to: $SPEC_FILE"
+Save the specification to: ./outputs/spec.md"
+```
 
-opencode run -m "$MODEL" "$SPECIFY_PROMPT"
+---
 
-echo ""
-echo "[Step 3/5] Plan - 创建技术实现计划..."
-PLAN_PROMPT="You are creating a technical implementation plan.
+## Step 3: Plan - 创建技术实现计划
+
+```bash
+opencode run -m "opencode/minimax-m2.5-free" "You are creating a technical implementation plan.
 
 ## Task
 Create an implementation plan following the plan template structure.
 
 ## Specification
-$(cat "$SPEC_FILE" 2>/dev/null || echo "Specification not yet created")
+$(cat outputs/spec.md 2>/dev/null || echo "Specification not yet created")
 
 ## Constitution
-$(cat "$WORKSPACE_DIR/.specify/memory/constitution.md" 2>/dev/null || echo "Constitution not yet created")
+$(cat .specify/memory/constitution.md 2>/dev/null || echo "Constitution not yet created")
 
 ## Plan Content Required
 1. Technical Context (infer appropriate tech stack from requirements)
@@ -109,19 +88,21 @@ $(cat "$WORKSPACE_DIR/.specify/memory/constitution.md" 2>/dev/null || echo "Cons
 6. File structure and module organization
 
 ## Output
-Save the plan to: $PLAN_FILE"
+Save the plan to: ./outputs/plan.md"
+```
 
-opencode run -m "$MODEL" "$PLAN_PROMPT"
+---
 
-echo ""
-echo "[Step 4/5] Tasks - 生成任务清单..."
-TASKS_PROMPT="You are generating an actionable task list.
+## Step 4: Tasks - 生成任务清单
+
+```bash
+opencode run -m "opencode/minimax-m2.5-free" "You are generating an actionable task list.
 
 ## Task
 Create a detailed, dependency-ordered task list from the implementation plan.
 
 ## Implementation Plan
-$(cat "$PLAN_FILE" 2>/dev/null || echo "Plan not yet created")
+$(cat outputs/plan.md 2>/dev/null || echo "Plan not yet created")
 
 ## Task Generation Rules
 1. Organize by user story to enable independent implementation and testing
@@ -137,22 +118,24 @@ $(cat "$PLAN_FILE" 2>/dev/null || echo "Plan not yet created")
 - Final Phase: Polish & Cross-Cutting Concerns
 
 ## Output
-Save the task list to: $TASKS_FILE"
+Save the task list to: ./outputs/tasks.md"
+```
 
-opencode run -m "$MODEL" "$TASKS_PROMPT"
+---
 
-echo ""
-echo "[Step 5/5] Implement - 执行实现..."
-IMPLEMENT_PROMPT="You are implementing a project based on the task list.
+## Step 5: Implement - 执行实现
+
+```bash
+opencode run -m "opencode/minimax-m2.5-free" "You are implementing a project based on the task list.
 
 ## Task
 Execute all tasks from the task list to build the complete application.
 
 ## Task List
-$(cat "$TASKS_FILE" 2>/dev/null || echo "Tasks not yet created")
+$(cat outputs/tasks.md 2>/dev/null || echo "Tasks not yet created")
 
 ## Implementation Plan
-$(cat "$PLAN_FILE" 2>/dev/null || echo "Plan not yet created")
+$(cat outputs/plan.md 2>/dev/null || echo "Plan not yet created")
 
 ## Execution Rules
 1. Complete each phase before moving to the next
@@ -163,16 +146,26 @@ $(cat "$PLAN_FILE" 2>/dev/null || echo "Plan not yet created")
 
 ## Output
 Implement all code files according to the task list. Create the complete working application."
+```
 
-opencode run -m "$MODEL" "$IMPLEMENT_PROMPT"
+---
 
-echo ""
-echo "========================================"
-echo "Spec Kit workspace 实现完成!"
-echo "========================================"
-echo ""
-echo "Output files:"
-echo "  - Constitution: $CONSTITUTION_FILE"
-echo "  - Specification: $SPEC_FILE"
-echo "  - Implementation Plan: $PLAN_FILE"
-echo "  - Task List: $TASKS_FILE"
+## Quick Reference
+
+| Step | Output File |
+|------|-------------|
+| 1 | outputs/constitution.md |
+| 2 | outputs/spec.md |
+| 3 | outputs/plan.md |
+| 4 | outputs/tasks.md |
+| 5 | (code changes) |
+
+---
+
+## Custom Model
+
+Replace model in any step:
+```bash
+opencode run -m "anthropic/claude-3.5-sonnet" "<prompt>"
+opencode run -m "opencode/llama-3.1-70b" "<prompt>"
+```

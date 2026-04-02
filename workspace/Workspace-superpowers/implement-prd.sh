@@ -11,6 +11,8 @@ if [ ! -f "$PRD_FILE" ]; then
     exit 1
 fi
 
+PRD_CONTENT=$(cat "$PRD_FILE")
+
 echo "========================================"
 echo "Superpowers workspace - PRD Implementation"
 echo "方法论: brainstorming → writing-plans → subagent-driven-development → verification → finishing"
@@ -19,7 +21,7 @@ echo "========================================"
 echo "PRD: $PRD_FILE"
 echo ""
 
-OUTPUT_DIR="$WORKSPACE_DIR/outputs"
+OUTPUT_DIR="$SCRIPT_DIR/outputs"
 mkdir -p "$OUTPUT_DIR"
 
 DESIGN_FILE="$OUTPUT_DIR/design.md"
@@ -27,15 +29,10 @@ PLAN_FILE="$OUTPUT_DIR/plan.md"
 VERIFY_REPORT="$OUTPUT_DIR/verification-report.md"
 
 echo "[Step 1/5] Brainstorming - 需求理解与设计..."
-BRAINSTORM_PROMPT="请使用 brainstorming skill 分析 PRD.md 中的 AI Coding可落地性评估系统需求。
+BRAINSTORM_PROMPT="请使用 brainstorming skill 分析 PRD.md 中的需求。
 
-## PRD文件
-$PRD_FILE
-
-## 核心需求
-- 评估维度: 上下文完备性(25%)、逻辑原子性(25%)、边界明确性(20%)、可验证性(15%)、技术约束清晰度(15%)
-- 评分算法: AI就绪分 = Σ(维度得分×权重) × 复杂度惩罚系数
-- 成功指标: AI代码采纳率>80%、评估效率<2分钟
+## Requirements Document
+$PRD_CONTENT
 
 ## 流程
 1) 探索项目上下文
@@ -55,14 +52,13 @@ PLANS_PROMPT="请使用 writing-plans skill 基于已批准的设计创建详细
 ## 设计文档
 $DESIGN_FILE
 
+## Requirements Document
+$PRD_CONTENT
+
 ## 计划要求
 - 分解为2-5分钟可完成的原子任务
 - 每个任务有精确文件路径、完整代码、验证步骤
 - 使用 subagent-driven-development skill 进行任务分解
-
-## PRD核心要求
-- 评估维度模型、评分算法、报告生成器
-- S/A/B/C等级、风险热力图
 
 ## 输出
 请将计划保存到: $PLAN_FILE"
@@ -75,11 +71,8 @@ SDD_PROMPT="请使用 subagent-driven-development skill 执行实现计划。
 ## 实现计划
 $PLAN_FILE
 
-## 实现内容
-- 评估维度模型
-- 评分算法
-- S/A/B/C报告生成器
-- 风险热力图
+## Requirements Document
+$PRD_CONTENT
 
 ## 执行要求
 每个任务由fresh subagent执行，两阶段review(规范合规性→代码质量)"
@@ -92,15 +85,13 @@ VERIFY_PROMPT="请使用 verification-before-completion skill 进行最终验证
 ## 实现产出
 请验证Step 3的实现产出
 
+## Requirements Document
+$PRD_CONTENT
+
 ## 验证要点
 - 功能完整性
 - 代码质量
 - 测试覆盖(80%+)
-
-## PRD成功指标
-- AI代码采纳率>80%
-- 返工率降低50%
-- 评估效率<2分钟
 
 ## 输出
 请将验证报告保存到: $VERIFY_REPORT"

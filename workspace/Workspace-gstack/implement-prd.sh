@@ -11,6 +11,8 @@ if [ ! -f "$PRD_FILE" ]; then
     exit 1
 fi
 
+PRD_CONTENT=$(cat "$PRD_FILE")
+
 echo "========================================"
 echo "GStack workspace - PRD Implementation"
 echo "方法论: Think → Plan → Build → Review → Test → Ship → Reflect"
@@ -19,7 +21,7 @@ echo "========================================"
 echo "PRD: $PRD_FILE"
 echo ""
 
-OUTPUT_DIR="$WORKSPACE_DIR/outputs"
+OUTPUT_DIR="$SCRIPT_DIR/outputs"
 mkdir -p "$OUTPUT_DIR"
 
 DESIGN_FILE="$OUTPUT_DIR/design.md"
@@ -31,15 +33,8 @@ SHIP_REPORT="$OUTPUT_DIR/ship-report.md"
 echo "[Step 1/7] Office Hours - 需求理解..."
 OFFICE_PROMPT="请使用 /office-hours 命令开始。
 
-## PRD文件
-$PRD_FILE
-
-## 项目
-AI Coding可落地性评估系统
-
-## 核心需求
-- 评估维度: 上下文完备性(25%)、逻辑原子性(25%)、边界明确性(20%)、可验证性(15%)、技术约束清晰度(15%)
-- 评分算法: AI就绪分 = Σ(维度得分×权重) × 复杂度惩罚系数
+## Requirements Document
+$PRD_CONTENT
 
 ## 流程
 将提出6个强制问题来重新审视产品，挑战前提，生成多种实现方案
@@ -83,11 +78,8 @@ IMPLEMENT_PROMPT="使用 gstack 的实现模式执行。
 ## 工程审查
 $ENG_REVIEW
 
-## 实现内容
-- 评估维度模型(上下文完备性25%、逻辑原子性25%、边界明确性20%、可验证性15%、技术约束清晰度15%)
-- 评分算法(S/A/B/C级)
-- 报告生成器
-- 风险热力图"
+## Requirements Document
+$PRD_CONTENT"
 opencode run -m "$MODEL" "$IMPLEMENT_PROMPT"
 
 echo ""

@@ -3,3 +3,29 @@ skill-source/
 
 # OpenCode skills directories
 **/.opencode/
+
+**/node_modules/
+**/dist/
+**/build/
+**/out/
+**/coverage/
+**/.next/
+**/.vercel/
+**/.vercel_build_output/
+**/.vercel_cache/
+**/.vercel_output/
+**/.vercel/
+**/.vercel_build_cache/
+
+**/frontend/
+**/backend/
+**/server/
+**/client/
+**/src/
+**/app/
+**/public/
+tsconfig.json
+
+progress.md
+task_plan.md
+findings.md

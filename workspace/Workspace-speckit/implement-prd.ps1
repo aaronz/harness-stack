@@ -9,6 +9,8 @@ if (-not (Test-Path $PrdFile)) {
     exit 1
 }
 
+$PrdContent = Get-Content $PrdFile -Raw
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Spec Kit workspace - PRD Implementation" -ForegroundColor Cyan
 Write-Host "方法论: /speckit.constitution -> /speckit.specify -> /speckit.plan -> /speckit.tasks -> /speckit.implement" -ForegroundColor Yellow
@@ -29,13 +31,8 @@ Write-Host "[Step 1/5] Constitution - 建立项目原则..." -ForegroundColor Gr
 $ConstitutionPrompt = @"
 请使用 /speckit.constitution 命令创建项目开发原则。
 
-## PRD内容
-$PrdFile
-
-## 核心需求
-- AI Coding可落地性评估系统
-- 评估维度: 上下文完备性(25%)、逻辑原子性(25%)、边界明确性(20%)、可验证性(15%)、技术约束清晰度(15%)
-- 评分算法: AI就绪分 = Σ(维度得分×权重) × 复杂度惩罚系数
+## Requirements Document
+$PrdContent
 
 ## 原则要求
 原则应聚焦于:
@@ -57,13 +54,8 @@ $SpecifyPrompt = @"
 ## 项目原则
 $ConstitutionFile
 
-## PRD内容
-$PrdFile
-
-## 核心要点
-- 五大评估维度(上下文完备性25%、逻辑原子性25%、边界明确性20%、可验证性15%、技术约束清晰度15%)
-- 评分算法
-- AI就绪等级(S/A/B/C级)
+## Requirements Document
+$PrdContent
 
 ## 输出
 请将规范保存到: $SpecFile
@@ -78,17 +70,14 @@ $PlanPrompt = @"
 ## 需求规范
 $SpecFile
 
+## Requirements Document
+$PrdContent
+
 ## 技术栈
 根据现有项目选择(Next.js + Express + SQLite)
 
 ## 架构
 模块化设计
-
-## 计划内容
-- 评估引擎模块
-- 评分计算器
-- 报告生成器
-- 数据模型设计
 
 ## 输出
 请将计划保存到: $PlanFile
@@ -119,14 +108,11 @@ $ImplementPrompt = @"
 ## 任务清单
 $TasksFile
 
-## 实现内容
-- 评估维度模型
-- 评分算法
-- S/A/B/C等级报告生成器
-- 风险热力图功能
+## Requirements Document
+$PrdContent
 
 ## 输出
-确保满足PRD成功指标: AI代码采纳率>80%、评估效率<2分钟
+确保实现满足PRD.md中的成功标准与验收要求
 "@
 opencode run -m "$Model" $ImplementPrompt
 

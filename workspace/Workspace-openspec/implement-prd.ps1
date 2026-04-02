@@ -9,6 +9,8 @@ if (-not (Test-Path $PrdFile)) {
     exit 1
 }
 
+$PrdContent = Get-Content $PrdFile -Raw
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "OpenSpec workspace - PRD Implementation" -ForegroundColor Cyan
 Write-Host "方法论: /opsx:propose -> /opsx:apply -> /opsx:archive" -ForegroundColor Yellow
@@ -27,14 +29,8 @@ Write-Host "[Step 1/3] Propose - 创建需求提案..." -ForegroundColor Green
 $ProposePrompt = @"
 请使用 /opsx:propose ai-ready-evaluator 命令基于 PRD.md 创建需求提案。
 
-## PRD内容
-$PrdFile
-
-## 核心需求
-- AI Coding可落地性评估系统
-- 评估维度: 上下文完备性(25%)、逻辑原子性(25%)、边界明确性(20%)、可验证性(15%)、技术约束清晰度(15%)
-- 评分算法: AI就绪分 = Σ(维度得分×权重) × 复杂度惩罚系数
-- AI就绪等级: S级(90-100)、A级(75-89)、B级(60-74)、C级(<60)
+## Requirements Document
+$PrdContent
 
 ## 输出要求
 请将产出保存到: $ProposalDir
@@ -53,10 +49,8 @@ $ApplyPrompt = @"
 ## 提案产出参考
 $ProposalDir
 
-## PRD核心要求
-- 评估维度模型: 上下文完备性、逻辑原子性、边界明确性、可验证性、技术约束清晰度
-- 评分算法: 加权求和 + 复杂度惩罚
-- 报告生成器: S/A/B/C等级、风险热力图
+## Requirements Document
+$PrdContent
 
 ## 输出要求
 将实现代码保存到项目目录，确保与proposal中的设计一致

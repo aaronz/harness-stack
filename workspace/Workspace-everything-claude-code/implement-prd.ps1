@@ -9,6 +9,8 @@ if (-not (Test-Path $PrdFile)) {
     exit 1
 }
 
+$PrdContent = Get-Content $PrdFile -Raw
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Everything Claude Code workspace - PRD Implementation" -ForegroundColor Cyan
 Write-Host "方法论: /plan -> /tdd -> /code-review -> /verify -> /security-scan" -ForegroundColor Yellow
@@ -30,18 +32,10 @@ $SecurityReport = Join-Path $OutputDir "security-report.md"
 
 Write-Host "[Step 1/5] Plan - 创建实现计划..." -ForegroundColor Green
 $PlanPrompt = @"
-请使用 /plan 命令创建 AI Coding可落地性评估系统的实现计划。
+请使用 /plan 命令创建实现计划。
 
-## PRD文件参考
-$PrdFile
-
-## 系统要求（从PRD提取的核心要求）
-1. **评估维度模型**: 上下文完备性(25%)、逻辑原子性(25%)、边界明确性(20%)、可验证性(15%)、技术约束清晰度(15%)
-2. **评分算法**: AI就绪分 = Σ(维度得分 × 维度权重) × 复杂度惩罚系数
-3. **核心模块: 评估引擎、评分计算器、报告生成器**
-4. **成功指标**:
-   - AI代码采纳率 > 80%
-   - 评估效率 < 2分钟
+## Requirements Document
+$PrdContent
 
 ## 输出要求
 请将完整的实施计划保存到: $PlanFile
@@ -61,10 +55,8 @@ $TddPrompt = @"
 ## 实施计划参考
 $PlanFile
 
-## PRD核心要求
-- 评估维度: 上下文完备性、逻辑原子性、边界明确性、可验证性、技术约束清晰度
-- 评分计算: 加权求和 + 复杂度惩罚
-- 成功指标: AI代码采纳率>80%、评估效率<2分钟
+## Requirements Document
+$PrdContent
 
 ## 输出要求
 1. 先创建测试文件（RED阶段），测试必须失败
@@ -87,9 +79,11 @@ $PlanFile
 ## TDD产出
 $TddOutputDir
 
-## 审查标准（来自PRD成功指标）
-- AI代码采纳率 > 80%（代码需符合可测试性、可维护性）
-- 评估效率 < 2分钟（性能优化检查）
+## Requirements Document
+$PrdContent
+
+## 审查标准
+结合需求文档检查代码质量、可维护性、可测试性与性能表现
 
 ## 输出
 请将审查报告保存到: $ReviewReport
@@ -104,9 +98,11 @@ $VerifyPrompt = @"
 ## 审查报告
 $ReviewReport
 
-## PRD成功指标验证
-1. **AI代码采纳率>80%**: 代码质量是否足够清晰、无歧义
-2. **评估效率<2分钟**: 性能是否满足要求
+## Requirements Document
+$PrdContent
+
+## 验证重点
+根据需求文档验证功能正确性、质量标准与性能要求
 
 ## 输出
 请将验证报告保存到: $VerifyReport
@@ -121,7 +117,10 @@ $SecurityPrompt = @"
 ## 验证报告
 $VerifyReport
 
-## PRD要求的安全检查
+## Requirements Document
+$PrdContent
+
+## 安全检查清单
 - 无硬编码 secrets
 - SQL注入防护
 - XSS防护
