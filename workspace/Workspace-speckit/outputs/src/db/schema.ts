@@ -6,10 +6,9 @@ import * as path from 'path';
 const DB_PATH = process.env.DB_PATH || './data/ai-evaluator.db';
 
 let db: SqlJsDatabase | null = null;
-let dbPath: string = DB_PATH;
 
-async function ensureDbDir(): void {
-  const dir = path.dirname(dbPath);
+async function ensureDbDir(): Promise<void> {
+  const dir = path.dirname(DB_PATH);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -19,7 +18,7 @@ function saveDb(): void {
   if (db) {
     const data = db.export();
     const buffer = Buffer.from(data);
-    fs.writeFileSync(dbPath, buffer);
+    fs.writeFileSync(DB_PATH, buffer);
   }
 }
 
@@ -30,8 +29,8 @@ export async function initDb(): Promise<SqlJsDatabase> {
 
   const SQL = await initSqlJs();
 
-  if (fs.existsSync(dbPath)) {
-    const buffer = fs.readFileSync(dbPath);
+  if (fs.existsSync(DB_PATH)) {
+    const buffer = fs.readFileSync(DB_PATH);
     db = new SQL.Database(buffer);
   } else {
     db = new SQL.Database();
@@ -57,8 +56,7 @@ export async function initDb(): Promise<SqlJsDatabase> {
       verifiability_score REAL NOT NULL,
       technical_score REAL NOT NULL,
       complexity_penalty REAL NOT NULL,
-      calculated_at TEXT NOT NULL,
-      FOREIGN KEY (requirement_id) REFERENCES requirements(id)
+      calculated_at TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS risk_highlights (
@@ -66,8 +64,7 @@ export async function initDb(): Promise<SqlJsDatabase> {
       score_id TEXT NOT NULL,
       dimension TEXT NOT NULL,
       text_span TEXT NOT NULL,
-      reason TEXT NOT NULL,
-      FOREIGN KEY (score_id) REFERENCES scores(id)
+      reason TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS optimization_suggestions (
@@ -75,8 +72,7 @@ export async function initDb(): Promise<SqlJsDatabase> {
       score_id TEXT NOT NULL,
       category TEXT NOT NULL,
       description TEXT NOT NULL,
-      priority TEXT NOT NULL,
-      FOREIGN KEY (score_id) REFERENCES scores(id)
+      priority TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS llm_providers (
@@ -103,21 +99,17 @@ export async function initDb(): Promise<SqlJsDatabase> {
 }
 
 export function getDb(): SqlJsDatabase {
-  if (!db) {
-    throw new Error('Database not initialized. Call initDb() first.');
-  }
+  if (!db) throw new Error('Database not initialized. Call initDb() first.');
   return db;
 }
 
 export function runQuery(sql: string, params: any[] = []): void {
-  const database = getDb();
-  database.run(sql, params);
+  getDb().run(sql, params);
   saveDb();
 }
 
 export function getOne(sql: string, params: any[] = []): any {
-  const database = getDb();
-  const stmt = database.prepare(sql);
+  const stmt = getDb().prepare(sql);
   stmt.bind(params);
   if (stmt.step()) {
     const row = stmt.getAsObject();
@@ -129,13 +121,10 @@ export function getOne(sql: string, params: any[] = []): any {
 }
 
 export function getAll(sql: string, params: any[] = []): any[] {
-  const database = getDb();
-  const stmt = database.prepare(sql);
+  const stmt = getDb().prepare(sql);
   stmt.bind(params);
   const results: any[] = [];
-  while (stmt.step()) {
-    results.push(stmt.getAsObject());
-  }
+  while (stmt.step()) results.push(stmt.getAsObject());
   stmt.free();
   return results;
 }

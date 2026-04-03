@@ -7,27 +7,12 @@ export interface ApiError extends Error {
 
 export function errorHandler(err: ApiError, req: Request, res: Response, next: NextFunction): void {
   console.error('Error:', err.message);
-  console.error('Stack:', err.stack);
-
   const statusCode = err.statusCode || 500;
-  const message = statusCode === 500 ? 'Internal Server Error' : err.message;
-
-  res.status(statusCode).json({
-    error: {
-      message,
-      code: err.code || 'INTERNAL_ERROR',
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-    },
-  });
+  res.status(statusCode).json({ error: { message: statusCode === 500 ? 'Internal Server Error' : err.message, code: err.code || 'INTERNAL_ERROR' } });
 }
 
 export function notFoundHandler(req: Request, res: Response): void {
-  res.status(404).json({
-    error: {
-      message: `Route ${req.method} ${req.path} not found`,
-      code: 'NOT_FOUND',
-    },
-  });
+  res.status(404).json({ error: { message: `Route ${req.method} ${req.path} not found`, code: 'NOT_FOUND' } });
 }
 
 export function createError(message: string, statusCode: number, code?: string): ApiError {
