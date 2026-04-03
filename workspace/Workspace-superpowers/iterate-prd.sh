@@ -3,7 +3,7 @@
 
 set -e
 
-MODEL=${1:-"opencode/minimax-m2.5-free"}
+MODEL=${1:-"minimax-cn/MiniMax-M2.7"}
 WORKSPACE_DIR="$(cd "$(dirname "$0")" && pwd)"
 PRD_PATH="$WORKSPACE_DIR/PRD.md"
 OUTPUTS_DIR="$WORKSPACE_DIR/outputs/iteration-2"

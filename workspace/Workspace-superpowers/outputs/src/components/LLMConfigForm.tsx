@@ -18,6 +18,7 @@ interface LLMConfigFormProps {
 
 export default function LLMConfigForm({ configs, onRefresh }: LLMConfigFormProps) {
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     provider: 'openai',
@@ -33,20 +34,17 @@ export default function LLMConfigForm({ configs, onRefresh }: LLMConfigFormProps
     setSaving(true)
     
     try {
-      await fetch('/api/config/llm', {
-        method: 'POST',
+      const url = editingId ? `/api/config/llm/${editingId}` : '/api/config/llm'
+      const method = editingId ? 'PUT' : 'POST'
+      const body = editingId && !formData.apiKey
+        ? { ...formData, apiKey: undefined }
+        : formData
+      await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(body),
       })
-      setShowForm(false)
-      setFormData({
-        name: '',
-        provider: 'openai',
-        model: 'gpt-4o',
-        apiKey: '',
-        baseUrl: '',
-        isDefault: false,
-      })
+      resetForm()
       onRefresh()
     } catch (error) {
       console.error('Failed to save config:', error)
@@ -60,6 +58,25 @@ export default function LLMConfigForm({ configs, onRefresh }: LLMConfigFormProps
     
     await fetch(`/api/config/llm/${id}`, { method: 'DELETE' })
     onRefresh()
+  }
+
+  const handleEdit = (config: LLMConfig) => {
+    setEditingId(config.id)
+    setFormData({
+      name: config.name,
+      provider: config.provider,
+      model: config.model,
+      apiKey: '',
+      baseUrl: config.baseUrl || '',
+      isDefault: config.isDefault,
+    })
+    setShowForm(true)
+  }
+
+  const resetForm = () => {
+    setShowForm(false)
+    setEditingId(null)
+    setFormData({ name: '', provider: 'openai', model: 'gpt-4o', apiKey: '', baseUrl: '', isDefault: false })
   }
   
   const providerModels: Record<string, string[]> = {
@@ -78,7 +95,7 @@ export default function LLMConfigForm({ configs, onRefresh }: LLMConfigFormProps
             onClick={() => setShowForm(!showForm)}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
-            {showForm ? 'Cancel' : '+ Add Model'}
+            {showForm ? 'Cancel' : (editingId ? 'Edit Model' : '+ Add Model')}
           </button>
         </div>
         
@@ -152,9 +169,9 @@ export default function LLMConfigForm({ configs, onRefresh }: LLMConfigFormProps
                 type="password"
                 value={formData.apiKey}
                 onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-                placeholder="sk-..."
+                placeholder={editingId ? 'Leave blank to keep current key' : 'sk-...'}
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md"
-                required
+                required={!editingId}
               />
             </div>
             
@@ -176,8 +193,9 @@ export default function LLMConfigForm({ configs, onRefresh }: LLMConfigFormProps
               disabled={saving}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {saving ? 'Saving...' : 'Save Configuration'}
+              {saving ? 'Saving...' : editingId ? 'Update Configuration' : 'Save Configuration'}
             </button>
+            {showForm && <button type="button" onClick={resetForm} className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">Cancel</button>}
           </form>
         )}
         
@@ -214,6 +232,12 @@ export default function LLMConfigForm({ configs, onRefresh }: LLMConfigFormProps
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(config)}
+                    className="text-blue-600 hover:text-blue-900 text-sm"
+                  >
+                    Edit
+                  </button>
                   <button
                     onClick={() => handleDelete(config.id)}
                     className="text-red-600 hover:text-red-900 text-sm"

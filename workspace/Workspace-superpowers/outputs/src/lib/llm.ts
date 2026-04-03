@@ -69,16 +69,33 @@ export async function callLLM(config: LLMConfig, content: string): Promise<Evalu
   
   switch (config.provider) {
     case 'openai':
-      return callOpenAI(config, prompt)
+      return withRetry(() => callOpenAI(config, prompt))
     case 'anthropic':
-      return callAnthropic(config, prompt)
+      return withRetry(() => callAnthropic(config, prompt))
     case 'google':
-      return callGoogle(config, prompt)
+      return withRetry(() => callGoogle(config, prompt))
     case 'ollama':
-      return callOllama(config, prompt)
+      return withRetry(() => callOllama(config, prompt))
     default:
       throw new Error(`Unknown provider: ${config.provider}`)
   }
+}
+
+async function withRetry<T>(fn: () => Promise<T>, maxRetries: number = 3, baseDelayMs: number = 1000): Promise<T> {
+  let lastError: Error | null = null
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+      if (lastError.message.includes('Invalid model ID') || lastError.message.includes('api key')) throw lastError
+      if (attempt < maxRetries) {
+        const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 1000
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+  }
+  throw lastError || new Error('Max retries exceeded')
 }
 
 async function callOpenAI(config: LLMConfig, prompt: string): Promise<EvaluationResult> {

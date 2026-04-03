@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import ScoreCard from '@/components/ScoreCard'
+import RiskHighlight from '@/components/RiskHighlight'
+import EditableTitle from '@/components/EditableTitle'
 import { useRouter } from 'next/navigation'
 
 interface EvaluationDetail {
@@ -20,6 +22,8 @@ interface EvaluationDetail {
   suggestions: Array<{ type: string; content: string }>
   modelUsed: string
   createdAt: string
+  rawResponse?: string
+  risks?: string[]
 }
 
 export default function EvaluationPage({ params }: { params: { id: string } }) {
@@ -31,7 +35,17 @@ export default function EvaluationPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetch(`/api/evaluations/${params.id}`)
       .then(res => res.json())
-      .then(data => setEvaluation(data))
+      .then(data => {
+        if (data.rawResponse) {
+          try {
+            const raw = JSON.parse(data.rawResponse)
+            data.risks = raw.risks || []
+          } catch {
+            data.risks = []
+          }
+        }
+        setEvaluation(data)
+      })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [params.id])
@@ -77,7 +91,7 @@ export default function EvaluationPage({ params }: { params: { id: string } }) {
       
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">{evaluation.title}</h1>
+          <EditableTitle title={evaluation.title} evaluationId={evaluation.id} />
           <span className={`px-3 py-1 text-lg font-semibold rounded-full ${gradeColors[evaluation.grade]}`}>
             {evaluation.grade} ({evaluation.overallScore})
           </span>
@@ -133,12 +147,25 @@ export default function EvaluationPage({ params }: { params: { id: string } }) {
           </ul>
         </div>
       )}
-      
+
+      {evaluation.risks && evaluation.risks.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-medium mb-4">Context Gaps & Risks</h2>
+          <p className="text-sm text-gray-600 mb-4">These areas may cause AI to generate incorrect or incomplete code:</p>
+          <ul className="space-y-2">
+            {evaluation.risks.map((risk, index) => (
+              <li key={index} className="flex items-start gap-2 text-gray-700">
+                <span className="mt-1.5 w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
+                <span>{risk}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-medium mb-4">Original Content</h2>
-        <pre className="whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 p-4 rounded-lg overflow-auto">
-          {evaluation.content}
-        </pre>
+        <RiskHighlight content={evaluation.content} risks={evaluation.risks || []} />
       </div>
     </div>
   )

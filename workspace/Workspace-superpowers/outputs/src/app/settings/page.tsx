@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import LLMConfigForm from '@/components/LLMConfigForm'
+import WeightsForm from '@/components/WeightsForm'
 import { useRouter } from 'next/navigation'
 
 interface LLMConfig {
@@ -50,7 +51,12 @@ export default function SettingsPage() {
       {loading ? (
         <div className="text-center py-8">Loading...</div>
       ) : (
-        <LLMConfigForm configs={configs} onRefresh={fetchConfigs} />
+        <>
+          <LLMConfigForm configs={configs} onRefresh={fetchConfigs} />
+          <div className="mt-8">
+            <WeightsForm />
+          </div>
+        </>
       )}
     </div>
   )

@@ -1,118 +1,144 @@
-I detect analysis intent — need to gather context by exploring codebase structure and finding PRD.
+**Intent → Routing: Research/analysis intent** — Need to understand codebase structure AND read PRD to compare gaps. My approach: parallel explore (codebase) + find/read PRD → synthesize into gap report.
 
-**My approach**: Parallel exploration of directory structure + locating PRD → synthesize gap analysis.
+Let me gather context in parallel:
+Found PRD.md at root. Let me read it and explore the outputs directory structure in parallel:
+Let me read the core implementation files to compare with PRD:
+Let me continue gathering more implementation details:
+Let me check remaining components and tests for complete picture:
+Let me check a few more files for completeness:
+Now I have a complete picture. Let me compile the gap analysis report.
+
 # 差距分析报告
 
-## 一、PRD核心需求回顾
-
-| PRD模块 | 核心功能 |
-|---------|----------|
-| 五大评估维度 | 上下文完备性、逻辑原子性、边界明确性、可验证性、技术约束 |
-| 多LLM支持 | OpenAI/Anthropic/Google/Ollama可配置切换 |
-| 评估流程 | 文件上传 → AI评估 → 评分/等级/建议 |
-| 结果展示 | 评分卡、等级(S/A/B/C)、优化建议、风险热力图 |
-| 配置管理 | 运行时LLM配置 CRUD |
+## 项目概述
+- **项目名称**: AI-Ready Evaluator (AI需求可实现性评估系统)
+- **PRD版本**: v1.0 (2026-03-31)
+- **实现状态**: 基础功能完成，核心评估流程可用
 
 ---
 
-## 二、差距列表
+## 差距列表
 
 | 差距项 | 严重程度 | 模块 | 修复建议 |
 |--------|----------|------|----------|
-| 风险热力图功能缺失 | **P0** | 前端/后端 | 实现需求原文高亮，标记AI高误解风险段落 |
-| 输入验证缺失 | **P0** | API层 | 使用Zod验证所有API输入 |
-| 单元测试缺失 | **P0** | 测试 | 添加评估引擎、API路由的单元测试 |
-| LLM配置编辑/删除缺失 | **P1** | API/前端 | 实现 `/api/config/llm/[id]` PUT和DELETE |
-| 评估统计API缺失 | **P1** | 后端 | 添加统计endpoint（采纳率、返工率等） |
-| JSON解析错误处理不完善 | **P1** | lib/llm.ts | 增强parseResponse的容错能力 |
-| 优化建议分类不精确 | **P2** | lib/llm.ts | 建议严格按context/boundary/atomicity/verifiability分类 |
-| 文件大小限制未实现 | **P2** | API | 添加file size limit (如10MB) |
-| 权重配置硬编码 | **P2** | 配置 | 权重可配置化，存入数据库或.env |
-| 评估历史筛选功能缺失 | **P2** | 前端 | 添加按日期/分数/等级筛选 |
+| 评估维度权重配置UI缺失 | P0 | 前端-Settings | 在Settings页面添加ScoreWeights管理界面 |
+| 风险热图/高亮未实现 | P1 | 前端-报告页 | 在评估详情页原文中标记AI高风险段落 |
+| LLM配置编辑功能缺失 | P1 | 前端-LLMConfigForm | 添加编辑模式支持 |
+| 模型选择器UI缺失 | P1 | 前端-上传 | 上传时可选择非默认模型 |
+| 评估报告详情页缺少"上下文缺口分析" | P1 | 前端-报告页 | 显示risks数组内容 |
+| 评估标题编辑UI缺失 | P2 | 前端-评估详情 | 添加标题编辑功能 |
+| weights管理API无UI | P2 | 前端 | 创建Weights管理组件 |
+| LLM调用无重试机制 | P2 | 后端-evaluator | 添加失败重试逻辑 |
+| evaluator.test.ts内容缺失 | P2 | 测试 | 补充评估逻辑测试 |
+| 无流式输出支持 | P2 | 后端-LLM | PRD提到streaming但未实现 |
 
 ---
 
-## 三、P0/P1/P2问题分类
+## P0/P1/P2问题分类
 
-### P0 - 阻断性问题
+### P0 (阻塞性问题)
 
-| 问题 | 影响 | 位置 |
+**1. 评估维度权重配置UI缺失**
+- **现状**: ScoreWeights数据模型已存在，API已实现(`GET/POST /api/config/weights`)，但Settings页面完全没有UI入口
+- **影响**: 用户无法自定义评估维度权重，产品无法满足不同业务场景的评估偏好
+- **修复**: 在Settings页面添加"Weights Configuration"区块，支持创建/编辑/删除权重预设
+
+### P1 (重要功能)
+
+**2. 风险热图/高亮未实现**
+- **现状**: PRD要求"高风险区域标记：在需求原文中高亮AI最可能误解的段落"，但`evaluations/[id]/page.tsx`仅显示原始文本
+- **影响**: 用户无法快速定位需求中的高风险区域，评估报告价值降低
+- **修复**: 解析LLM返回的`risks`字段，在原文中用颜色标记对应段落
+
+**3. LLM配置编辑功能缺失**
+- **现状**: `LLMConfigForm`只有Add和Delete，没有Edit模式
+- **影响**: 用户修改模型配置必须先删后建，不够便捷
+- **修复**: 在`LLMConfigForm`中添加编辑模式，填充现有数据
+
+**4. 模型选择器UI缺失**
+- **现状**: 上传文件时强制使用默认模型，无法选择其他已配置模型
+- **影响**: 用户想对比不同模型评估结果时需频繁切换默认模型
+- **修复**: 在`FileUpload`组件添加模型下拉选择器
+
+**5. 上下文缺口分析未展示**
+- **现状**: `risks`数组被存储但未在报告页展示
+- **影响**: PRD强调的"上下文缺口分析：列出AI生成代码时必定缺失的外部知识"未实现
+- **修复**: 在评估报告页添加"Risks & Context Gaps"区块
+
+### P2 (优化项)
+
+| 问题 | 现状 | 建议 |
 |------|------|------|
-| 风险热力图缺失 | 核心PRD功能未实现，用户无法识别高风险段落 | 前端evaluations/[id] |
-| 输入验证缺失 | 安全性问题，非法输入可能导致崩溃 | 所有API路由 |
-| 测试覆盖缺失 | 无法保证代码质量，线上风险高 | 全项目 |
-
-### P1 - 重要功能缺失
-
-| 问题 | 影响 | 位置 |
-|------|------|------|
-| LLM配置编辑/删除 | 配置管理不完整，无法修改已添加的LLM | api/config/llm/[id] |
-| 评估统计功能 | 无法追踪PRD中的成功指标（采纳率、返工率） | 新增API |
-| JSON解析容错 | LLM响应格式异常时会直接报错 | lib/llm.ts |
-
-### P2 - 体验优化
-
-| 问题 | 影响 | 位置 |
-|------|------|------|
-| 建议分类不精确 | 建议与维度不对应 | lib/llm.ts prompt |
-| 文件大小限制 | 可能导致大文件DDOS | api/evaluations |
-| 权重硬编码 | 无法根据业务调整评估策略 | lib/evaluator.ts |
+| 评估标题编辑UI | PUT API存在但无UI | 添加编辑按钮 |
+| Weights管理 | API存在无UI | 创建管理组件 |
+| LLM重试机制 | 调用失败直接报错 | 添加3次重试逻辑 |
+| evaluator.test.ts | 存在但未验证核心逻辑 | 补充测试用例 |
+| 流式输出 | 未实现 | 按需支持 |
 
 ---
 
-## 四、技术债务清单
+## 技术债务清单
 
-| 债务项 | 描述 | 修复成本 |
-|--------|------|----------|
-| T1 | 未使用的Zod依赖 (已安装未使用) | 低 |
-| T2 | API路由缺少输入校验 (无schema validation) | 中 |
-| T3 | 提示词硬编码在llm.ts中 | 低 |
-| T4 | 评估权重 DEFAULT_WEIGHTS 硬编码 | 低 |
-| T5 | 缺少错误边界处理 | 中 |
-| T6 | 无loading states / toast notifications | 低 |
-| T7 | 无响应式布局完整适配 | 低 |
-| T8 | 无国际化支持 | 高 |
+1. **类型定义不一致**
+   - `EvaluationResult`中`overall: number`，但`EvaluatedResult`使用`overallScore: number`
+   - 建议统一命名
+
+2. **Error Handling不完整**
+   - LLM调用失败无重试
+   - 缺少请求超时处理
+
+3. **硬编码值**
+   - `llm.ts`中模型列表hardcoded在组件内
+   - 建议移到配置文件或API
+
+4. **安全性**
+   - API Key加密存储已实现✅
+   - 但缺乏输入验证(如model名称白名单校验)
+
+5. **数据库**
+   - 缺少索引：Evaluation.createdAt, LLMConfig.isDefault
+   - 缺少数据迁移脚本
+
+6. **前端状态管理**
+   - 使用useState + prop drilling，无全局状态管理
+   - 大型应用可能需要Context或Zustand
 
 ---
 
-## 五、功能完整性矩阵
+## 功能完整性检查
 
 | PRD功能 | 状态 | 说明 |
 |---------|------|------|
-| 五大维度评分 | ✅ 已实现 | context/atomicity/boundary/verifiability/tech |
-| 复杂度惩罚 | ✅ 已实现 | simple:1.0, medium:0.9, complex:0.7 |
-| 等级评定 | ✅ 已实现 | S(90+)/A(75+)/B(60+)/C(<60) |
-| 多LLM支持 | ✅ 已实现 | openai/anthropic/google/ollama |
-| 文件上传评估 | ✅ 已实现 | 支持.md/.txt |
-| 优化建议生成 | ⚠️ 部分 | 有输出但分类不精确 |
-| 风险热力图 | ❌ 未实现 | **缺失** |
-| 配置CRUD | ⚠️ 部分 | 缺编辑/删除 |
+| 五大评估维度 | ✅ | 已实现 |
+| 维度权重配置 | ⚠️ | API有，UI无 |
+| 复杂度惩罚 | ✅ | simple/medium/complex |
+| S/A/B/C等级 | ✅ | 已实现 |
+| 多LLM支持 | ✅ | OpenAI/Anthropic/Gemini/Ollama |
+| 运行时切换LLM | ⚠️ | 可切换但无UI选择器 |
+| 优化建议生成 | ✅ | suggestions数组 |
+| 风险识别 | ⚠️ | 有risks字段但未展示 |
+| 风险热图 | ❌ | 未实现高亮 |
+| 文件上传评估 | ✅ | TXT/Markdown |
+| 评估历史 | ✅ | 列表+详情 |
+| API Key加密 | ✅ | AES加密 |
+| SQLite存储 | ✅ | Prisma+SQLite |
 
 ---
 
-## 六、接口完整性
+## 总结
 
-| API端点 | GET | POST | PUT | DELETE |
-|---------|-----|------|-----|--------|
-| /api/evaluations | ✅ 列表 | ✅ 创建 | - | - |
-| /api/evaluations/[id] | ✅ 详情 | - | - | ✅ 删除 |
-| /api/config/llm | ✅ 列表 | ✅ 创建 | - | - |
-| /api/config/llm/[id] | ✅ 详情 | - | ❌ **未实现** | ❌ **未实现** |
+**完成度: ~75%**
 
----
+核心评估流程已完整实现，主要差距集中在:
+1. 配置管理UI不完整(Weights)
+2. 报告可视化不够丰富(风险热图、上下文缺口)
+3. 部分交互功能缺失(模型选择、编辑功能)
+The background exploration tasks completed, but I've already synthesized all the findings and delivered the complete gap analysis report above.
 
-## 七、总结
+**Summary of key findings:**
+- **Project completeness: ~75%**
+- **P0 (blocking)**: Weights configuration UI missing
+- **P1 (important)**: Risk heatmap, LLM config editing, model selector, risks display
+- **P2 (optimization)**: Retry mechanism, edit UI, tests, streaming
 
-**核心功能完成度: ~75%**
-
-- ✅ 基础评估流程完整
-- ✅ 多LLM集成完成
-- ⚠️ 结果展示不完整（缺风险热力图）
-- ⚠️ 配置管理不完整
-- ❌ 输入安全无保障
-- ❌ 无测试覆盖
-
-**建议优先级:**
-1. **P0**: 补充输入验证 + 单元测试（质量底线）
-2. **P1**: 实现风险热力图 + LLM配置编辑（核心功能）
-3. **P2**: 完善统计、筛选等体验功能（优化）
+Is there a specific gap you'd like me to prioritize fixing, or would you like me to create a detailed implementation plan for any of these items?
