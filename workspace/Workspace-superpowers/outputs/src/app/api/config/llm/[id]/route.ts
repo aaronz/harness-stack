@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { encryptApiKey } from '@/lib/encryption'
+import { encryptApiKey, decryptApiKey } from '@/lib/encryption'
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const config = await prisma.lLMConfig.findUnique({
+      where: { id: params.id },
+    })
+    
+    if (!config) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+    
+    return NextResponse.json({
+      id: config.id,
+      name: config.name,
+      provider: config.provider,
+      model: config.model,
+      baseUrl: config.baseUrl,
+      isDefault: config.isDefault,
+      createdAt: config.createdAt.toISOString(),
+    })
+  } catch (error) {
+    console.error('Get LLM config error:', error)
+    return NextResponse.json({ error: 'Failed to get config' }, { status: 500 })
+  }
+}
 
 export async function PUT(
   request: NextRequest,

@@ -139,7 +139,7 @@ async function callOllama(config: LLMConfig, prompt: string): Promise<Evaluation
   return parseResponse(data.response)
 }
 
-function parseResponse(content: string): EvaluationResult {
+export function parseResponse(content: string): EvaluationResult {
   const jsonMatch = content.match(/\{[\s\S]*\}/)
   if (!jsonMatch) {
     throw new Error('Failed to parse LLM response')

@@ -19,6 +19,19 @@ model LLMConfig {
   updatedAt DateTime @updatedAt
 }
 
+model ScoreWeights {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  context        Float    @default(0.25)
+  atomicity      Float    @default(0.25)
+  boundary       Float    @default(0.20)
+  verifiability  Float    @default(0.15)
+  tech           Float    @default(0.15)
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 model Evaluation {
   id                  String   @id @default(cuid())
   title               String

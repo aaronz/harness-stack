@@ -25,6 +25,7 @@ interface EvaluationDetail {
 export default function EvaluationPage({ params }: { params: { id: string } }) {
   const [evaluation, setEvaluation] = useState<EvaluationDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [activeDimension, setActiveDimension] = useState<string>('context')
   const router = useRouter()
   
   useEffect(() => {
@@ -48,6 +49,21 @@ export default function EvaluationPage({ params }: { params: { id: string } }) {
     A: 'bg-blue-100 text-blue-800',
     B: 'bg-yellow-100 text-yellow-800',
     C: 'bg-red-100 text-red-800',
+  }
+  
+  const groupedSuggestions = evaluation.suggestions.reduce((acc, s) => {
+    const type = s.type || 'other'
+    if (!acc[type]) acc[type] = []
+    acc[type].push(s.content)
+    return acc
+  }, {} as Record<string, string[]>)
+
+  const dimensionLabels: Record<string, string> = {
+    context: 'Context Completeness',
+    atomicity: 'Logic Atomicity',
+    boundary: 'Boundary Clarity',
+    verifiability: 'Verifiability',
+    tech: 'Technical Constraints',
   }
   
   return (
@@ -90,13 +106,28 @@ export default function EvaluationPage({ params }: { params: { id: string } }) {
       {evaluation.suggestions.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-medium mb-4">Suggestions</h2>
+          
+          <div className="flex flex-wrap gap-2 mb-4">
+            {Object.keys(groupedSuggestions).map(type => (
+              <button
+                key={type}
+                onClick={() => setActiveDimension(type)}
+                className={`px-3 py-1 text-sm rounded-full ${
+                  activeDimension === type 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {dimensionLabels[type] || type} ({groupedSuggestions[type].length})
+              </button>
+            ))}
+          </div>
+          
           <ul className="space-y-2">
-            {evaluation.suggestions.map((suggestion, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 rounded">
-                  {suggestion.type}
-                </span>
-                <span className="text-gray-700">{suggestion.content}</span>
+            {(groupedSuggestions[activeDimension] || []).map((content, index) => (
+              <li key={index} className="flex items-start gap-2 text-gray-700">
+                <span className="mt-1.5 w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+                <span>{content}</span>
               </li>
             ))}
           </ul>

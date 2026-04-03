@@ -1048,6 +1048,94 @@ src/
 
 ---
 
+## 十九、迭代开发工作流
+
+### 19.1 迭代脚本概览
+
+为每个方法论创建的迭代脚本，支持基于PRD差距分析的增量开发：
+
+| Workspace | 迭代脚本 | 方法论特点 |
+|-----------|----------|-----------|
+| workspace-openspec | `iterate-prd.sh` | `/propose` → `/apply` → 验证 |
+| workspace-gstack | `iterate-prd.sh` | Office Hours → CEO/Eng Review → Implement → QA |
+| workspace-planning-with-files | `iterate-prd.sh` | task_plan + findings + progress |
+| workspace-speckit | `iterate-prd.sh` | Constitution → Spec → Plan → Tasks |
+| workspace-superpowers | `iterate-prd.sh` | brainstorming → writing-plans → subagent |
+| workspace-everything-claude-code | `iterate-prd.sh` | `/plan` → `/tdd` → `/verify` |
+
+### 19.2 通用迭代流程
+
+所有迭代脚本遵循统一的 5 步流程：
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    通用迭代工作流                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  [1] Gap Analysis ───→ 差距分析                             │
+│         │                                                   │
+│         ↓                                                   │
+│  [2] Increment Doc ──→ 增量文档 (P0/P1/P2)                   │
+│         │                                                   │
+│         ↓                                                   │
+│  [3] Method-specific ─→ 方法论特定步骤                        │
+│         │ (Propose/Apply 或 Review 或 Plan 等)               │
+│         ↓                                                   │
+│  [4] Implement ───────→ 执行实现                             │
+│         │                                                   │
+│         ↓                                                   │
+│  [5] Verification ───→ 验证报告                             │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 19.3 迭代脚本使用方式
+
+```bash
+# 单个Workspace迭代
+cd workspace/workspace-gstack
+./iterate-prd.sh minimax-m2.5-free
+
+# 批量迭代所有Workspace
+cd workspace
+./run-iteration-all.sh minimax-m2.5-free
+
+# PowerShell版本
+cd workspace\workspace-gstack
+.\iterate-prd.ps1 -Model minimax-m2.5-free
+```
+
+### 19.4 迭代产出目录
+
+每个迭代周期产出以下文件在 `outputs/iteration-2/`：
+
+| 文件 | 内容 |
+|------|------|
+| `gap-analysis.md` | 与PRD的差距分析 |
+| `increment.md` | 增量文档（P0/P1/P2任务） |
+| `design-v2.md` 或 `proposal_v2.md` | 更新的设计文档 |
+| `review-v2.md` 或 `plan_v2.md` | 更新的计划/审查 |
+| `verification-report.md` | 迭代验证报告 |
+
+### 19.5 关键设计：PRD无关性
+
+**核心原则**：迭代脚本不硬编码任何具体PRD内容
+
+脚本中的差距分析采用**通用维度**：
+
+| 维度 | 说明 |
+|------|------|
+| 功能完整性 | PRD描述的功能是否都已实现 |
+| 接口完整性 | API是否完整，CRUD是否齐全 |
+| 前端完整性 | 页面/组件是否都已实现 |
+| 数据模型 | 数据实体是否都已建模 |
+| 配置管理 | 配置项是否都已实现 |
+| 测试覆盖 | 是否有必要的测试 |
+
+这确保脚本可以复用于任何PRD的迭代开发。
+
+---
+
 **EOF**
 
 *本文档为个人实验总结，欢迎讨论和指正。*
