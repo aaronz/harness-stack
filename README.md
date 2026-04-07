@@ -81,6 +81,40 @@ cd workspace/Workspace-openspec
 
 依次运行所有 workspace 实现脚本，自动追踪迭代版本。
 
+### 安装方法论脚本 (install-methodology.sh)
+
+将指定方法论安装到目标项目文件夹：
+
+```bash
+# 基本用法
+./install-methodology.sh <methodology> <target-folder>
+
+# 选项
+# -c, --clean    安装前清空 .opencode/skills、.opencode/commands 和脚本文件
+
+# 示例
+./install-methodology.sh superpowers ~/projects/my-app
+./install-methodology.sh speckit ./my-workspace
+./install-methodology.sh planning-with-files ../other-project
+
+# 清理后安装（清空现有文件后再安装新方法论）
+./install-methodology.sh --clean speckit ./my-workspace
+./install-methodology.sh -c superpowers ~/projects/my-app
+```
+
+**可用方法论：**
+- `openspec` - 使用 `openspec init` 初始化
+- `speckit` - 使用 `specify init` 初始化
+- `superpowers` - 复制 skills 和 commands
+- `everything-claude-code` - 复制 skills 和 commands
+- `planning-with-files` - 复制 skills 和 commands
+- `gstack` - 复制 skills 和 commands
+
+**安装内容：**
+- **openspec/speckit**: 运行 CLI init 命令自动设置
+- **其他方法论**: 复制 skills 到 `.opencode/skills/`，commands 到 `.opencode/commands/`
+- **所有方法论**: 复制 `implement-prd.sh`, `implement-prd.ps1`, `iterate-prd.sh`, `iterate-prd.ps1`, `prompts.md`
+
 ## Workspace 详细
 
 ### OpenSpec
