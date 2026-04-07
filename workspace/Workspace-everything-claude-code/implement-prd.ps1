@@ -1,146 +1,204 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
+
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$PrdFile = Join-Path $ScriptDir "..\..\PRD.md"
+$WorkspaceDir = Split-Path -Parent $ScriptDir
+$PRDFile = Join-Path $WorkspaceDir "PRD.md"
 
-$Model = if ($args.Count -gt 0) { $args[0] } else { "opencode/minimax-m2.5-free" }
+$Model = if ($args[0]) { $args[0] } else { "opencode/minimax-m2.5-free" }
 
-if (-not (Test-Path $PrdFile)) {
-    Write-Host "Error: PRD.md not found at $PrdFile" -ForegroundColor Red
+$lastIteration = Get-ChildItem -Path "$ScriptDir\outputs\iteration-*" -ErrorAction SilentlyContinue | 
+    ForEach-Object { [int]($_.Name -replace 'iteration-', '') } | 
+    Sort-Object | Select-Object -Last 1
+$nextIteration = if ($lastIteration) { $lastIteration + 1 } else { 1 }
+$outputDir = "$ScriptDir\outputs\iteration-$nextIteration"
+New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+
+if (-not (Test-Path $PRDFile)) {
+    Write-Host "Error: PRD.md not found at $PRDFile" -ForegroundColor Red
     exit 1
 }
 
-$PrdContent = Get-Content $PrdFile -Raw
+$PRDContent = Get-Content $PRDFile -Raw
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Everything Claude Code workspace - PRD Implementation" -ForegroundColor Cyan
-Write-Host "方法论: /plan -> /tdd -> /code-review -> /verify -> /security-scan" -ForegroundColor Yellow
-Write-Host "模型: $Model" -ForegroundColor Yellow
+Write-Host "Methodology: Gap Analysis -> Plan -> TDD -> Review -> Verify -> Security Scan" -ForegroundColor Cyan
+Write-Host "Iteration: $nextIteration" -ForegroundColor Cyan
+Write-Host "Model: $Model" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "PRD: $PrdFile"
+
+function Test-OutputFile {
+    param([string]$FilePath)
+    if (-not (Test-Path $FilePath)) {
+        Write-Host "  ❌ File missing: $FilePath" -ForegroundColor Red
+        return $false
+    }
+    $content = Get-Content $FilePath -Raw -ErrorAction SilentlyContinue
+    if (-not $content -or $content.Length -lt 10) {
+        Write-Host "  ❌ File invalid (too small): $FilePath" -ForegroundColor Red
+        return $false
+    }
+    Write-Host "  ✅ File exists: $FilePath ($($content.Length) bytes)" -ForegroundColor Green
+    return $true
+}
+
+function Start-RerunMissing {
+    param([string]$File, [string]$Prompt)
+    $maxRetries = 2
+    $attempt = 0
+
+    while ($attempt -lt $maxRetries) {
+        if (Test-OutputFile $File) { return }
+        $attempt++
+        if ($attempt -lt $maxRetries) {
+            Write-Host "  🔄 Regenerating ($attempt/$maxRetries)..." -ForegroundColor Yellow
+            opencode run -m $Model $Prompt
+        }
+    }
+    if (-not (Test-OutputFile $File)) {
+        Write-Host "  ⚠️  File generation failed: $File" -ForegroundColor Red
+    }
+}
+
+$planFile = "$outputDir\implementation-plan.md"
+$tddDir = "$outputDir\tdd"
+$reviewReport = "$outputDir\code-review-report.md"
+$verifyReport = "$outputDir\verification-report.md"
+$securityReport = "$outputDir\security-report.md"
+$gapAnalysis = "$outputDir\gap-analysis.md"
+New-Item -ItemType Directory -Path $tddDir -Force | Out-Null
+
 Write-Host ""
-
-$OutputDir = Join-Path $ScriptDir "outputs"
-New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
-
-$TddOutputDir = Join-Path $OutputDir "tdd"
-New-Item -ItemType Directory -Path $TddOutputDir -Force | Out-Null
-
-$PlanFile = Join-Path $OutputDir "implementation-plan.md"
-$ReviewReport = Join-Path $OutputDir "code-review-report.md"
-$VerifyReport = Join-Path $OutputDir "verification-report.md"
-$SecurityReport = Join-Path $OutputDir "security-report.md"
-
-Write-Host "[Step 1/5] Plan - 创建实现计划..." -ForegroundColor Green
-$PlanPrompt = @"
-请使用 /plan 命令创建实现计划。
+Write-Host "[1/6] PRD Gap Analysis..." -ForegroundColor Yellow
+$gapPrompt = "Analyze the gap between current implementation and PRD.
 
 ## Requirements Document
-$PrdContent
+$PRDContent
 
-## 输出要求
-请将完整的实施计划保存到: $PlanFile
-确保计划包含:
-- 模块划分及依赖关系
-- 数据模型设计
-- API接口定义
-- 前端页面规划
-"@
-opencode run -m "$Model" $PlanPrompt
+## Output
+Write gap analysis to: $gapAnalysis
+Report must include:
+1. Gap list (table format)
+2. P0/P1/P2 classification
+3. Implementation progress summary"
+opencode run -m $Model $gapPrompt
+Start-RerunMissing $gapAnalysis $gapPrompt
 
 Write-Host ""
-Write-Host "[Step 2/5] TDD - 测试驱动开发..." -ForegroundColor Green
-$TddPrompt = @"
-请使用 /tdd 命令执行测试驱动开发。
-
-## 实施计划参考
-$PlanFile
+Write-Host "[2/6] Plan..." -ForegroundColor Yellow
+$planPrompt = "Use /plan to create implementation plan.
 
 ## Requirements Document
-$PrdContent
+$PRDContent
 
-## 输出要求
-1. 先创建测试文件（RED阶段），测试必须失败
-2. 实现最小代码使测试通过（GREEN阶段）
-3. 重构并确保测试覆盖（REFACTOR阶段）
-4. 覆盖率需达到80%+
+## Gap Analysis
+$(Get-Content $gapAnalysis -Raw)
 
-请将TDD产出保存到: $TddOutputDir
-"@
-opencode run -m "$Model" $TddPrompt
+## Output
+Save plan to: $planFile"
+opencode run -m $Model $planPrompt
+Start-RerunMissing $planFile $planPrompt
 
 Write-Host ""
-Write-Host "[Step 3/5] Review - 代码审查与验证..." -ForegroundColor Green
-$ReviewPrompt = @"
-请使用 /code-review 命令审查代码质量。
+Write-Host "[3/6] TDD..." -ForegroundColor Yellow
+$tddPrompt = "Use /tdd for test-driven development.
 
-## 实施计划
-$PlanFile
-
-## TDD产出
-$TddOutputDir
+## Implementation Plan
+$planFile
 
 ## Requirements Document
-$PrdContent
+$PRDContent
 
-## 审查标准
-结合需求文档检查代码质量、可维护性、可测试性与性能表现
+## Gap Analysis
+$(Get-Content $gapAnalysis -Raw)
 
-## 输出
-请将审查报告保存到: $ReviewReport
-"@
-opencode run -m "$Model" $ReviewPrompt
+## Requirements
+1. RED: Tests must fail
+2. GREEN: Minimal code to pass
+3. REFACTOR: Ensure 80%+ coverage
+Build must pass"
+opencode run -m $Model $tddPrompt
 
 Write-Host ""
-Write-Host "[Step 4/5] Verify - 验证循环..." -ForegroundColor Green
-$VerifyPrompt = @"
-请使用 /verify 命令运行验证循环。
+Write-Host "[4/6] Review..." -ForegroundColor Yellow
+$reviewPrompt = "Use /code-review for code review.
 
-## 审查报告
-$ReviewReport
+## Implementation Plan
+$planFile
+
+## TDD Output
+$tddDir
 
 ## Requirements Document
-$PrdContent
+$PRDContent
 
-## 验证重点
-根据需求文档验证功能正确性、质量标准与性能要求
+## Gap Analysis
+$(Get-Content $gapAnalysis -Raw)
 
-## 输出
-请将验证报告保存到: $VerifyReport
-"@
-opencode run -m "$Model" $VerifyPrompt
+## Output
+Save review to: $reviewReport"
+opencode run -m $Model $reviewPrompt
+Start-RerunMissing $reviewReport $reviewPrompt
 
 Write-Host ""
-Write-Host "[Step 5/5] Security Scan - 安全审计..." -ForegroundColor Green
-$SecurityPrompt = @"
-请使用 /security-scan 命令进行安全审计。
+Write-Host "[5/6] Verify..." -ForegroundColor Yellow
+$verifyPrompt = "Use /verify for verification loop.
 
-## 验证报告
-$VerifyReport
+## Review Report
+$reviewReport
 
 ## Requirements Document
-$PrdContent
+$PRDContent
 
-## 安全检查清单
-- 无硬编码 secrets
-- SQL注入防护
-- XSS防护
-- CSRF保护
-- 认证授权验证
-- 速率限制
+## Gap Analysis
+$(Get-Content $gapAnalysis -Raw)
 
-## 输出
-请将安全审计报告保存到: $SecurityReport
-"@
-opencode run -m "$Model" $SecurityPrompt
+## Output
+Save verification to: $verifyReport
+Report must include:
+1. P0 issue status
+2. PRD completeness
+3. Remaining issues
+4. Next steps"
+opencode run -m $Model $verifyPrompt
+Start-RerunMissing $verifyReport $verifyPrompt
 
 Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Everything Claude Code workspace 实现完成!" -ForegroundColor Green
-Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "[6/6] Security Scan..." -ForegroundColor Yellow
+$securityPrompt = "Use /security-scan for security audit.
+
+## Verification Report
+$verifyReport
+
+## Requirements Document
+$PRDContent
+
+## Gap Analysis
+$(Get-Content $gapAnalysis -Raw)
+
+## Security Checklist
+- No hardcoded secrets
+- SQL injection protection
+- XSS protection
+- CSRF protection
+- Auth & auth
+- Rate limiting
+
+## Output
+Save security report to: $securityReport"
+opencode run -m $Model $securityPrompt
+Start-RerunMissing $securityReport $securityPrompt
+
 Write-Host ""
-Write-Host "产出文件:" -ForegroundColor Cyan
-Write-Host "  - $PlanFile"
-Write-Host "  - $TddOutputDir"
-Write-Host "  - $ReviewReport"
-Write-Host "  - $VerifyReport"
-Write-Host "  - $SecurityReport"
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "Everything Claude Code workspace implementation complete!" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Output files:" -ForegroundColor Cyan
+Write-Host "  - Gap Analysis: $gapAnalysis"
+Write-Host "  - Plan: $planFile"
+Write-Host "  - TDD: $tddDir"
+Write-Host "  - Review: $reviewReport"
+Write-Host "  - Verify: $verifyReport"
+Write-Host "  - Security: $securityReport"
+Write-Host "  - Output Dir: $outputDir"

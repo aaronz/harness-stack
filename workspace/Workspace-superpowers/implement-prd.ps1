@@ -1,122 +1,182 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
+
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$PrdFile = Join-Path $ScriptDir "..\..\PRD.md"
+$WorkspaceDir = Split-Path -Parent $ScriptDir
+$PRDFile = Join-Path $WorkspaceDir "PRD.md"
 
-$Model = if ($args.Count -gt 0) { $args[0] } else { "opencode/minimax-m2.5-free" }
+$Model = if ($args[0]) { $args[0] } else { "opencode/minimax-m2.5-free" }
 
-if (-not (Test-Path $PrdFile)) {
-    Write-Host "Error: PRD.md not found at $PrdFile" -ForegroundColor Red
+$lastIteration = Get-ChildItem -Path "$ScriptDir\outputs\iteration-*" -ErrorAction SilentlyContinue | 
+    ForEach-Object { [int]($_.Name -replace 'iteration-', '') } | 
+    Sort-Object | Select-Object -Last 1
+$nextIteration = if ($lastIteration) { $lastIteration + 1 } else { 1 }
+$outputDir = "$ScriptDir\outputs\iteration-$nextIteration"
+New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+
+if (-not (Test-Path $PRDFile)) {
+    Write-Host "Error: PRD.md not found at $PRDFile" -ForegroundColor Red
     exit 1
 }
 
-$PrdContent = Get-Content $PrdFile -Raw
+$PRDContent = Get-Content $PRDFile -Raw
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Superpowers workspace - PRD Implementation" -ForegroundColor Cyan
-Write-Host "方法论: brainstorming -> writing-plans -> subagent-driven-development -> verification -> finishing" -ForegroundColor Yellow
-Write-Host "模型: $Model" -ForegroundColor Yellow
+Write-Host "Methodology: Gap Analysis → Brainstorming → Plans → SDD → Verification" -ForegroundColor Cyan
+Write-Host "Iteration: $nextIteration" -ForegroundColor Cyan
+Write-Host "Model: $Model" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "PRD: $PrdFile"
+
+function Test-OutputFile {
+    param([string]$FilePath)
+    if (-not (Test-Path $FilePath)) {
+        Write-Host "  ❌ File missing: $FilePath" -ForegroundColor Red
+        return $false
+    }
+    $content = Get-Content $FilePath -Raw -ErrorAction SilentlyContinue
+    if (-not $content -or $content.Length -lt 10) {
+        Write-Host "  ❌ File invalid (too small): $FilePath" -ForegroundColor Red
+        return $false
+    }
+    Write-Host "  ✅ File exists: $FilePath ($($content.Length) bytes)" -ForegroundColor Green
+    return $true
+}
+
+function Start-RerunMissing {
+    param([string]$File, [string]$Prompt)
+    $maxRetries = 2
+    $attempt = 0
+
+    while ($attempt -lt $maxRetries) {
+        if (Test-OutputFile $File) { return }
+        $attempt++
+        if ($attempt -lt $maxRetries) {
+            Write-Host "  🔄 Regenerating ($attempt/$maxRetries)..." -ForegroundColor Yellow
+            opencode run -m $Model $Prompt
+        }
+    }
+    if (-not (Test-OutputFile $File)) {
+        Write-Host "  ⚠️  File generation failed: $File" -ForegroundColor Red
+    }
+}
+
+$gapAnalysis = "$outputDir\gap-analysis.md"
+$designFile = "$outputDir\design.md"
+$planFile = "$outputDir\plan.md"
+$verifyReport = "$outputDir\verification-report.md"
+
 Write-Host ""
-
-$OutputDir = Join-Path $ScriptDir "outputs"
-New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
-
-$DesignFile = Join-Path $OutputDir "design.md"
-$PlanFile = Join-Path $OutputDir "plan.md"
-$VerifyReport = Join-Path $OutputDir "verification-report.md"
-
-Write-Host "[Step 1/5] Brainstorming - 需求理解与设计..." -ForegroundColor Green
-$BrainstormPrompt = @"
-请使用 brainstorming skill 分析 PRD.md 中的需求。
+Write-Host "[1/5] PRD Gap Analysis..." -ForegroundColor Yellow
+$gapPrompt = "Analyze the gap between current implementation and PRD.
 
 ## Requirements Document
-$PrdContent
+$PRDContent
 
-## 流程
-1) 探索项目上下文
-2) 提出视觉辅助(如有UI问题)
-3) 提出澄清问题
-4) 提出2-3个方案及权衡
-5) 展示设计sections获取批准
+## Gap Analysis Dimensions
+1. Feature completeness
+2. API completeness
+3. Frontend completeness
+4. Data model
+5. Configuration
+6. Test coverage
 
-## 输出
-请将设计文档保存到: $DesignFile
-"@
-opencode run -m "$Model" $BrainstormPrompt
+## Output
+Write gap analysis to: $gapAnalysis
+Report must include:
+1. Gap list (table format)
+2. P0/P1/P2 classification
+3. Technical debt list
+4. Implementation progress summary"
+opencode run -m $Model $gapPrompt
+Start-RerunMissing $gapAnalysis $gapPrompt
 
 Write-Host ""
-Write-Host "[Step 2/5] Writing Plans - 创建实现计划..." -ForegroundColor Green
-$PlansPrompt = @"
-请使用 writing-plans skill 基于已批准的设计创建详细实现计划。
-
-## 设计文档
-$DesignFile
+Write-Host "[2/5] Brainstorming..." -ForegroundColor Yellow
+$brainstormPrompt = "Use brainstorming skill to analyze PRD requirements.
 
 ## Requirements Document
-$PrdContent
+$PRDContent
 
-## 计划要求
-- 分解为2-5分钟可完成的原子任务
-- 每个任务有精确文件路径、完整代码、验证步骤
-- 使用 subagent-driven-development skill 进行任务分解
+## Gap Analysis
+$(Get-Content $gapAnalysis -Raw)
 
-## 输出
-请将计划保存到: $PlanFile
-"@
-opencode run -m "$Model" $PlansPrompt
+## Output
+Save design document to: $designFile"
+opencode run -m $Model $brainstormPrompt
+Start-RerunMissing $designFile $brainstormPrompt
 
 Write-Host ""
-Write-Host "[Step 3/5] Subagent-Driven Development - 执行实现..." -ForegroundColor Green
-$SDDPrompt = @"
-请使用 subagent-driven-development skill 执行实现计划。
+Write-Host "[3/5] Writing Plans..." -ForegroundColor Yellow
+$plansPrompt = "Use writing-plans skill to create implementation plan.
 
-## 实现计划
-$PlanFile
+## Design Document
+$(Get-Content $designFile -Raw)
 
 ## Requirements Document
-$PrdContent
+$PRDContent
 
-## 执行要求
-每个任务由fresh subagent执行，两阶段review(规范合规性->代码质量)
-"@
-opencode run -m "$Model" $SDDPrompt
+## Gap Analysis
+$(Get-Content $gapAnalysis -Raw)
+
+## Output
+Save plan to: $planFile"
+opencode run -m $Model $plansPrompt
+Start-RerunMissing $planFile $plansPrompt
 
 Write-Host ""
-Write-Host "[Step 4/5] Verification - 验证..." -ForegroundColor Green
-$VerifyPrompt = @"
-请使用 verification-before-completion skill 进行最终验证。
+Write-Host "[4/5] Subagent-Driven Development..." -ForegroundColor Yellow
+$sddPrompt = "Use subagent-driven-development skill to execute plan.
 
-## 实现产出
-请验证Step 3的实现产出
+## Implementation Plan
+$(Get-Content $planFile -Raw)
 
 ## Requirements Document
-$PrdContent
+$PRDContent
 
-## 验证要点
-- 功能完整性
-- 代码质量
-- 测试覆盖(80%+)
+## Gap Analysis
+$(Get-Content $gapAnalysis -Raw)
 
-## 输出
-请将验证报告保存到: $VerifyReport
-"@
-opencode run -m "$Model" $VerifyPrompt
+## Requirements
+- Build must pass"
+opencode run -m $Model $sddPrompt
 
 Write-Host ""
-Write-Host "[Step 5/5] Finishing - 完成开发..." -ForegroundColor Green
-$FinishPrompt = @"
-请使用 finishing-a-development-branch skill 完成开发。
+Write-Host "[5/5] Verification..." -ForegroundColor Yellow
+$verifyPrompt = "Use verification-before-completion skill for final verification.
 
-## 验证报告
-$VerifyReport
+## Implementation Output
+Verify Step 4 output
 
-## 完成要求
-验证测试通过，展示选项(merge/PR/keep/discard)，清理worktree
-"@
-opencode run -m "$Model" $FinishPrompt
+## Requirements Document
+$PRDContent
+
+## Gap Analysis
+$(Get-Content $gapAnalysis -Raw)
+
+## Verification Points
+- Functionality completeness
+- Code quality
+- Test coverage (80%+)
+- Build must pass
+
+## Output
+Save verification report to: $verifyReport
+Report must include:
+1. P0 issue status
+2. PRD completeness
+3. Remaining issues
+4. Next steps"
+opencode run -m $Model $verifyPrompt
+Start-RerunMissing $verifyReport $verifyPrompt
 
 Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Superpowers workspace 实现完成!" -ForegroundColor Green
-Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "Superpowers workspace implementation complete!" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Output files:" -ForegroundColor Cyan
+Write-Host "  - Gap Analysis: $gapAnalysis"
+Write-Host "  - Design: $designFile"
+Write-Host "  - Plan: $planFile"
+Write-Host "  - Verification: $verifyReport"
+Write-Host "  - Output Dir: $outputDir"
