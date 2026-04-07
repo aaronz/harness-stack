@@ -1,0 +1,15 @@
+{
+  "round": 0,
+  "phase": "complete",
+  "status": "success",
+  "last_error": "",
+  "history": [
+        {
+      "round": 0,
+      "phase": "complete",
+      "status": "success",
+      "error": "",
+      "timestamp": "2026-04-01T17:05:02Z"
+    }
+  ]
+}
