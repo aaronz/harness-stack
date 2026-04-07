@@ -9,6 +9,10 @@ myhaness/
 ├── PRD.md                          # 需求文档
 ├── setup-projects.sh              # 初始化项目脚本
 ├── run-all-workspaces.sh          # 批量运行所有 workspace
+├── install-methodology.sh         # 安装方法论脚本 (Bash)
+├── install-methodology.ps1        # 安装方法论脚本 (PowerShell)
+├── lib/                           # 共享脚本库
+│   └── common.sh                 # 通用函数
 ├── skill-source/                 # 克隆的源码仓库
 │   ├── openspec/
 │   ├── speckit/
@@ -207,4 +211,41 @@ MODEL=opencode/minimax-m2.5-free ./implement-prd.sh
 
 - [opencode CLI](https://github.com/opencode-ai/opencode)
 - Git
-- Bash (Linux/macOS)
+- Bash (Linux/macOS) / PowerShell (Windows)
+
+## 前置要求
+
+根据安装的方法论，可能需要以下工具：
+
+### 通用依赖
+- **Git** - 版本控制
+- **Bash 4+** (Linux/macOS) 或 **PowerShell 5+** (Windows)
+
+### openspec 方法论
+- **Node.js 20.19.0+**
+- **npm**
+
+安装:
+```bash
+npm install -g @fission-ai/openspec
+```
+
+### speckit 方法论
+- **Python 3.11+**
+- **uv** (推荐) 或 **pip** 或 **pipx**
+
+推荐安装:
+```bash
+# 使用 uv (推荐)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
+
+# 或使用 pipx
+pipx install specify-cli
+
+# 或使用 pip
+pip install specify-cli
+```
+
+### superpowers / everything-claude-code / planning-with-files / gstack
+无额外依赖 (只需复制文件)
