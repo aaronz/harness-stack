@@ -24,15 +24,6 @@ echo "方法论: Think → Plan → Build → Review → Test → Ship → Refle
 echo "迭代: ${NEXT_ITERATION}"
 echo "模型: $MODEL"
 echo "========================================"
-echo "PRD: $PRD_FILE"
-echo ""
-
-DESIGN_FILE="$OUTPUT_DIR/design.md"
-CEO_REVIEW="$OUTPUT_DIR/ceo-review.md"
-ENG_REVIEW="$OUTPUT_DIR/eng-review.md"
-REVIEW_REPORT="$OUTPUT_DIR/code-review-report.md"
-SHIP_REPORT="$OUTPUT_DIR/ship-report.md"
-GAP_ANALYSIS="$OUTPUT_DIR/gap-analysis.md"
 
 check_file() {
     if [ ! -f "$1" ]; then
@@ -71,6 +62,13 @@ rerun_if_missing() {
     return 0
 }
 
+DESIGN_FILE="$OUTPUT_DIR/design.md"
+CEO_REVIEW="$OUTPUT_DIR/ceo-review.md"
+ENG_REVIEW="$OUTPUT_DIR/eng-review.md"
+REVIEW_REPORT="$OUTPUT_DIR/code-review-report.md"
+SHIP_REPORT="$OUTPUT_DIR/ship-report.md"
+GAP_ANALYSIS="$OUTPUT_DIR/gap-analysis.md"
+
 echo ""
 echo "[1/8] PRD Gap Analysis - 差距分析..."
 GAP_PROMPT="请分析当前实现与PRD的差距。
@@ -83,7 +81,11 @@ GAP_PROMPT="请分析当前实现与PRD的差距。
 $PRD_CONTENT
 
 ## 输出
-将差距分析报告写入到: $GAP_ANALYSIS"
+将差距分析报告写入到: $GAP_ANALYSIS
+报告必须包含：
+1. 差距列表（表格格式：差距项 | 严重程度 | 模块 | 修复建议）
+2. P0/P1/P2问题分类
+3. 实现进度总结"
 opencode run -m "$MODEL" "$GAP_PROMPT"
 
 rerun_if_missing "$GAP_ANALYSIS" "$GAP_PROMPT"
@@ -118,7 +120,7 @@ $DESIGN_FILE
 $(cat $GAP_ANALYSIS)
 
 ## 审查要求
-重新思考问题，找到10星产品。4种模式: Expansion, Selective Expansion, Hold Scope, Reduction。10章节审查
+重新思考问题，找到10��产品。4种模式: Expansion, Selective Expansion, Hold Scope, Reduction。10章节审查
 
 ## 输出
 请将审查结果保存到: $CEO_REVIEW"
@@ -153,7 +155,10 @@ $ENG_REVIEW
 $PRD_CONTENT
 
 ## 差距分析
-$(cat $GAP_ANALYSIS)"
+$(cat $GAP_ANALYSIS)
+
+## 执行要求
+Build必须通过"
 opencode run -m "$MODEL" "$IMPLEMENT_PROMPT"
 
 echo ""
@@ -186,10 +191,16 @@ $REVIEW_REPORT
 $(cat $GAP_ANALYSIS)
 
 ## 要求
-自动生成回归测试
+- 自动生成回归测试
+- Build必须通过
 
 ## 输出
-请将发布报告保存到: $SHIP_REPORT"
+请将发布报告保存到: $SHIP_REPORT
+报告必须包含：
+1. P0问题状态
+2. PRD完整度评估
+3. 遗留问题清单
+4. 下一步建议"
 opencode run -m "$MODEL" "$SHIP_PROMPT"
 
 rerun_if_missing "$SHIP_REPORT" "$SHIP_PROMPT"
@@ -217,3 +228,4 @@ echo "  - CEO Review: $CEO_REVIEW"
 echo "  - Eng Review: $ENG_REVIEW"
 echo "  - Code Review: $REVIEW_REPORT"
 echo "  - Ship Report: $SHIP_REPORT"
+echo "  - Output Dir: $OUTPUT_DIR"

@@ -34,7 +34,7 @@ for workspace in "${WORKSPACES[@]}"; do
         bash "$script_path" "$MODEL"
         echo ""
     else
-        echo "Warning: $script_path not found, skipping"
+        echo "⚠️ Warning: $script_path not found, skipping"
     fi
 done
 

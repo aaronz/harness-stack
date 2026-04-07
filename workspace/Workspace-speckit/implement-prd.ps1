@@ -1,122 +1,182 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
+
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$PrdFile = Join-Path $ScriptDir "..\..\PRD.md"
+$WorkspaceDir = Split-Path -Parent $ScriptDir
+$PRDFile = Join-Path $WorkspaceDir "PRD.md"
 
-$Model = if ($args.Count -gt 0) { $args[0] } else { "opencode/minimax-m2.5-free" }
+$Model = if ($args[0]) { $args[0] } else { "opencode/minimax-m2.5-free" }
 
-if (-not (Test-Path $PrdFile)) {
-    Write-Host "Error: PRD.md not found at $PrdFile" -ForegroundColor Red
+$lastIteration = Get-ChildItem -Path "$ScriptDir\outputs\iteration-*" -ErrorAction SilentlyContinue | 
+    ForEach-Object { [int]($_.Name -replace 'iteration-', '') } | 
+    Sort-Object | Select-Object -Last 1
+$nextIteration = if ($lastIteration) { $lastIteration + 1 } else { 1 }
+$outputDir = "$ScriptDir\outputs\iteration-$nextIteration"
+New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+
+New-Item -ItemType Directory -Path "$WorkspaceDir\.specify\memory" -Force | Out-Null
+New-Item -ItemType Directory -Path "$WorkspaceDir\.specify\templates" -Force | Out-Null
+New-Item -ItemType Directory -Path "$WorkspaceDir\.specify\specs" -Force | Out-Null
+
+if (-not (Test-Path $PRDFile)) {
+    Write-Host "Error: PRD.md not found at $PRDFile" -ForegroundColor Red
     exit 1
 }
 
-$PrdContent = Get-Content $PrdFile -Raw
+$PRDContent = Get-Content $PRDFile -Raw
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Spec Kit workspace - PRD Implementation" -ForegroundColor Cyan
-Write-Host "方法论: /speckit.constitution -> /speckit.specify -> /speckit.plan -> /speckit.tasks -> /speckit.implement" -ForegroundColor Yellow
-Write-Host "模型: $Model" -ForegroundColor Yellow
+Write-Host "Methodology: Gap Analysis → Constitution → Specify → Plan → Tasks → Implement" -ForegroundColor Cyan
+Write-Host "Iteration: $nextIteration" -ForegroundColor Cyan
+Write-Host "Model: $Model" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "PRD: $PrdFile"
+
+function Test-OutputFile {
+    param([string]$FilePath)
+    if (-not (Test-Path $FilePath)) {
+        Write-Host "  ❌ File missing: $FilePath" -ForegroundColor Red
+        return $false
+    }
+    $content = Get-Content $FilePath -Raw -ErrorAction SilentlyContinue
+    if (-not $content -or $content.Length -lt 10) {
+        Write-Host "  ❌ File invalid (too small): $FilePath" -ForegroundColor Red
+        return $false
+    }
+    Write-Host "  ✅ File exists: $FilePath ($($content.Length) bytes)" -ForegroundColor Green
+    return $true
+}
+
+function Start-RerunMissing {
+    param([string]$File, [string]$Prompt)
+    $maxRetries = 2
+    $attempt = 0
+
+    while ($attempt -lt $maxRetries) {
+        if (Test-OutputFile $File) { return }
+        $attempt++
+        if ($attempt -lt $maxRetries) {
+            Write-Host "  🔄 Regenerating ($attempt/$maxRetries)..." -ForegroundColor Yellow
+            opencode run -m $Model $Prompt
+        }
+    }
+    if (-not (Test-OutputFile $File)) {
+        Write-Host "  ⚠️  File generation failed: $File" -ForegroundColor Red
+    }
+}
+
+$constitutionFile = "$outputDir\constitution.md"
+$specFile = "$outputDir\spec.md"
+$planFile = "$outputDir\plan.md"
+$tasksFile = "$outputDir\tasks.md"
+$gapAnalysis = "$outputDir\gap-analysis.md"
+$constitutionPath = "$WorkspaceDir\.specify\memory\constitution.md"
+
 Write-Host ""
-
-$OutputDir = Join-Path $ScriptDir "outputs"
-New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
-
-$ConstitutionFile = Join-Path $OutputDir "constitution.md"
-$SpecFile = Join-Path $OutputDir "spec.md"
-$PlanFile = Join-Path $OutputDir "plan.md"
-$TasksFile = Join-Path $OutputDir "tasks.md"
-
-Write-Host "[Step 1/5] Constitution - 建立项目原则..." -ForegroundColor Green
-$ConstitutionPrompt = @"
-请使用 /speckit.constitution 命令创建项目开发原则。
+Write-Host "[1/6] PRD Gap Analysis..." -ForegroundColor Yellow
+$gapPrompt = "Analyze the gap between current implementation and PRD.
 
 ## Requirements Document
-$PrdContent
+$PRDContent
 
-## 原则要求
-原则应聚焦于:
-- 代码质量标准
-- 测试覆盖率要求(80%+)
-- 用户体验一致性
-- 性能要求
-
-## 输出
-请将原则保存到: $ConstitutionFile
-"@
-opencode run -m "$Model" $ConstitutionPrompt
+## Output
+Write gap analysis to: $gapAnalysis
+Report must include:
+1. Gap list (table format)
+2. P0/P1/P2 classification
+3. Technical debt list
+4. Implementation progress summary"
+opencode run -m $Model $gapPrompt
+Start-RerunMissing $gapAnalysis $gapPrompt
 
 Write-Host ""
-Write-Host "[Step 2/5] Specify - 定义需求规范..." -ForegroundColor Green
-$SpecifyPrompt = @"
-请使用 /speckit.specify 命令基于 PRD.md 定义需求规范。
-
-## 项目原则
-$ConstitutionFile
+Write-Host "[2/6] Constitution..." -ForegroundColor Yellow
+$constPrompt = "Update project constitution.
 
 ## Requirements Document
-$PrdContent
+$PRDContent
 
-## 输出
-请将规范保存到: $SpecFile
-"@
-opencode run -m "$Model" $SpecifyPrompt
+## Gap Analysis
+$(Get-Content $gapAnalysis -Raw)
+
+## Output
+Save constitution to: $constitutionFile"
+opencode run -m $Model $constPrompt
+Start-RerunMissing $constitutionFile $constPrompt
 
 Write-Host ""
-Write-Host "[Step 3/5] Plan - 创建技术实现计划..." -ForegroundColor Green
-$PlanPrompt = @"
-请使用 /speckit.plan 命令创建技术实现计划。
-
-## 需求规范
-$SpecFile
+Write-Host "[3/6] Specify..." -ForegroundColor Yellow
+$specPrompt = "Create detailed specification.
 
 ## Requirements Document
-$PrdContent
+$PRDContent
 
-## 技术栈
-根据现有项目选择(Next.js + Express + SQLite)
+## Constitution
+$(Get-Content $constitutionPath -Raw)
 
-## 架构
-模块化设计
+## Gap Analysis
+$(Get-Content $gapAnalysis -Raw)
 
-## 输出
-请将计划保存到: $PlanFile
-"@
-opencode run -m "$Model" $PlanPrompt
-
-Write-Host ""
-Write-Host "[Step 4/5] Tasks - 生成任务清单..." -ForegroundColor Green
-$TasksPrompt = @"
-请使用 /speckit.tasks 命令生成可执行的任务清单。
-
-## 技术计划
-$PlanFile
-
-## 任务要求
-从技术计划中分解出具体的开发任务，每个任务应有明确的验收标准
-
-## 输出
-请将任务清单保存到: $TasksFile
-"@
-opencode run -m "$Model" $TasksPrompt
+## Output
+Save specification to: $specFile"
+opencode run -m $Model $specPrompt
+Start-RerunMissing $specFile $specPrompt
 
 Write-Host ""
-Write-Host "[Step 5/5] Implement - 执行实现..." -ForegroundColor Green
-$ImplementPrompt = @"
-请使用 /speckit.implement 命令执行所有任务。
+Write-Host "[4/6] Plan..." -ForegroundColor Yellow
+$planPrompt = "Create implementation plan.
 
-## 任务清单
-$TasksFile
+## Specification
+$(Get-Content $specFile -Raw)
 
-## Requirements Document
-$PrdContent
+## Constitution
+$(Get-Content $constitutionPath -Raw)
 
-## 输出
-确保实现满足PRD.md中的成功标准与验收要求
-"@
-opencode run -m "$Model" $ImplementPrompt
+## Gap Analysis
+$(Get-Content $gapAnalysis -Raw)
+
+## Output
+Save plan to: $planFile"
+opencode run -m $Model $planPrompt
+Start-RerunMissing $planFile $planPrompt
 
 Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Spec Kit workspace 实现完成!" -ForegroundColor Green
-Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "[5/6] Tasks..." -ForegroundColor Yellow
+$tasksPrompt = "Generate actionable task list.
+
+## Implementation Plan
+$(Get-Content $planFile -Raw)
+
+## Output
+Save tasks to: $tasksFile"
+opencode run -m $Model $tasksPrompt
+Start-RerunMissing $tasksFile $tasksPrompt
+
+Write-Host ""
+Write-Host "[6/6] Implement..." -ForegroundColor Yellow
+$implPrompt = "Execute all tasks from task list.
+
+## Task List
+$(Get-Content $tasksFile -Raw)
+
+## Implementation Plan
+$(Get-Content $planFile -Raw)
+
+## Gap Analysis
+$(Get-Content $gapAnalysis -Raw)
+
+## Requirements
+- Build must pass"
+opencode run -m $Model $implPrompt
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "Spec Kit workspace implementation complete!" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Output files:" -ForegroundColor Cyan
+Write-Host "  - Gap Analysis: $gapAnalysis"
+Write-Host "  - Constitution: $constitutionFile"
+Write-Host "  - Specification: $specFile"
+Write-Host "  - Plan: $planFile"
+Write-Host "  - Tasks: $tasksFile"
+Write-Host "  - Output Dir: $outputDir"

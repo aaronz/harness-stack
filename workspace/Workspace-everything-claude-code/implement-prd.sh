@@ -24,15 +24,6 @@ echo "方法论: /plan → /tdd → /code-review → /verify → /security-scan"
 echo "迭代: ${NEXT_ITERATION}"
 echo "模型: $MODEL"
 echo "========================================"
-echo "PRD: $PRD_FILE"
-echo ""
-
-PLAN_FILE="$OUTPUT_DIR/implementation-plan.md"
-TDD_OUTPUT_DIR="$OUTPUT_DIR/tdd"
-REVIEW_REPORT="$OUTPUT_DIR/code-review-report.md"
-VERIFY_REPORT="$OUTPUT_DIR/verification-report.md"
-SECURITY_REPORT="$OUTPUT_DIR/security-report.md"
-GAP_ANALYSIS="$OUTPUT_DIR/gap-analysis.md"
 
 check_file() {
     if [ ! -f "$1" ]; then
@@ -71,6 +62,13 @@ rerun_if_missing() {
     return 0
 }
 
+PLAN_FILE="$OUTPUT_DIR/implementation-plan.md"
+TDD_OUTPUT_DIR="$OUTPUT_DIR/tdd"
+REVIEW_REPORT="$OUTPUT_DIR/code-review-report.md"
+VERIFY_REPORT="$OUTPUT_DIR/verification-report.md"
+SECURITY_REPORT="$OUTPUT_DIR/security-report.md"
+GAP_ANALYSIS="$OUTPUT_DIR/gap-analysis.md"
+
 echo ""
 echo "[1/6] PRD Gap Analysis - 差距分析..."
 GAP_PROMPT="请分析当前实现与PRD的差距。
@@ -83,7 +81,11 @@ GAP_PROMPT="请分析当前实现与PRD的差距。
 $PRD_CONTENT
 
 ## 输出
-将差距分析报告写入到: $GAP_ANALYSIS"
+将差距分析报告写入到: $GAP_ANALYSIS
+报告必须包含：
+1. 差距列表（表格格式：差距项 | 严重程度 | 模块 | 修复建议）
+2. P0/P1/P2问题分类
+3. 实现进度总结"
 opencode run -m "$MODEL" "$GAP_PROMPT"
 
 rerun_if_missing "$GAP_ANALYSIS" "$GAP_PROMPT"
@@ -128,7 +130,8 @@ $(cat $GAP_ANALYSIS)
 3. 重构并确保测试覆盖（REFACTOR阶段）
 4. 覆盖率需达到80%+
 
-请将TDD产出保存到: $TDD_OUTPUT_DIR"
+请将TDD产出保存到: $TDD_OUTPUT_DIR
+Build必须通过"
 opencode run -m "$MODEL" "$TDD_PROMPT"
 
 echo ""
@@ -173,7 +176,12 @@ $(cat $GAP_ANALYSIS)
 根据需求文档验证功能正确性、质量标准与性能要求
 
 ## 输出
-请将验证报告保存到: $VERIFY_REPORT"
+请将验证报告保存到: $VERIFY_REPORT
+报告必须包含：
+1. P0问题状态（表格：问题 | 状态 | 备注）
+2. PRD完整度评估
+3. 遗留问题清单
+4. 下一步建议"
 opencode run -m "$MODEL" "$VERIFY_PROMPT"
 
 rerun_if_missing "$VERIFY_REPORT" "$VERIFY_PROMPT"
@@ -217,3 +225,4 @@ echo "  - $TDD_OUTPUT_DIR/"
 echo "  - $REVIEW_REPORT"
 echo "  - $VERIFY_REPORT"
 echo "  - $SECURITY_REPORT"
+echo "  - Output Dir: $OUTPUT_DIR"
