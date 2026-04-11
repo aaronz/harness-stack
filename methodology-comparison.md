@@ -1096,10 +1096,6 @@ src/
 cd workspace/workspace-gstack
 ./iterate-prd.sh minimax-m2.5-free
 
-# 批量迭代所有Workspace
-cd workspace
-./run-iteration-all.sh minimax-m2.5-free
-
 # PowerShell版本
 cd workspace\workspace-gstack
 .\iterate-prd.ps1 -Model minimax-m2.5-free
