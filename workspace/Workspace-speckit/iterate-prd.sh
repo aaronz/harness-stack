@@ -8,14 +8,24 @@ RESUME_ITERATION=""
 MODEL="$DEFAULT_MODEL"
 PRD_INPUT=""
 VERBOSE="false"
+USE_SUBAGENTS="false"
 WORKSPACE_DIR="$SCRIPT_DIR"
 OUTPUTS_DIR=""
+
+CONSTRAINTS_NO_SUBAGENT='## 重要约束
+- 禁止使用 subagent 或 task 工具 spawning 其他 agent
+- 禁止将工作委托给其他 agent
+- 必须直接在当前 session 中完成所有分析/实现工作
+- 只使用 Read、Write、Edit、Grep、LSP、Bash 等直接工具
+
+'
 
 parse_args() {
     RESUME_ITERATION=""
     MODEL="$DEFAULT_MODEL"
     PRD_INPUT=""
     VERBOSE="false"
+    USE_SUBAGENTS="false"
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -35,6 +45,10 @@ parse_args() {
                 VERBOSE="true"
                 shift
                 ;;
+            --use-subagents)
+                USE_SUBAGENTS="true"
+                shift
+                ;;
             --help|-h)
                 echo "Usage: $0 [options]"
                 echo "Options:"
@@ -42,6 +56,7 @@ parse_args() {
                 echo "  --model, -m <M>     Set model (default: $DEFAULT_MODEL)"
                 echo "  --prd, -p <P>       PRD file or directory"
                 echo "  --verbose, -v       Enable verbose output"
+                echo "  --use-subagents     Allow subagent spawning (default: disabled)"
                 exit 0
                 ;;
             *)
@@ -99,47 +114,6 @@ resolve_prd_path() {
     fi
 }
 
-GAP_ANALYSIS_PROMPT='分析当前实现与PRD的差距：
-
-## 任务
-1. 读取当前实现目录结构
-2. 读取PRD.md识别核心功能需求
-3. 对比实现与PRD的差距
-
-## 分析维度
-1. 功能完整性：PRD中描述的功能是否都已实现？
-2. 接口完整性：API是否完整？CRUD是否齐全？
-3. 前端完整性：PRD中描述的页面/组件是否都已实现？
-4. 数据模型：PRD中的数据实体是否都已建模？
-5. 配置管理：PRD中要求的配置项是否都已实现？
-6. 测试覆盖：是否有必要的测试？
-
-## 通用差距识别
-- 缺失的功能模块
-- 不完整的实现
-- 未连接的模块
-- 硬编码/魔法数字
-- 错误处理缺失
-- 类型定义缺失
-
-## 输出格式
-# 差距分析报告
-
-## 差距列表
-| 差距项 | 严重程度 | 模块 | 修复建议 |
-
-## P0问题（必须修复）
-...
-
-## P1问题（应该修复）
-...
-
-## P2问题（可以修复）
-...
-
-## 技术债务
-...'
-
 parse_args "$@"
 export WORKSPACE_DIR
 SESSION_LOG_DIR="$WORKSPACE_DIR/sessions"
@@ -168,6 +142,7 @@ log "工作目录: $WORKSPACE_DIR"
 log "迭代目录: $OUTPUTS_DIR"
 log "模型: $MODEL"
 log "PRD: $PRD_FILE"
+log "子代理: $([ "$USE_SUBAGENTS" = "true" ] && echo "启用" || echo "禁用")"
 log "日志文件: $LOG_FILE"
 
 PRD_CONTENT=$(cat "$PRD_FILE")
@@ -199,6 +174,15 @@ check_file_quiet() {
         return 1
     fi
     return 0
+}
+
+build_prompt() {
+    local prompt_body="$1"
+    if [ "$USE_SUBAGENTS" = "false" ]; then
+        echo "${CONSTRAINTS_NO_SUBAGENT}${prompt_body}"
+    else
+        echo "${prompt_body}"
+    fi
 }
 
 rerun_if_missing() {
@@ -242,17 +226,13 @@ save_checkpoint "$NEXT_ITERATION" "phase1"
 if check_file_quiet "$GAP_ANALYSIS"; then
     log "  ⏭️  跳过Gap Analysis（已存在）"
 else
-    GAP_PROMPT="请分析当前实现与PRD的差距。
-
-## 重要约束
-- 禁止使用 subagent 或 task 工具 spawning 其他 agent
-- 必须直接在当前 session 中完成所有分析工作
+    GAP_PROMPT=$(build_prompt "请分析当前实现与PRD的差距。
 
 ## Requirements Document
 $PRD_CONTENT
 
 ## 输出
-将差距分析报告写入到: $GAP_ANALYSIS"
+将差距分析报告写入到: $GAP_ANALYSIS")
 
     cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_PROMPT"
     rerun_if_missing "$GAP_ANALYSIS" "$GAP_PROMPT"
@@ -265,7 +245,7 @@ save_checkpoint "$NEXT_ITERATION" "phase2"
 if check_file_quiet "$CONSTITUTION_FILE"; then
     log "  ⏭️  跳过Constitution（已存在）"
 else
-    CONSTITUTION_PROMPT="You are creating a project constitution.
+    CONSTITUTION_PROMPT=$(build_prompt "You are creating a project constitution.
 
 ## Task
 Update the project constitution at \`$WORKSPACE_DIR/.specify/memory/constitution.md\`. This file is a TEMPLATE containing placeholder tokens in square brackets (e.g. \`[PROJECT_NAME]\`, \`[PRINCIPLE_1_NAME]\`). Your job is to (a) collect/derive concrete values, (b) fill the template precisely, and (c) propagate any amendments across dependent artifacts.
@@ -282,7 +262,7 @@ $PRD_CONTENT
 6. Write the completed constitution to \`$CONSTITUTION_FILE\`
 
 ## Output
-Save the final constitution to: $CONSTITUTION_FILE"
+Save the final constitution to: $CONSTITUTION_FILE")
 
     cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$CONSTITUTION_PROMPT"
     rerun_if_missing "$CONSTITUTION_FILE" "$CONSTITUTION_PROMPT"
@@ -295,7 +275,7 @@ save_checkpoint "$NEXT_ITERATION" "phase3"
 if check_file_quiet "$SPEC_FILE"; then
     log "  ⏭️  跳过Specify（已存在）"
 else
-    SPECIFY_PROMPT="You are creating a feature specification.
+    SPECIFY_PROMPT=$(build_prompt "You are creating a feature specification.
 
 ## Task
 Create a detailed specification based on the requirements document, focusing on WHAT users need and WHY (not HOW to implement).
@@ -315,7 +295,7 @@ $(cat "$WORKSPACE_DIR/.specify/memory/constitution.md" 2>/dev/null || echo "Not 
 6. Identify Key Entities involved
 
 ## Output
-Save the specification to: $SPEC_FILE"
+Save the specification to: $SPEC_FILE")
 
     cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$SPECIFY_PROMPT"
     rerun_if_missing "$SPEC_FILE" "$SPECIFY_PROMPT"
@@ -328,7 +308,7 @@ save_checkpoint "$NEXT_ITERATION" "phase4"
 if check_file_quiet "$PLAN_FILE"; then
     log "  ⏭️  跳过Plan（已存在）"
 else
-    PLAN_PROMPT="You are creating a technical implementation plan.
+    PLAN_PROMPT=$(build_prompt "You are creating a technical implementation plan.
 
 ## Task
 Create an implementation plan following the plan template structure.
@@ -348,7 +328,7 @@ $(cat "$WORKSPACE_DIR/.specify/memory/constitution.md" 2>/dev/null || echo "Cons
 6. File structure and module organization
 
 ## Output
-Save the plan to: $PLAN_FILE"
+Save the plan to: $PLAN_FILE")
 
     cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PLAN_PROMPT"
     rerun_if_missing "$PLAN_FILE" "$PLAN_PROMPT"
@@ -361,7 +341,7 @@ save_checkpoint "$NEXT_ITERATION" "phase5"
 if check_file_quiet "$TASKS_FILE"; then
     log "  ⏭️  跳过Tasks（已存在）"
 else
-    TASKS_PROMPT="You are generating an actionable task list.
+    TASKS_PROMPT=$(build_prompt "You are generating an actionable task list.
 
 ## Task
 Create a detailed, dependency-ordered task list from the implementation plan.
@@ -383,7 +363,7 @@ $(cat "$PLAN_FILE" 2>/dev/null || echo "Plan not yet created")
 - Final Phase: Polish & Cross-Cutting Concerns
 
 ## Output
-Save the task list to: $TASKS_FILE"
+Save the task list to: $TASKS_FILE")
 
     cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$TASKS_PROMPT"
     rerun_if_missing "$TASKS_FILE" "$TASKS_PROMPT"
@@ -393,7 +373,7 @@ log ""
 log "[6/6] Implement - 执行实现..."
 save_checkpoint "$NEXT_ITERATION" "phase6"
 
-IMPLEMENT_PROMPT="You are implementing a project based on the task list.
+IMPLEMENT_PROMPT=$(build_prompt "You are implementing a project based on the task list.
 
 ## Task
 Execute all tasks from the task list to build the complete application.
@@ -415,7 +395,7 @@ $(cat "$GAP_ANALYSIS")
 5. Halt execution if any non-parallel task fails
 
 ## Output
-Implement all code files according to the task list. Create the complete working application."
+Implement all code files according to the task list. Create the complete working application.")
 
 cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$IMPLEMENT_PROMPT"
 

@@ -8,14 +8,24 @@ RESUME_ITERATION=""
 MODEL="$DEFAULT_MODEL"
 PRD_INPUT=""
 VERBOSE="false"
+USE_SUBAGENTS="false"
 WORKSPACE_DIR="$SCRIPT_DIR"
 OUTPUTS_DIR=""
+
+CONSTRAINTS_NO_SUBAGENT='## 重要约束
+- 禁止使用 subagent 或 task 工具 spawning 其他 agent
+- 禁止将工作委托给其他 agent
+- 必须直接在当前 session 中完成所有分析/实现工作
+- 只使用 Read、Write、Edit、Grep、LSP、Bash 等直接工具
+
+'
 
 parse_args() {
     RESUME_ITERATION=""
     MODEL="$DEFAULT_MODEL"
     PRD_INPUT=""
     VERBOSE="false"
+    USE_SUBAGENTS="false"
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -35,6 +45,10 @@ parse_args() {
                 VERBOSE="true"
                 shift
                 ;;
+            --use-subagents)
+                USE_SUBAGENTS="true"
+                shift
+                ;;
             --help|-h)
                 echo "Usage: $0 [options]"
                 echo "Options:"
@@ -42,6 +56,7 @@ parse_args() {
                 echo "  --model, -m <M>     Set model (default: $DEFAULT_MODEL)"
                 echo "  --prd, -p <P>       PRD file or directory"
                 echo "  --verbose, -v       Enable verbose output"
+                echo "  --use-subagents     Allow subagent spawning (default: disabled)"
                 exit 0
                 ;;
             *)
@@ -109,46 +124,14 @@ check_file_quiet() {
     return 0
 }
 
-GAP_ANALYSIS_PROMPT='分析当前实现与PRD的差距：
-
-## 任务
-1. 读取当前实现目录结构
-2. 读取PRD.md识别核心功能需求
-3. 对比实现与PRD的差距
-
-## 分析维度
-1. 功能完整性：PRD中描述的功能是否都已实现？
-2. 接口完整性：API是否完整？CRUD是否齐全？
-3. 前端完整性：PRD中描述的页面/组件是否都已实现？
-4. 数据模型：PRD中的数据实体是否都已建模？
-5. 配置管理：PRD中要求的配置项是否都已实现？
-6. 测试覆盖：是否有必要的测试？
-
-## 通用差距识别
-- 缺失的功能模块
-- 不完整的实现
-- 未连接的模块
-- 硬编码/魔法数字
-- 错误处理缺失
-- 类型定义缺失
-
-## 输出格式
-# 差距分析报告
-
-## 差距列表
-| 差距项 | 严重程度 | 模块 | 修复建议 |
-
-## P0问题（必须修复）
-...
-
-## P1问题（应该修复）
-...
-
-## P2问题（可以修复）
-...
-
-## 技术债务
-...'
+build_prompt() {
+    local prompt_body="$1"
+    if [ "$USE_SUBAGENTS" = "false" ]; then
+        echo "${CONSTRAINTS_NO_SUBAGENT}${prompt_body}"
+    else
+        echo "${prompt_body}"
+    fi
+}
 
 parse_args "$@"
 export WORKSPACE_DIR
@@ -180,6 +163,7 @@ log_section "Superpowers 迭代开发 v3.0"
 log "工作目录: $WORKSPACE_DIR"
 log "迭代目录: $OUTPUTS_DIR"
 log "模型: $MODEL"
+log "子代理: $([ "$USE_SUBAGENTS" = "true" ] && echo "启用" || echo "禁用")"
 log "PRD: $PRD_PATH"
 log "日志文件: $LOG_FILE"
 
@@ -190,7 +174,24 @@ save_checkpoint "$NEXT_ITERATION" "phase1"
 if check_file_quiet "$OUTPUTS_DIR/gap-analysis.md"; then
     log "  ⏭️  跳过Gap Analysis（已存在）"
 else
-    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
+    PROMPT=$(build_prompt "分析当前实现与PRD的差距。
+
+## 任务
+1. 读取当前实现目录结构
+2. 读取PRD.md识别核心功能需求
+3. 对比实现与PRD的差距
+
+## 分析维度
+1. 功能完整性：PRD中描述的功能是否都已实现？
+2. 接口完整性：API是否完整？CRUD是否齐全？
+3. 前端完整性：PRD中描述的页面/组件是否都已实现？
+4. 数据模型：PRD中的数据实体是否都已建模？
+5. 配置管理：PRD中要求的配置项是否都已实现？
+6. 测试覆盖：是否有必要的测试？
+
+## 输出
+将差距分析报告写入到: $OUTPUTS_DIR/gap-analysis.md")
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
     log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
 fi
 
@@ -201,7 +202,7 @@ save_checkpoint "$NEXT_ITERATION" "phase2"
 if check_file_quiet "$OUTPUTS_DIR/design_v${NEXT_ITERATION}.md"; then
     log "  ⏭️  跳过Brainstorming（已存在）"
 else
-    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "请使用 brainstorming skill 分析差距并深化设计。
+    PROMPT=$(build_prompt "请使用 brainstorming skill 分析差距并深化设计。
 
 ## PRD
 $(cat $PRD_PATH)
@@ -215,7 +216,8 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 3. 展示设计sections获取批准
 
 ## 输出
-设计文档保存到: $OUTPUTS_DIR/design_v${NEXT_ITERATION}.md"
+设计文档保存到: $OUTPUTS_DIR/design_v${NEXT_ITERATION}.md")
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT" > "$OUTPUTS_DIR/design_v${NEXT_ITERATION}.md"
     log "Brainstorming完成: $OUTPUTS_DIR/design_v${NEXT_ITERATION}.md"
 fi
 
@@ -226,10 +228,10 @@ save_checkpoint "$NEXT_ITERATION" "phase3"
 if check_file_quiet "$OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md"; then
     log "  ⏭️  跳过Writing Plans（已存在）"
 else
-    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "请使用 writing-plans skill 创建详细实现计划。
+    PROMPT=$(build_prompt "请使用 writing-plans skill 创建详细实现计划。
 
 ## 设计文档
-$OUTPUTS_DIR/design_v${NEXT_ITERATION}.md
+$(cat "$OUTPUTS_DIR/design_v${NEXT_ITERATION}.md")
 
 ## PRD
 $(cat $PRD_PATH)
@@ -244,7 +246,8 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 4. 优先P0任务
 
 ## 输出
-计划保存到: $OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md"
+计划保存到: $OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md")
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT" > "$OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md"
     log "Writing Plans完成: $OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md"
 fi
 
@@ -252,11 +255,10 @@ log ""
 log "[4/5] Subagent-Driven Development..."
 save_checkpoint "$NEXT_ITERATION" "phase4"
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "请使用 subagent-driven-development skill 执行实现。
+PROMPT=$(build_prompt "请使用 subagent-driven-development skill 执行实现。
 
 ## 实现计划
-$OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md
+$(cat "$OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md")
 
 ## PRD
 $(cat $PRD_PATH)
@@ -271,7 +273,9 @@ $IMPL_DIR/
 4. 确保Build通过
 
 ## 验证
-- npm run build 必须通过"
+- npm run build 必须通过")
+cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT"
+log "Subagent-Driven Development完成"
 
 log ""
 log "[5/5] Verification - 验证..."
@@ -280,7 +284,7 @@ save_checkpoint "$NEXT_ITERATION" "phase5"
 if check_file_quiet "$OUTPUTS_DIR/verification-report.md"; then
     log "  ⏭️  跳过Verification（已存在）"
 else
-    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "请使用 verification-before-completion skill 进行最终验证。
+    PROMPT=$(build_prompt "请使用 verification-before-completion skill 进行最终验证。
 
 ## 实现产出
 检查$IMPL_DIR/目录
@@ -297,7 +301,8 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 3. 功能是否完整？
 
 ## 输出
-验证报告保存到: $OUTPUTS_DIR/verification-report.md"
+验证报告保存到: $OUTPUTS_DIR/verification-report.md")
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT" > "$OUTPUTS_DIR/verification-report.md"
     log "Verification完成: $OUTPUTS_DIR/verification-report.md"
 fi
 

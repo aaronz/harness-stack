@@ -8,14 +8,24 @@ RESUME_ITERATION=""
 MODEL="$DEFAULT_MODEL"
 PRD_INPUT=""
 VERBOSE="false"
+USE_SUBAGENTS="false"
 WORKSPACE_DIR="$SCRIPT_DIR"
 OUTPUTS_DIR=""
+
+CONSTRAINTS_NO_SUBAGENT='## 重要约束
+- 禁止使用 subagent 或 task 工具 spawning 其他 agent
+- 禁止将工作委托给其他 agent
+- 必须直接在当前 session 中完成所有分析/实现工作
+- 只使用 Read、Write、Edit、Grep、LSP、Bash 等直接工具
+
+'
 
 parse_args() {
     RESUME_ITERATION=""
     MODEL="$DEFAULT_MODEL"
     PRD_INPUT=""
     VERBOSE="false"
+    USE_SUBAGENTS="false"
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -35,6 +45,10 @@ parse_args() {
                 VERBOSE="true"
                 shift
                 ;;
+            --use-subagents)
+                USE_SUBAGENTS="true"
+                shift
+                ;;
             --help|-h)
                 echo "Usage: $0 [options]"
                 echo "Options:"
@@ -42,6 +56,7 @@ parse_args() {
                 echo "  --model, -m <M>     Set model (default: $DEFAULT_MODEL)"
                 echo "  --prd, -p <P>       PRD file or directory"
                 echo "  --verbose, -v       Enable verbose output"
+                echo "  --use-subagents     Allow subagent spawning (default: disabled)"
                 exit 0
                 ;;
             *)
@@ -109,46 +124,14 @@ check_file_quiet() {
     return 0
 }
 
-GAP_ANALYSIS_PROMPT='分析当前实现与PRD的差距：
-
-## 任务
-1. 读取当前实现目录结构
-2. 读取PRD.md识别核心功能需求
-3. 对比实现与PRD的差距
-
-## 分析维度
-1. 功能完整性：PRD中描述的功能是否都已实现？
-2. 接口完整性：API是否完整？CRUD是否齐全？
-3. 前端完整性：PRD中描述的页面/组件是否都已实现？
-4. 数据模型：PRD中的数据实体是否都已建模？
-5. 配置管理：PRD中要求的配置项是否都已实现？
-6. 测试覆盖：是否有必要的测试？
-
-## 通用差距识别
-- 缺失的功能模块
-- 不完整的实现
-- 未连接的模块
-- 硬编码/魔法数字
-- 错误处理缺失
-- 类型定义缺失
-
-## 输出格式
-# 差距分析报告
-
-## 差距列表
-| 差距项 | 严重程度 | 模块 | 修复建议 |
-
-## P0问题（必须修复）
-...
-
-## P1问题（应该修复）
-...
-
-## P2问题（可以修复）
-...
-
-## 技术债务
-...'
+build_prompt() {
+    local prompt_body="$1"
+    if [ "$USE_SUBAGENTS" = "false" ]; then
+        echo "${CONSTRAINTS_NO_SUBAGENT}${prompt_body}"
+    else
+        echo "${prompt_body}"
+    fi
+}
 
 parse_args "$@"
 
@@ -183,6 +166,7 @@ log_section "GStack 迭代开发 v3.0"
 log "工作目录: $WORKSPACE_DIR"
 log "迭代目录: $OUTPUTS_DIR"
 log "模型: $MODEL"
+log "子代理: $([ "$USE_SUBAGENTS" = "true" ] && echo "启用" || echo "禁用")"
 log "PRD: $PRD_PATH"
 log "日志文件: $LOG_FILE"
 
@@ -193,7 +177,24 @@ save_checkpoint "$NEXT_ITERATION" "phase1"
 if check_file_quiet "$OUTPUTS_DIR/gap-analysis.md"; then
     log "  ⏭️  跳过Gap Analysis（已存在）"
 else
-    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
+    PROMPT=$(build_prompt "分析当前实现与PRD的差距。
+
+## 任务
+1. 读取当前实现目录结构
+2. 读取PRD.md识别核心功能需求
+3. 对比实现与PRD的差距
+
+## 分析维度
+1. 功能完整性：PRD中描述的功能是否都已实现？
+2. 接口完整性：API是否完整？CRUD是否齐全？
+3. 前端完整性：PRD中描述的页面/组件是否都已实现？
+4. 数据模型：PRD中的数据实体是否都已建模？
+5. 配置管理：PRD中要求的配置项是否都已实现？
+6. 测试覆盖：是否有必要的测试？
+
+## 输出
+将差距分析报告写入到: $OUTPUTS_DIR/gap-analysis.md")
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
     log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
 fi
 
@@ -225,7 +226,8 @@ else
 INCEOF
 )
 
-    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$(echo "$INCREMENT"; cat "$OUTPUTS_DIR/gap-analysis.md")" > "$OUTPUTS_DIR/increment.md"
+    FULL_PROMPT=$(build_prompt "$(echo "$INCREMENT"; echo ""; echo "## 差距分析结果"; cat "$OUTPUTS_DIR/gap-analysis.md")")
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$FULL_PROMPT" > "$OUTPUTS_DIR/increment.md"
     log "增量文档完成: $OUTPUTS_DIR/increment.md"
 fi
 
@@ -236,7 +238,7 @@ save_checkpoint "$NEXT_ITERATION" "phase3"
 if check_file_quiet "$OUTPUTS_DIR/design-v${NEXT_ITERATION}.md"; then
     log "  ⏭️  跳过Office Hours（已存在）"
 else
-    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /office-hours 命令进行需求理解深化。
+    PROMPT=$(build_prompt "使用 /office-hours 命令进行需求理解深化。
 
 ## PRD
 $(cat $PRD_PATH)
@@ -248,7 +250,8 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 重点关注差距分析中识别的P0问题，重新审视产品设计。
 
 ## 输出
-更新设计文档到: $OUTPUTS_DIR/design-v${NEXT_ITERATION}.md"
+更新设计文档到: $OUTPUTS_DIR/design-v${NEXT_ITERATION}.md")
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT" > "$OUTPUTS_DIR/design-v${NEXT_ITERATION}.md"
     log "Office Hours完成: $OUTPUTS_DIR/design-v${NEXT_ITERATION}.md"
 fi
 
@@ -259,7 +262,7 @@ save_checkpoint "$NEXT_ITERATION" "phase4"
 if check_file_quiet "$OUTPUTS_DIR/review-v${NEXT_ITERATION}.md"; then
     log "  ⏭️  跳过Review（已存在）"
 else
-    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /plan-ceo-review 和 /plan-eng-review 命令进行审查。
+    PROMPT=$(build_prompt "使用 /plan-ceo-review 和 /plan-eng-review 命令进行审查。
 
 ## 增量文档
 $(cat "$OUTPUTS_DIR/increment.md")
@@ -273,7 +276,8 @@ $WORKSPACE_DIR/outputs/design.md
 3. 多Provider支持方案
 
 ## 输出
-审查结果保存到: $OUTPUTS_DIR/review-v${NEXT_ITERATION}.md"
+审查结果保存到: $OUTPUTS_DIR/review-v${NEXT_ITERATION}.md")
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT" > "$OUTPUTS_DIR/review-v${NEXT_ITERATION}.md"
     log "Review完成: $OUTPUTS_DIR/review-v${NEXT_ITERATION}.md"
 fi
 
@@ -281,14 +285,13 @@ log ""
 log "[5/6] 执行实现..."
 save_checkpoint "$NEXT_ITERATION" "phase5"
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 gstack 的实现模式执行迭代开发。
+PROMPT=$(build_prompt "使用 gstack 的实现模式执行迭代开发。
 
 ## 增量文档
 $(cat "$OUTPUTS_DIR/increment.md")
 
 ## 审查结果
-$OUTPUTS_DIR/review-v${NEXT_ITERATION}.md
+$(cat "$OUTPUTS_DIR/review-v${NEXT_ITERATION}.md")
 
 ## 目录
 $IMPL_DIR
@@ -300,7 +303,9 @@ $IMPL_DIR
 4. 添加必要的错误处理
 
 ## 验证
-- npm run build 必须通过"
+- npm run build 必须通过")
+cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT"
+log "执行实现完成"
 
 log ""
 log "[6/6] 验证与QA..."
@@ -309,10 +314,10 @@ save_checkpoint "$NEXT_ITERATION" "phase6"
 if check_file_quiet "$OUTPUTS_DIR/verification-report.md"; then
     log "  ⏭️  跳过Verification（已存在）"
 else
-    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /review 和 /qa 命令进行验证。
+    PROMPT=$(build_prompt "使用 /review 和 /qa 命令进行验证。
 
 ## 代码审查
-$OUTPUTS_DIR/review-v${NEXT_ITERATION}.md
+$(cat "$OUTPUTS_DIR/review-v${NEXT_ITERATION}.md")
 
 ## 要求
 1. 找到所有P0问题的修复
@@ -320,7 +325,8 @@ $OUTPUTS_DIR/review-v${NEXT_ITERATION}.md
 3. 生成验证报告
 
 ## 输出
-验证报告保存到: $OUTPUTS_DIR/verification-report.md"
+验证报告保存到: $OUTPUTS_DIR/verification-report.md")
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT" > "$OUTPUTS_DIR/verification-report.md"
     log "Verification完成: $OUTPUTS_DIR/verification-report.md"
 fi
 
