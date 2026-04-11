@@ -9,6 +9,7 @@ MODEL="$DEFAULT_MODEL"
 PRD_INPUT=""
 VERBOSE="false"
 USE_SUBAGENTS="false"
+MAX_IMPLEMENTATION_ROUNDS=3
 WORKSPACE_DIR="$SCRIPT_DIR"
 OUTPUTS_DIR=""
 
@@ -49,6 +50,10 @@ parse_args() {
                 USE_SUBAGENTS="true"
                 shift
                 ;;
+            --rounds|-r)
+                MAX_IMPLEMENTATION_ROUNDS="$2"
+                shift 2
+                ;;
             --help|-h)
                 echo "Usage: $0 [options]"
                 echo "Options:"
@@ -57,6 +62,7 @@ parse_args() {
                 echo "  --prd, -p <P>       PRD file or directory"
                 echo "  --verbose, -v       Enable verbose output"
                 echo "  --use-subagents     Allow subagent spawning (default: disabled)"
+                echo "  --rounds, -r <N>    Max implementation rounds (default: 3)"
                 exit 0
                 ;;
             *)
@@ -251,11 +257,15 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
     log "Writing Plans完成: $OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md"
 fi
 
-log ""
-log "[4/5] Subagent-Driven Development..."
-save_checkpoint "$NEXT_ITERATION" "phase4"
+impl_round=0
+READY_FOR_VERIFY="false"
+while [ "$READY_FOR_VERIFY" != "true" ] && [ $impl_round -lt $MAX_IMPLEMENTATION_ROUNDS ]; do
+    impl_round=$((impl_round + 1))
+    log ""
+    log "[4/5] Subagent-Driven Development... (第${impl_round}轮)"
+    save_checkpoint "$NEXT_ITERATION" "phase4-impl${impl_round}"
 
-PROMPT=$(build_prompt "请使用 subagent-driven-development skill 执行实现。
+    PROMPT=$(build_prompt "请使用 subagent-driven-development skill 执行实现。
 
 ## 实现计划
 $(cat "$OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md")
@@ -274,15 +284,15 @@ $IMPL_DIR/
 
 ## 验证
 - npm run build 必须通过")
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT"
-log "Subagent-Driven Development完成"
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT"
+    log "Subagent-Driven Development完成"
 
-log ""
-log "[4/5b] 更新任务状态..."
-save_checkpoint "$NEXT_ITERATION" "phase4b"
+    log ""
+    log "[4/5b] 更新任务状态..."
+    save_checkpoint "$NEXT_ITERATION" "phase4b"
 
-TASK_STATUS_FILE="$OUTPUTS_DIR/task_status.txt"
-PROMPT=$(build_prompt "分析任务完成情况并输出状态报告。
+    TASK_STATUS_FILE="$OUTPUTS_DIR/task_status.txt"
+    PROMPT=$(build_prompt "分析任务完成情况并输出状态报告。
 
 ## 实现计划
 $(cat "$OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md")
@@ -304,21 +314,28 @@ TOTAL_PROGRESS=<已完成数>/<总数>
 
 如果所有P0任务已完成，输出: READY_FOR_VERIFICATION=true
 如果还有P0任务未完成，输出: READY_FOR_VERIFICATION=false")
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT" 2>/dev/null || true
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT" 2>/dev/null || true
 
-if [ -f "$TASK_STATUS_FILE" ]; then
-    log "任务状态已更新:"
-    cat "$TASK_STATUS_FILE" | while read line; do log "  $line"; done
-    
-    READY_FOR_VERIFY=$(grep "READY_FOR_VERIFICATION=" "$TASK_STATUS_FILE" 2>/dev/null | cut -d= -f2)
-    if [ "$READY_FOR_VERIFY" = "true" ]; then
-        log "  ✅ 所有P0任务完成，可以进入验证阶段"
+    if [ -f "$TASK_STATUS_FILE" ]; then
+        log "任务状态已更新:"
+        cat "$TASK_STATUS_FILE" | while read line; do log "  $line"; done
+        
+        READY_FOR_VERIFY=$(grep "READY_FOR_VERIFICATION=" "$TASK_STATUS_FILE" 2>/dev/null | cut -d= -f2)
+        if [ "$READY_FOR_VERIFY" = "true" ]; then
+            log "  ✅ 所有P0任务完成，可以进入验证阶段"
+            break
+        fi
     else
-        log "  ⚠️  仍有P0任务未完成，建议继续实现"
+        log "  ⚠️  任务状态文件未生成"
     fi
-else
-    log "  ⚠️  任务状态文件未生成"
-fi
+
+    if [ $impl_round -ge $MAX_IMPLEMENTATION_ROUNDS ]; then
+        log "  ⚠️  达到最大轮次限制，进入验证阶段"
+        break
+    fi
+
+    log "  🔄 仍有P0任务未完成，继续第$((impl_round+1))轮实现..."
+done
 
 log ""
 log "[5/5] Verification - 验证..."

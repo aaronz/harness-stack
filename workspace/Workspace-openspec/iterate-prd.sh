@@ -9,6 +9,7 @@ MODEL="$DEFAULT_MODEL"
 PRD_INPUT=""
 VERBOSE="false"
 USE_SUBAGENTS="false"
+MAX_IMPLEMENTATION_ROUNDS=3
 WORKSPACE_DIR="$SCRIPT_DIR"
 OUTPUTS_DIR=""
 
@@ -49,6 +50,10 @@ parse_args() {
                 USE_SUBAGENTS="true"
                 shift
                 ;;
+            --rounds|-r)
+                MAX_IMPLEMENTATION_ROUNDS="$2"
+                shift 2
+                ;;
             --help|-h)
                 echo "Usage: $0 [options]"
                 echo "Options:"
@@ -57,6 +62,7 @@ parse_args() {
                 echo "  --prd, -p <P>       PRD file or directory"
                 echo "  --verbose, -v       Enable verbose output"
                 echo "  --use-subagents     Allow subagent spawning (default: disabled)"
+                echo "  --rounds, -r <N>    Max implementation rounds (default: 3)"
                 exit 0
                 ;;
             *)
@@ -239,11 +245,15 @@ INCEOF
     log "增量文档完成: $OUTPUTS_DIR/increment.md"
 fi
 
-log ""
-log "[3/5] 执行迭代开发..."
-save_checkpoint "$NEXT_ITERATION" "phase3"
+impl_round=0
+READY_FOR_VERIFY="false"
+while [ "$READY_FOR_VERIFY" != "true" ] && [ $impl_round -lt $MAX_IMPLEMENTATION_ROUNDS ]; do
+    impl_round=$((impl_round + 1))
+    log ""
+    log "[3/5] 执行迭代开发... (第${impl_round}轮)"
+    save_checkpoint "$NEXT_ITERATION" "phase3-impl${impl_round}"
 
-ITERATION_TASK=$(cat << 'ITEOF'
+    ITERATION_TASK=$(cat << 'ITEOF'
 基于增量文档，执行第二轮开发：
 
 ## 增量文档位置
@@ -271,16 +281,16 @@ $PROPOSAL_DIR/
 ITEOF
 )
 
-FULL_PROMPT=$(build_prompt "$(eval echo \"$ITERATION_TASK\")")
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$FULL_PROMPT"
-log "迭代开发完成"
+    FULL_PROMPT=$(build_prompt "$(eval echo \"$ITERATION_TASK\")")
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$FULL_PROMPT"
+    log "迭代开发完成"
 
-log ""
-log "[4/5] 更新任务状态..."
-save_checkpoint "$NEXT_ITERATION" "phase4"
+    log ""
+    log "[4/5] 更新任务状态..."
+    save_checkpoint "$NEXT_ITERATION" "phase4"
 
-TASK_STATUS_FILE="$OUTPUTS_DIR/task_status.txt"
-PROMPT=$(build_prompt "分析增量任务完成情况并输出状态报告。
+    TASK_STATUS_FILE="$OUTPUTS_DIR/task_status.txt"
+    PROMPT=$(build_prompt "分析增量任务完成情况并输出状态报告。
 
 ## 增量文档
 $(cat "$OUTPUTS_DIR/increment.md")
@@ -302,21 +312,28 @@ TOTAL_PROGRESS=<已完成数>/<总数>
 
 如果所有P0任务已完成，输出: READY_FOR_VERIFICATION=true
 如果还有P0任务未完成，输出: READY_FOR_VERIFICATION=false")
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT" 2>/dev/null || true
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT" 2>/dev/null || true
 
-if [ -f "$TASK_STATUS_FILE" ]; then
-    log "任务状态已更新:"
-    cat "$TASK_STATUS_FILE" | while read line; do log "  $line"; done
-    
-    READY_FOR_VERIFY=$(grep "READY_FOR_VERIFICATION=" "$TASK_STATUS_FILE" 2>/dev/null | cut -d= -f2)
-    if [ "$READY_FOR_VERIFY" = "true" ]; then
-        log "  ✅ 所有P0任务完成，可以进入验证阶段"
+    if [ -f "$TASK_STATUS_FILE" ]; then
+        log "任务状态已更新:"
+        cat "$TASK_STATUS_FILE" | while read line; do log "  $line"; done
+        
+        READY_FOR_VERIFY=$(grep "READY_FOR_VERIFICATION=" "$TASK_STATUS_FILE" 2>/dev/null | cut -d= -f2)
+        if [ "$READY_FOR_VERIFY" = "true" ]; then
+            log "  ✅ 所有P0任务完成，可以进入验证阶段"
+            break
+        fi
     else
-        log "  ⚠️  仍有P0任务未完成，建议继续实现"
+        log "  ⚠️  任务状态文件未生成"
     fi
-else
-    log "  ⚠️  任务状态文件未生成"
-fi
+
+    if [ $impl_round -ge $MAX_IMPLEMENTATION_ROUNDS ]; then
+        log "  ⚠️  达到最大轮次限制，进入验证阶段"
+        break
+    fi
+
+    log "  🔄 仍有P0任务未完成，继续第$((impl_round+1))轮实现..."
+done
 
 log ""
 log "[5/5] 生成验证报告..."
