@@ -1,1006 +1,1191 @@
-# Product Requirements Document (PRD)
+# Open-Source Implementation-Ready PRD
 
-## Rust-based WYSIWYG Markdown Editor (Typora-like)
+## Typora-like Markdown Editor in Rust
 
-**Document Version:** 1.0
-**Product Codename:** RustNote
-**Document Type:** Product Requirements Document
-**Target Platform:** Desktop-first, cross-platform
-**Primary Implementation Language:** Rust
-**Status:** Draft
-
----
-
-## 1. Executive Summary
-
-RustNote is a desktop-first, cross-platform Markdown editor designed to deliver a clean, immersive, distraction-free writing experience similar to Typora, while leveraging Rust for performance, stability, security, and maintainability.
-
-The product aims to combine the following qualities:
-
-* A seamless “what you see while writing” Markdown experience
-* Fast startup and smooth editing for large documents
-* Native-feeling desktop performance across macOS, Windows, and Linux
-* Reliable local-first document management
-* Extensible architecture for future plugin, sync, AI, and publishing workflows
-
-RustNote is targeted at writers, developers, technical authors, students, product managers, and knowledge workers who want a modern Markdown editor that is simpler than IDE-style editors, but more polished and performant than basic text tools.
+**Project Name:** RustNote
+**Document Version:** 2.1
+**Document Type:** Open-source implementation-ready PRD
+**Primary Language:** Rust
+**Target Runtime:** Desktop, cross-platform
+**Recommended Shell:** Tauri (V1)
+**License Direction:** MIT OR Apache-2.0
+**Status:** Refined implementation draft
 
 ---
 
-## 2. Product Vision
+# 1. Executive Definition
 
-Build the best Rust-native Markdown writing tool for serious users who value clarity, speed, portability, and a delightful writing experience.
+RustNote is an open-source, local-first, writing-first Markdown editor built in Rust.
 
-The editor should feel:
+It is **not** merely a text editor with Markdown rendering.
+It is a **single-pane, seamless reader-writer experience** in which users write in a visually formatted document while the underlying source of truth remains plain Markdown.
 
-* **As clean as a writing app**
-* **As capable as a modern Markdown tool**
-* **As fast and reliable as a native desktop application**
+The product goal is to reproduce and eventually surpass the reasons users love Typora:
 
----
+* the writing flow feels uninterrupted
+* the document looks readable while being edited
+* Markdown syntax does not constantly get in the way
+* common authoring tasks feel natural and low-friction
+* local files remain portable and trustworthy
 
-## 3. Background and Opportunity
-
-Markdown has become the default lightweight writing format for developers, technical documentation teams, PKM users, product teams, and open-source communities. Existing tools often fall into one of three categories:
-
-1. **Developer editors**: powerful but too complex for pure writing
-2. **Basic note apps**: easy to use but limited in formatting/export
-3. **Markdown-focused editors**: polished, but often closed, less extensible, or constrained by architecture choices
-
-A Rust-based implementation creates an opportunity to deliver:
-
-* Better startup time and runtime efficiency
-* Lower memory usage for large documents
-* Safer systems programming foundations
-* Better long-term maintainability
-* Shared core logic across multiple platforms
-* Future reuse of core parser/editor/export capabilities in CLI, desktop, and mobile products
+This PRD is intentionally implementation-ready for an open-source team. It defines product identity, user experience invariants, module boundaries, MVP scope, testing strategy, and engineering constraints.
 
 ---
 
-## 4. Product Goals
+# 2. Why Typora-like Products Win
 
-### 4.1 Primary Goals
+A Typora-like product wins **less because of feature count** and **more because of interaction quality**.
 
-* Deliver a Typora-like live preview Markdown editing experience
-* Support a full-featured local Markdown writing workflow
-* Provide excellent cross-platform desktop performance
-* Make document editing intuitive for both technical and non-technical users
-* Establish a strong foundation for future extensibility
+Most Markdown tools force users into one of these trade-offs:
 
-### 4.2 Secondary Goals
+* raw source editing that hurts readability
+* split preview that breaks writing flow
+* rich text convenience that breaks Markdown fidelity
+* powerful workspaces that create UI noise and cognitive overhead
 
-* Enable robust import/export and publishing workflows
-* Support themes, document templates, and configurable preferences
-* Prepare architecture for plugin and sync capabilities
-* Build a reusable Rust core for future products
+A great Typora-like editor resolves those trade-offs by combining:
 
-### 4.3 Non-Goals (V1)
+1. **Seamless live rendering**
+   Users edit a readable document, not a wall of syntax.
 
-* Real-time multi-user collaboration
-* Cloud-first document storage
-* Full Notion-like block database features
-* Full IDE-level extensibility at launch
-* Enterprise document governance in V1
-* In-editor code execution or notebook runtime in V1
+2. **Low-distraction writing flow**
+   Minimal chrome, strong typography, focus-friendly modes.
 
----
+3. **High-frequency authoring ergonomics**
+   Lists, links, images, tables, code blocks, paste, and export feel easy.
 
-## 5. Target Users
+4. **Markdown trustworthiness**
+   Markdown remains the source of truth; files stay portable and Git-friendly.
 
-### 5.1 Primary User Segments
+5. **Desktop stability and polish**
+   The product feels dependable for everyday writing, not like a fragile demo.
 
-#### A. Technical Writers
-
-Need a clean Markdown workflow with headings, tables, images, code blocks, export, and file organization.
-
-#### B. Developers
-
-Write README files, design docs, specs, changelogs, architecture notes, and project documentation.
-
-#### C. Knowledge Workers
-
-Use Markdown for personal notes, meeting notes, drafts, and lightweight documentation.
-
-#### D. Students and Researchers
-
-Need structured writing, citation placeholders, export, image insertion, and clean focus mode.
-
-### 5.2 Secondary User Segments
-
-* Bloggers and content creators
-* Product managers writing PRDs and RFCs
-* Open-source maintainers
-* PKM users managing Markdown file collections
+This PRD therefore prioritizes the **experience contract** as much as the feature list.
 
 ---
 
-## 6. User Problems
+# 3. Product Thesis
 
-Users today commonly face the following frustrations:
+## 3.1 Core Thesis
 
-* Split preview and source editing interrupts writing flow
-* Many editors are too heavy or too developer-centric
-* Large Markdown files can become slow or visually unstable
-* Export quality is inconsistent across tools
-* Theme and typography support is limited or inconsistent
-* File management for local Markdown projects is clumsy
-* WYSIWYG behavior often breaks Markdown predictability
+RustNote should be defined as:
 
-RustNote should solve these by offering a predictable live-render editing model, high performance, and a polished desktop experience.
+> A writing-first, WYSIWYM Markdown editor that eliminates the cognitive gap between editing Markdown source and reading formatted content, while preserving plain Markdown as the durable source of truth.
 
----
+## 3.2 Strategic Positioning
 
-## 7. Product Positioning
+RustNote should sit between:
 
-### 7.1 Positioning Statement
+* developer editors that are too complex for writing
+* note apps that hide or weaken file portability
+* rich text tools that do not preserve Markdown cleanly
 
-For users who want a focused, elegant, high-performance Markdown writing tool, RustNote is a Rust-based desktop editor that provides seamless live Markdown rendering, local-first file workflows, and professional export capabilities without the complexity of a full code editor.
+It should feel:
 
-### 7.2 Competitive Positioning
-
-Compared with Typora:
-
-* Similar immersive editing model
-* More modern Rust-based architecture
-* Stronger extensibility path
-* Greater emphasis on performance and core engine reuse
-
-Compared with VS Code + Markdown plugins:
-
-* Simpler and cleaner writing experience
-* Lower cognitive overhead
-* More document-centric interaction design
-
-Compared with note-taking tools:
-
-* Better file-system compatibility
-* Better standards-based Markdown workflow
-* More predictable export and publishing pipeline
+* calmer than VS Code
+* more open and extensible than Typora
+* more file-native than note databases
+* more polished than most open-source Markdown editors
 
 ---
 
-## 8. Core Product Principles
+# 4. Product Principles
 
-1. **Write first**: writing flow is the highest priority
-2. **Markdown remains the source of truth**
-3. **Live formatting should feel natural, not magical**
-4. **Fast by default**
-5. **Local-first and file-friendly**
-6. **Beautiful typography matters**
-7. **Power features should not clutter the core experience**
-8. **Rust core should be modular and reusable**
+## 4.1 Identity Principles
 
----
+1. **Write first**
+   The user should feel like they are writing a document, not managing syntax.
 
-## 9. Key Use Cases
+2. **Markdown is the source of truth**
+   Everything saved must remain valid, predictable Markdown.
 
-### 9.1 Core Writing Use Cases
+3. **Rendered while editing, not previewed separately**
+   Single-pane live rendering is the default identity of the product.
 
-* Write and edit Markdown documents with live formatting
-* Create headings, lists, links, images, tables, and code blocks
-* Organize files and folders in a project sidebar
-* Export documents to HTML, PDF, and DOCX-like formats
-* Switch themes and writing modes
-* Search within and across documents
+4. **Invisible UI beats visible complexity**
+   Keep chrome, controls, and mode switches minimal.
 
-### 9.2 Professional Documentation Use Cases
+5. **High-frequency actions must feel effortless**
+   Lists, headings, links, images, tables, code blocks, paste, and export are product-defining paths.
 
-* Write product specs and technical design docs
-* Maintain repository README and docs content
-* Draft blog posts and knowledge-base articles
-* Manage a folder-based documentation workspace
+6. **Local-first always**
+   Users own normal files on disk.
 
-### 9.3 Extended Use Cases
+7. **Rust owns correctness**
+   Parsing, editing semantics, serialization, recovery, and export-critical logic belong in Rust-owned boundaries.
 
-* Use templates for recurring document types
-* Manage images and relative asset paths
-* Use keyboard shortcuts for efficient authoring
-* Publish static HTML output for lightweight sharing
+## 4.2 Open-Source Principles
+
+* small, reviewable pull requests
+* ADRs for meaningful architectural decisions
+* documented supported Markdown behavior
+* tests around editing invariants, not just parser output
+* low-coupling modules with clear ownership
+* explicit out-of-scope choices to prevent product drift
 
 ---
 
-## 10. Scope Definition
+# 5. Success Criteria
 
-## 10.1 MVP Scope
+RustNote succeeds when users say:
 
-The MVP should include:
+* “I forget I’m editing Markdown.”
+* “It feels smoother than editing raw `.md` in a code editor.”
+* “It does not break my files.”
+* “Images, tables, lists, and export work without friction.”
+* “It is calm enough for long-form writing.”
 
-* Cross-platform desktop app (macOS, Windows, Linux)
-* Open/edit/save Markdown files
-* Live Markdown rendering in a single-pane editing experience
-* Basic file explorer for local folders
-* Support for common Markdown syntax
-* Syntax-aware editing behaviors
-* Image insertion and display
-* Table editing support
-* Code fences with syntax highlighting
-* Export to HTML and PDF
-* Themes (light/dark at minimum)
-* Search in current document
-* Auto-save and crash recovery
-* Keyboard shortcuts and command palette
-* Settings/preferences
+For open-source maintainers, success also means:
 
-## 10.2 Post-MVP Scope
-
-* Tabs/workspaces
-* Global search across folders
-* Document outline panel
-* Template library
-* Typewriter mode / focus mode enhancements
-* More advanced exports (DOCX, EPUB)
-* Plugin system
-* Mermaid/diagram support
-* Frontmatter editing UI
-* Sync integrations
-* AI writing assistance
+* contributors can understand the repo quickly
+* editing bugs are reproducible and regression-tested
+* releases are stable across macOS, Windows, Linux
 
 ---
 
-## 11. Functional Requirements
+# 6. Users and Jobs to Be Done
 
-## 11.1 Document Lifecycle
+## 6.1 Primary Users
 
-### FR-001 Create Document
+### Writers and note-takers
 
-* User can create a new untitled Markdown document
-* User can save it to a selected file path
-* Default extension is `.md`
+Need a clean writing space with Markdown portability.
 
-### FR-002 Open Existing Document
+### Developers and technical authors
 
-* User can open a Markdown file from disk
-* User can open a folder/workspace containing Markdown files
-* App should preserve recent files and recent folders
+Need README/docs/spec editing with Git-friendly output and code-block correctness.
 
-### FR-003 Save and Auto-save
+### Product managers and researchers
 
-* Manual save via command/menu/shortcut
-* Auto-save configurable by user
-* Unsaved state visibly indicated
-* Crash recovery restores recent unsaved content
+Need a readable drafting environment with headings, lists, tables, images, and export.
 
-### FR-004 Rename / Move Awareness
+## 6.2 Core Jobs
 
-* If files are renamed or moved externally, app should detect and handle gracefully
-* User should be notified of broken paths or deleted files
+* write a document in Markdown without being distracted by syntax
+* edit existing Markdown files from local disk
+* structure content with headings, lists, tables, quotes, and code blocks
+* insert images and links without breaking paths
+* export polished HTML or PDF
+* work in a folder-based documentation workspace
 
 ---
 
-## 11.2 Editing Experience
+# 7. Non-Negotiable Experience Invariants
 
-### FR-005 Live Preview Editing
+This section is the most important refinement to the PRD.
 
-* Markdown syntax should visually render inline while editing
-* Headings, bold, italic, links, lists, checklists, quotes, code blocks, and tables should be represented in a rendered manner
-* Cursor behavior must remain intuitive when moving through rendered content
+These are not “nice to have” UX details. They define whether the product actually feels Typora-like.
 
-### FR-006 Source-of-Truth Integrity
+## 7.1 Single-Pane Invariant
 
-* Underlying content must remain valid Markdown text
-* Users must always be able to inspect or edit raw syntax where needed
-* Rendered editing should never silently corrupt Markdown structure
+* the main experience is one editing canvas
+* split preview is not the core workflow
+* users should never need to mode-switch to understand document appearance
 
-### FR-007 Standard Text Editing
+## 7.2 Readability Invariant
 
-* Undo/redo
-* Cut/copy/paste
-* Select all
-* Multi-line selection
-* Indentation / outdentation for lists and blocks
-* Duplicate line / paragraph
-* Delete line / block
+* headings should look like headings while editing
+* lists should look like lists
+* links and images should appear as document content, not primarily as raw syntax
+* the document should remain pleasant to read during editing
 
-### FR-008 Markdown Shortcuts
+## 7.3 Cursor Invariant
 
-* Keyboard shortcuts for headings, bold, italic, code, quote, lists, links, images
-* Auto-completion or assisted insertion for matching syntax markers where appropriate
+* cursor movement must be predictable around inline formatting, links, code spans, tables, images, and quotes
+* no cursor traps
+* selection boundaries must feel natural
 
-### FR-009 Smart Enter / Backspace Behavior
+## 7.4 Structure Invariant
 
-* Continue bullet lists and numbered lists on Enter
-* Exit list when pressing Enter on empty item
-* Handle block quotes and checklists intelligently
-* Backspace should degrade structure predictably
+* Enter, Backspace, Tab, and Shift+Tab must behave consistently for lists, quotes, and nested structures
+* structural editing must not cause surprising Markdown corruption
 
-### FR-010 Paste Handling
+## 7.5 Fidelity Invariant
 
-* Plain text paste
-* Rich text paste converted to Markdown where feasible
-* Image paste support from clipboard
-* URL paste handling for automatic link creation when selected text exists
+* editing and rendering must not silently destroy supported Markdown constructs
+* when a construct cannot be preserved perfectly, behavior must be documented and tested
 
----
+## 7.6 Calmness Invariant
 
-## 11.3 Markdown Syntax Support
+* default UI should remain visually quiet
+* toolbar, controls, and settings must not dominate the writing surface
+* focus mode and typewriter mode are part of product identity, not decoration
 
-### FR-011 Core Syntax
+## 7.7 Local-Trust Invariant
 
-Support at minimum:
-
-* Headings (H1-H6)
-* Bold / italic / strikethrough
-* Inline code
-* Code fences
-* Ordered / unordered lists
-* Task lists
-* Blockquotes
-* Links
-* Images
-* Horizontal rules
-* Tables
-* Footnotes (post-MVP acceptable if necessary)
-* Frontmatter (read/write support)
-
-### FR-012 Extended Markdown Compatibility
-
-The system should support a defined Markdown flavor, such as GitHub Flavored Markdown (GFM) plus selected extensions.
-
-A compatibility spec must be documented for:
-
-* Tables
-* Task lists
-* Auto links
-* Strikethrough
-* Frontmatter
-* Math support (optional for MVP, preferred post-MVP)
+* the app should behave like a trustworthy steward of local files
+* save, autosave, recovery, reload, and external-change handling must be dependable
 
 ---
 
-## 11.4 File and Workspace Management
-
-### FR-013 Sidebar File Tree
-
-* User can open a folder as a workspace
-* File tree displays Markdown files and optionally assets
-* User can create, rename, delete, and duplicate files from sidebar
-* Folder creation supported
-
-### FR-014 Recent Files / Recent Workspaces
-
-* Show recent documents and folders on app launch or via menu
-* Configurable history limit
-
-### FR-015 External File Change Detection
-
-* Changes made by other apps should trigger reload or conflict handling
-* User may choose auto-reload or prompt-before-reload behavior
-
----
-
-## 11.5 Navigation and Discovery
-
-### FR-016 In-document Search
-
-* Find next/previous
-* Case-sensitive option
-* Regex optional post-MVP
-* Replace current / replace all
-
-### FR-017 Outline View
-
-* Generate heading outline from document
-* Clicking outline item jumps to relevant section
-* Post-MVP acceptable if not in MVP
-
-### FR-018 Go To Elements
-
-* Go to heading
-* Go to line / section equivalent where technically appropriate
-* Jump between open documents when tabs are supported
-
----
-
-## 11.6 Visual Presentation and Themes
-
-### FR-019 Themes
-
-* Support at least light and dark themes
-* Typography, spacing, code block style, table style, and block quote style should be customizable
-
-### FR-020 Focus and Reading Modes
-
-* Focus mode hides non-essential UI
-* Typewriter mode keeps active line or paragraph visually centered
-* Reading mode optional for MVP
-
-### FR-021 Typography Controls
-
-* Font family selection
-* Font size
-* Line height
-* Paragraph width / content max width
-* Custom CSS or theme customization post-MVP
-
----
-
-## 11.7 Media and Embedded Content
-
-### FR-022 Image Support
-
-* Insert local image via picker, drag-drop, or paste
-* Display relative-path images correctly
-* Basic resize/display controls optional
-* Broken image states clearly indicated
-
-### FR-023 Code Block Rendering
-
-* Syntax highlighting for common languages
-* Copy code action optional
-* Code fence language preserved in source
-
-### FR-024 Table Editing
-
-* Easy insertion of tables
-* Keyboard navigation across cells
-* Row/column add/remove operations
-* Rendered visual table editing without breaking Markdown serialization
-
-### FR-025 Math and Diagrams
-
-* Inline/block math optional MVP stretch goal
-* Mermaid/diagram rendering post-MVP
-
----
-
-## 11.8 Import / Export / Publishing
-
-### FR-026 Export to HTML
-
-* Clean standalone HTML export
-* Optional CSS theme selection
-* Assets linked or embedded based on mode
-
-### FR-027 Export to PDF
-
-* Print-quality PDF export
-* Preserve headings, tables, code blocks, and images
-* Page margins and paper size configurable
-
-### FR-028 Export to Additional Formats
-
-* DOCX and EPUB are post-MVP goals
-* Export architecture should be designed to support multiple targets
-
-### FR-029 Copy as HTML / Rich Text
-
-* Optional post-MVP capability for interoperability with external apps
-
----
-
-## 11.9 Settings and Preferences
-
-### FR-030 Preferences
-
-* Theme
-* Auto-save behavior
-* Default opening behavior
-* Preferred Markdown flavor/settings
-* Font settings
-* Window restore behavior
-* Export defaults
-
-### FR-031 Keyboard Shortcut Support
-
-* Standard shortcuts per OS
-* Shortcut customization post-MVP
-
----
-
-## 11.10 Reliability and Recovery
-
-### FR-032 Auto Recovery
-
-* Unsaved changes periodically snapshotted
-* On crash or forced shutdown, recovery flow restores document drafts
-
-### FR-033 Version Safety
-
-* Basic local history optional MVP stretch or post-MVP
-* At minimum, protect users from silent overwrite or serialization corruption
-
----
-
-## 12. Non-Functional Requirements
-
-## 12.1 Performance
-
-### NFR-001 Startup Performance
-
-* Cold startup should feel near-instant on modern machines
-* Target: under 2 seconds for typical systems
-
-### NFR-002 Editing Responsiveness
-
-* Typing latency should remain imperceptible for normal documents
-* Large documents should remain usable without major frame drops
-
-### NFR-003 Memory Efficiency
-
-* Idle memory footprint should remain competitive with native desktop tools
-* Large document rendering should degrade gracefully
-
-## 12.2 Reliability
-
-### NFR-004 Stability
-
-* App should not crash under standard editing workflows
-* File corruption risk must be minimized
-
-### NFR-005 Data Integrity
-
-* Save operations must be atomic where possible
-* Backup/temporary write strategy should reduce risk of partial writes
-
-## 12.3 Cross-platform Consistency
-
-### NFR-006 Platform Support
-
-* macOS, Windows, Linux supported with consistent core behavior
-* Keyboard/menu conventions should still respect platform expectations
-
-## 12.4 Security and Privacy
-
-### NFR-007 Local-first Privacy
-
-* User content stored locally by default
-* No cloud transmission in MVP unless explicitly enabled
-
-### NFR-008 Safe File Handling
-
-* Prevent arbitrary execution via document rendering
-* Sanitize HTML rendering and preview pathways appropriately
-
-## 12.5 Accessibility
-
-### NFR-009 Accessibility Support
-
-* Keyboard-first operation
-* Screen-reader-friendly baseline where technically feasible
-* High contrast themes post-MVP if not fully in MVP
-
----
-
-## 13. UX Requirements
-
-## 13.1 Interaction Model
-
-The interaction model should emulate the smoothness of direct writing rather than source-code editing.
-
-Key UX expectations:
-
-* Syntax decorations appear when helpful, but do not distract
-* Cursor movement through formatted content is predictable
-* Selection behavior remains intuitive around links, images, and tables
-* Structural editing feels natural for lists, block quotes, and code blocks
-
-## 13.2 Layout
-
-Recommended desktop layout:
-
-* Optional left sidebar: file tree
-* Main center: document canvas/editor
-* Optional right sidebar: outline / document info / export options (post-MVP)
-* Top toolbar should remain minimal
-* Command palette available for discoverability without clutter
-
-## 13.3 Empty States
-
-* New user welcome screen
-* Recent documents/workspaces
-* “Create new” and “Open folder” as primary actions
-* Template suggestions optional
-
----
-
-## 14. Information Architecture
-
-### 14.1 MVP Information Areas
-
-* Home / Recent
-* Workspace File Tree
-* Active Document Editor
-* Search Bar / Find Panel
-* Preferences
-* Export Modal
-
-### 14.2 Data Objects
-
-Core entities include:
-
-* Document
-* Workspace
-* Asset
-* Theme
-* Preference Set
-* Export Job
-* Recovery Snapshot
-
----
-
-## 15. Suggested Technical Product Architecture
-
-This section is included to align product design with a Rust-first implementation strategy.
-
-## 15.1 Architecture Goals
-
-* Reusable Rust core for parsing, editing state, serialization, and export
-* Thin platform shell for desktop UI and system integration
-* Clear separation between content model, render model, and UI state
-
-## 15.2 Recommended High-level Modules
-
-### A. Core Document Engine (Rust)
-
-Responsibilities:
-
-* Markdown parsing
-* Document AST / intermediate representation
-* Incremental update handling
-* Markdown serialization
-* Structural editing rules
-
-### B. Editor State Engine (Rust)
-
-Responsibilities:
-
-* Cursor/selection model
-* Undo/redo stack
-* Block and inline edit operations
-* Smart enter/backspace transformations
-
-### C. Renderer / Presentation Mapping Layer
-
-Responsibilities:
-
-* Map Markdown structures into renderable UI blocks/spans
-* Support live visual formatting while preserving source-of-truth Markdown
-* Efficient incremental re-rendering
-
-### D. File System and Workspace Layer
-
-Responsibilities:
-
-* Read/write files
-* Watch file system changes
-* Manage recent workspaces
-* Asset path resolution
-
-### E. Export Pipeline
-
-Responsibilities:
-
-* HTML generation
-* PDF rendering pipeline
-* Optional future DOCX/EPUB output
-
-### F. Desktop Shell
-
-Potential choices:
-
-* Tauri + Rust backend + web-based UI layer
-* Pure native UI stack where feasible
-
-Recommended pragmatic choice for V1:
-
-* **Tauri + Rust core**, due to strong cross-platform delivery speed and ecosystem practicality
-
----
-
-## 16. Product Design Decisions
-
-## 16.1 Markdown Flavor Decision
-
-The product must explicitly define supported syntax behavior rather than loosely claiming “Markdown support.”
-
-Recommended V1 standard:
-
-* CommonMark baseline
-* GitHub Flavored Markdown extensions
-* Frontmatter support
-* Optional math behind feature flag
-
-## 16.2 Single-pane Editing Decision
-
-The editor should prioritize a single-pane live-render writing experience.
-
-Optional post-MVP modes:
-
-* Source-only mode
-* Split source + preview mode for debugging or advanced workflows
-
-## 16.3 Local-first Decision
-
-Documents are normal files on disk. No proprietary storage model is required for MVP.
-
-Benefits:
-
-* User trust
-* Easy interoperability
-* Git compatibility
-* No platform lock-in
-
----
-
-## 17. MVP Feature Prioritization
-
-## 17.1 Must Have
-
-* Open/save Markdown files
-* Single-pane live Markdown editing
-* Core syntax support
-* File tree/workspace support
-* In-document search
-* Theme support
+# 8. Scope
+
+## 8.1 MVP In Scope
+
+* desktop app for macOS, Windows, Linux
+* open, edit, save `.md` files
+* open a folder as a workspace
+* single-pane live Markdown editing
+* rendered support for headings, emphasis, links, images, lists, task lists, code fences, quotes, horizontal rules, tables
+* smart editing behavior for lists, quotes, and basic structure transitions
+* in-document search and replace
+* recent files and recent folders
+* theme support: light and dark minimum
+* focus mode
+* typewriter mode
 * HTML export
 * PDF export
-* Auto-save and recovery
-* Syntax highlighting in code fences
-* Basic image and table support
+* auto-save and crash recovery
+* code fence syntax highlighting
+* relative asset path support
+* basic outline / table-of-contents panel
 
-## 17.2 Should Have
+## 8.2 Explicitly Out of Scope for MVP
 
-* Outline panel
-  n- Typewriter mode
-* Better paste conversion
-* Frontmatter support
-* Recent files/home screen
+* real-time collaboration
+* cloud sync
+* plugin marketplace
+* mobile app
+* AI writing features
+* Mermaid and advanced diagrams
+* full DOCX/EPUB support
+* database-backed note graph
+* workspace complexity comparable to IDEs
 
-## 17.3 Could Have
+## 8.3 Stretch Goals
 
-* Template system
-* Global search
-* Custom shortcuts
-* Local version history
-* Math rendering
-
-## 17.4 Won’t Have in MVP
-
-* Realtime collaboration
-* Cloud sync
-* Plugin marketplace
-* AI co-writing
-* Advanced publishing integrations
+* frontmatter helper UI
+* local document history
+* math rendering
+* custom CSS support
+* improved paste-from-rich-text conversion
 
 ---
 
-## 18. Success Metrics
+# 9. What Must Feel Excellent in V1
 
-## 18.1 Product Metrics
+For a Typora-like editor, some workflows matter disproportionately more than others.
 
-* Weekly active writers
-* Number of documents created/opened per active user
-* Export usage rate
-* Workspace adoption rate
-* Retention at 7/30 days
+The MVP should optimize aggressively for these:
 
-## 18.2 Quality Metrics
+1. opening an existing Markdown document and continuing writing immediately
+2. creating a clean structured document with headings and lists
+3. inserting and managing links
+4. pasting content from web/docs/apps without making a mess
+5. inserting images with correct relative paths
+6. writing technical docs with code fences and tables
+7. exporting a polished PDF or HTML file
+8. recovering safely from accidental close or crash
 
-* Crash-free session rate
-* Median startup time
-* Median typing latency under typical document sizes
-* Recovery success rate after crash
-* Save failure rate
-
-## 18.3 User Experience Metrics
-
-* Time to first successful document creation
-* Time to complete export task
-* User-rated writing satisfaction
-* User-rated performance satisfaction
+A feature may exist and still fail if the interaction is awkward. Therefore these flows need interaction-level tests and polish.
 
 ---
 
-## 19. Release Plan
+# 10. Functional Requirements
 
-## Phase 1: Foundation
+## 10.1 File Operations
 
-* Core document model
-* Markdown parsing and serialization
-* Desktop shell setup
-* Basic editor and save/load
+### FR-001 New file
 
-## Phase 2: Writing Experience MVP
+* create untitled document
+* save to chosen location
+* default extension `.md`
 
-* Live formatting
-* Lists, code blocks, tables, images
-* Find/replace
-* Themes and settings
+### FR-002 Open file
 
-## Phase 3: Workspace and Export
+* open Markdown file from disk
+* drag-and-drop file open supported
 
-* File tree
-* Recent workspaces
-* HTML/PDF export
-* Crash recovery
+### FR-003 Open folder
 
-## Phase 4: Polish
+* open folder as workspace
+* show Markdown files in sidebar
+* optionally show image/assets directory entries
 
-* Performance optimization
-* Cursor behavior refinement
-* Paste improvements
-* UX polish and platform conventions
+### FR-004 Save
 
-## Phase 5: Post-MVP Expansion
+* manual save supported
+* save preserves valid UTF-8 Markdown text
+* save uses atomic write strategy where possible
 
-* Outline/global search
-* Templates
-* Math/diagrams
-* Plugin architecture
-* Sync/AI integrations
+### FR-005 Auto-save
 
----
+* configurable on/off
+* configurable debounce interval
+* dirty-state indication required
 
-## 20. Risks and Mitigations
+### FR-006 Recovery
 
-## 20.1 WYSIWYG Complexity Risk
+* restore unsaved content after crash or force close
+* recovery prompt presented when relevant
 
-**Risk:** Typora-like live rendering is significantly harder than plain text editing. Cursor, selection, and serialization consistency can become fragile.
+### FR-007 External changes
 
-**Mitigation:**
-
-* Build a robust intermediate document model
-* Clearly separate Markdown source, semantic structure, and presentation state
-* Invest early in editing invariants and regression tests
-
-## 20.2 Cross-platform UI Consistency Risk
-
-**Risk:** Desktop behavior differs across platforms.
-
-**Mitigation:**
-
-* Centralize editor logic in Rust core
-* Keep platform shell thin
-* Use platform-specific conventions only at the edges
-
-## 20.3 Large Document Performance Risk
-
-**Risk:** Full document rerendering becomes slow.
-
-**Mitigation:**
-
-* Use incremental parsing/rendering where possible
-* Virtualize heavy regions if necessary
-* Benchmark large-file workflows from early milestones
-
-## 20.4 Export Fidelity Risk
-
-**Risk:** PDF and HTML outputs differ from editor appearance.
-
-**Mitigation:**
-
-* Build a documented export styling model
-* Use a consistent render/export theme layer
-* Test with representative documents
+* detect file changes outside the app
+* user can reload, compare later, or preserve current buffer depending final implementation
 
 ---
 
-## 21. Testing Requirements
+## 10.2 Core Editing Experience
 
-## 21.1 Functional Testing
+### FR-008 Single-pane live rendering
 
-* Markdown syntax editing correctness
-* Save/load workflows
-* Export accuracy
-* File tree operations
-* Search/replace behavior
+* document edited in one primary pane
+* supported syntax is visually rendered inline
+* raw Markdown remains serializable and trustworthy
 
-## 21.2 Compatibility Testing
+### FR-009 Heading behavior
 
-* Different Markdown flavors and edge cases
-* OS-level file path variations
-* Relative asset loading across platforms
+* headings visually differentiate by level while editing
+* heading editing must remain intuitive when entering or deleting markers
 
-## 21.3 Performance Testing
+### FR-010 Emphasis behavior
 
-* Startup time benchmarks
-* Typing latency benchmarks
-* Large document editing stress tests
-* Bulk folder/workspace loading tests
+* bold, italic, strikethrough, inline code visually render inline
+* cursor and selection behavior around inline formatting must be regression-tested
 
-## 21.4 Reliability Testing
+### FR-011 Link behavior
 
-* Crash recovery verification
-* File system conflict scenarios
-* Save interruption simulation
+* links visually appear as links while editing
+* users can edit link text and target without raw-syntax confusion
+* opening link vs editing link behavior must be intentionally designed
 
-## 21.5 UX Testing
+### FR-012 List behavior
 
-* Cursor movement predictability
-* Table editing ergonomics
-* Paste behavior quality
-* Theme readability and layout comfort
+* ordered and unordered lists visually render correctly
+* Enter continues list item
+* Enter on empty list item exits list
+* Backspace at expected structural boundaries degrades list predictably
+* Tab/Shift+Tab indent and outdent nested items where applicable
 
----
+### FR-013 Task list behavior
 
-## 22. Acceptance Criteria for MVP Launch
+* task list items render with interactive-feeling checkbox affordance or a clear equivalent visual treatment
+* toggling task state preserves valid Markdown
 
-The MVP can be considered launch-ready when:
+### FR-014 Blockquote behavior
 
-* Users can reliably create, edit, save, and reopen Markdown files
-* Live-render writing experience is stable and intuitive
-* Core Markdown constructs render and serialize correctly
-* HTML and PDF export are production-usable
-* The app performs well on mainstream desktop devices
-* Crash recovery and auto-save are trustworthy
-* macOS, Windows, and Linux builds meet baseline usability standards
+* blockquotes visually render while remaining easy to enter, continue, and exit
 
----
+### FR-015 Code fence behavior
 
-## 23. Future Roadmap Directions
+* fenced code blocks render with syntax highlighting
+* entering/exiting code blocks should be unsurprising
+* language tag preserved in Markdown source
 
-Potential roadmap investments include:
+### FR-016 Table behavior
 
-* Plugin architecture and extension APIs
-* Git-aware workflows
-* Cloud sync providers
-* Collaboration and commenting
-* AI-assisted writing, rewrite, summarize, translate, and format tools
-* Publishing pipelines for blogs/docs platforms
-* Mobile companion app built on shared Rust core
-* Database-backed library mode alongside file-based mode
+* tables render clearly in editor
+* table editing behavior must prioritize correctness and low friction
+* if full cell-model editing is too risky for MVP, a constrained but safe editing model is acceptable
 
----
+### FR-017 Image behavior
 
-## 24. Open Questions
+* local images insert via picker, drag-and-drop, or paste when feasible
+* relative path handling must be correct
+* broken images must show obvious but unobtrusive error state
 
-1. Should V1 optimize primarily for writers or developer-doc authors?
-2. Should the initial UI be closer to Typora simplicity or Obsidian-lite workspace structure?
-3. Is math support important enough for MVP?
-4. Should table editing be basic or highly interactive in V1?
-5. Should we support custom CSS in MVP or defer to theme presets?
-6. Should split preview mode exist at launch for advanced users?
-7. What export formats beyond HTML/PDF materially affect adoption?
-8. Is Tauri the committed shell strategy for V1, or should the team evaluate native alternatives in parallel?
+### FR-018 Paste behavior
+
+* plain text paste works predictably
+* rich text paste converts to Markdown on best-effort basis where feasible
+* paste should not silently create malformed Markdown structures in common cases
+
+### FR-019 Undo/redo
+
+* session-level undo/redo required
+* structural operations participate consistently
 
 ---
 
-## 25. Appendix A: Suggested Initial Command Set
+## 10.3 Markdown Support
 
-* New File
-* Open File
-* Open Folder
-* Save
-* Save As
-* Export HTML
-* Export PDF
-* Find
-* Replace
-* Toggle Sidebar
-* Toggle Theme
-* Toggle Focus Mode
-* Toggle Typewriter Mode
-* Insert Table
-* Insert Image
-* Insert Code Block
-* Insert Link
-* Show Outline
-* Open Recent
-* Preferences
+### FR-020 Required syntax support
 
----
+* headings H1-H6
+* bold, italic, strikethrough
+* inline code
+* fenced code blocks
+* ordered/unordered lists
+* task lists
+* blockquotes
+* links
+* images
+* horizontal rules
+* tables
+* frontmatter preserved as text block support
 
-## 26. Appendix B: Suggested Rust-oriented Delivery Strategy
+### FR-021 Markdown flavor
 
-### Recommended Technical Stack Direction
+* CommonMark baseline
+* GFM support for tables, task lists, strikethrough, autolinks
+* supported behavior documented clearly in repo
 
-* **Core Language:** Rust
-* **Desktop Shell:** Tauri
-* **Markdown Parsing:** CommonMark/GFM-capable parser in Rust
-* **Syntax Highlighting:** Rust-based highlighting engine or interoperable library
-* **Rendering Strategy:** Rust core + frontend presentation layer
-* **Persistence:** Native file system + lightweight local config store
+### FR-022 Serialization fidelity
 
-### Why Rust Is Strategic Here
-
-* Excellent performance for parsing and editing engines
-* Safe concurrency opportunities for background parsing/export
-* Portable core logic across desktop and future mobile/CLI products
-* Strong fit for building a durable editor engine with low runtime overhead
+* supported constructs must survive edit-save-reopen cycles reliably
+* known lossy or unsupported constructs must be documented
 
 ---
 
-## 27. Final Product Definition
+## 10.4 Workspace and Navigation
 
-RustNote is a high-performance, local-first, Typora-like Markdown editor built around a reusable Rust core and a carefully designed writing experience. The product should win by offering the clarity of a dedicated writing tool, the practicality of Markdown files, and the speed and reliability expected from a modern native desktop application.
+### FR-023 File tree
+
+* create, rename, delete files/folders
+* refresh on external changes
+
+### FR-024 Recent items
+
+* persist recent files and folders locally
+
+### FR-025 Find/replace
+
+* find next/previous
+* replace one/all
+* case-sensitive option
+
+### FR-026 Outline / TOC panel
+
+* heading outline generated from current document
+* clicking item navigates to section
+* panel hide/show supported
+
+---
+
+## 10.5 Display, Focus, and Themes
+
+### FR-027 Themes
+
+* light and dark themes required
+* typography and spacing tuned for long-form readability
+
+### FR-028 Focus mode
+
+* dim or de-emphasize non-current paragraphs/sections according to design choice
+* should materially reduce visual distraction
+
+### FR-029 Typewriter mode
+
+* active line or paragraph remains vertically centered or near-centered
+* interaction should remain smooth during navigation and editing
+
+### FR-030 Content width and typography settings
+
+* editor font size
+* content width
+* line spacing or equivalent readability control
+
+---
+
+## 10.6 Export
+
+### FR-031 HTML export
+
+* standalone or linked-assets mode
+* preserve headings, lists, code blocks, tables, images
+
+### FR-032 PDF export
+
+* preserve structure and readable layout
+* configurable page size and margins minimum
+
+### FR-033 Export architecture
+
+* export targets implemented behind clear interface boundary to enable future formats
+
+---
+
+## 10.7 Preferences and State
+
+### FR-034 Preferences
+
+* theme
+* auto-save
+* focus mode defaults
+* typewriter mode defaults
+* editor width/font size
+* export defaults
+
+---
+
+# 11. Non-Functional Requirements
+
+## 11.1 Performance
+
+### NFR-001 Startup
+
+* target cold start under 2 seconds on mainstream modern laptop
+
+### NFR-002 Typing responsiveness
+
+* no visible lag during ordinary editing on typical documents under 1 MB
+
+### NFR-003 Large document usability
+
+* at least 5 MB documents remain usable, with graceful degradation if necessary
+
+## 11.2 Reliability
+
+### NFR-004 Crash-free goal
+
+* stable releases target crash-free session rate above 99%
+
+### NFR-005 Safe writes
+
+* partial writes avoided through temp-file replacement strategy where practical
+
+## 11.3 Privacy and Security
+
+### NFR-006 Local-first
+
+* no network dependency in MVP editing path
+
+### NFR-007 Safe rendering
+
+* raw HTML handling policy must be explicit
+* export sanitization and trust model documented
+
+## 11.4 Accessibility
+
+### NFR-008 Keyboard-first
+
+* essential actions reachable by keyboard
+
+### NFR-009 Readability
+
+* default themes must maintain good contrast and comfortable typography
+
+---
+
+# 12. Architecture Overview
+
+## 12.1 High-Level Approach
+
+Recommended V1 architecture:
+
+* **Rust core** for parsing, editing semantics, serialization, workspace logic, recovery, export orchestration
+* **Tauri desktop shell** for packaging, windows, menus, file dialogs, OS integration
+* **UI layer** for rendering and interaction, but not as the owner of document correctness
+
+## 12.2 Architectural Rule
+
+Anything affecting:
+
+* Markdown fidelity
+* cursor/selection semantics
+* structural editing behavior
+* save/recovery correctness
+* export correctness
+
+must live in Rust-owned interfaces or Rust-controlled services.
+
+## 12.3 Why This Matters
+
+A Typora-like editor fails when too much logic leaks into ad hoc UI behavior. The architecture must preserve a clear center of correctness.
+
+---
+
+# 13. Repository Structure
+
+```text
+rustnote/
+  Cargo.toml
+  README.md
+  LICENSE-MIT
+  LICENSE-APACHE
+  CONTRIBUTING.md
+  CODE_OF_CONDUCT.md
+  SECURITY.md
+  ADR/
+  docs/
+    architecture/
+    product/
+    testing/
+    release/
+  crates/
+    core-model/
+    markdown-parser/
+    editor-engine/
+    serializer/
+    workspace/
+    export/
+    theme/
+    settings/
+    recovery/
+    app-services/
+  apps/
+    desktop/
+  fixtures/
+    markdown/
+    editor/
+    export/
+    recovery/
+  scripts/
+    ci/
+    release/
+```
+
+---
+
+# 14. Crate Responsibilities
+
+## 14.1 `core-model`
+
+* semantic document structures
+* positions, ranges, identifiers
+* shared core types and errors
+
+## 14.2 `markdown-parser`
+
+* parse Markdown to semantic/intermediate representation
+* document supported flavor behavior
+
+## 14.3 `editor-engine`
+
+* cursor movement rules
+* selection logic
+* insert/delete/edit commands
+* smart Enter/Backspace/Tab behaviors
+* undo/redo
+* editing invariants and regression coverage
+
+## 14.4 `serializer`
+
+* semantic model to Markdown output
+* preserve supported constructs predictably
+
+## 14.5 `workspace`
+
+* file IO
+* recent files/folders
+* file watching
+* asset path resolution
+
+## 14.6 `export`
+
+* HTML export
+* PDF export
+* export option types and pipelines
+
+## 14.7 `theme`
+
+* theme tokens
+* typography defaults
+* focus/typewriter presentation config as needed
+
+## 14.8 `settings`
+
+* persisted configuration
+* schema versioning
+
+## 14.9 `recovery`
+
+* autosave snapshots
+* crash recovery metadata
+* stale cleanup
+
+## 14.10 `app-services`
+
+* orchestration layer between UI shell and Rust core modules
+
+---
+
+# 15. Public Service Boundaries
+
+Prefer narrow service interfaces over exposing many unstable internal types.
+
+Suggested boundaries:
+
+* `DocumentService`
+* `EditorService`
+* `WorkspaceService`
+* `ExportService`
+* `SettingsService`
+* `RecoveryService`
+
+Suggested operation families:
+
+* open/save/reload document
+* apply editor command
+* query selection or outline
+* insert image/link/table block
+* export document
+* restore snapshot
+
+---
+
+# 16. Data Model Layers
+
+The implementation should keep these layers separate:
+
+## 16.1 Source Layer
+
+* raw Markdown text
+
+## 16.2 Semantic Layer
+
+* parsed structures: headings, paragraphs, list items, tables, links, code blocks, images
+
+## 16.3 Editing Layer
+
+* selection state
+* cursor mapping
+* commands
+* undo/redo history
+
+## 16.4 Presentation Layer
+
+* rendered spans/blocks
+* visual decorations
+* focus/typewriter metadata
+
+The UI should render state, not become the source of truth.
+
+---
+
+# 17. UX Requirements
+
+## 17.1 Layout
+
+* left sidebar for workspace tree
+* central editor canvas
+* optional outline panel
+* minimal top bar/menu
+* find/replace panel
+* export dialog
+* preferences dialog
+
+## 17.2 Interaction Rules
+
+* split preview is not primary mode
+* visible chrome must stay minimal
+* command palette recommended
+* link, image, and table interactions must be intentional and documented
+
+## 17.3 Quality Bar
+
+The product should feel calm enough for long writing sessions and precise enough for technical documentation.
+
+---
+
+# 18. Implementation Milestones
+
+## Milestone 0: Bootstrap
+
+Deliverables:
+
+* repo initialized
+* Cargo workspace
+* CI on macOS, Windows, Linux
+* formatter, clippy, test scaffolding
+* desktop shell launches empty app
+* core docs: README, CONTRIBUTING, roadmap skeleton
+
+Acceptance criteria:
+
+* contributors can build locally from docs
+* CI green on all supported OSes
+
+## Milestone 1: Plain Markdown Document Loop
+
+Deliverables:
+
+* new/open/save file
+* text buffer editing
+* dirty state
+* recent files
+* basic recovery plumbing
+
+Acceptance criteria:
+
+* user can safely create and edit `.md`
+* no normal-flow data loss
+
+## Milestone 2: Live Rendering Foundation
+
+Deliverables:
+
+* parser integration
+* render headings, emphasis, lists, quotes, links, code blocks
+* initial cursor/selection mapping
+
+Acceptance criteria:
+
+* supported syntax reads like a document while editing
+* edit-save-reopen fidelity passes fixtures for supported cases
+
+## Milestone 3: Editing Semantics
+
+Deliverables:
+
+* smart Enter/Backspace/Tab behaviors
+* task list handling
+* shortcut formatting commands
+* regression tests for editing invariants
+
+Acceptance criteria:
+
+* structural editing feels consistent in core authoring scenarios
+* no major cursor traps in supported flows
+
+## Milestone 4: Authoring Essentials
+
+Deliverables:
+
+* workspace sidebar
+* image insertion/rendering
+* code highlighting
+* safe table support
+* outline panel
+
+Acceptance criteria:
+
+* real documentation workflow is viable end-to-end
+
+## Milestone 5: Calm Writing Features
+
+Deliverables:
+
+* themes
+* focus mode
+* typewriter mode
+* settings persistence
+* find/replace
+
+Acceptance criteria:
+
+* product feels distinctly writing-first, not just editor-first
+
+## Milestone 6: Recovery, Export, Beta
+
+Deliverables:
+
+* robust autosave and recovery
+* HTML export
+* PDF export
+* packaging and release process
+
+Acceptance criteria:
+
+* real documents export cleanly
+* crash recovery works in tested scenarios
+* public beta builds available for all target platforms
+
+---
+
+# 19. Engineering Standards
+
+## 19.1 Rust Standards
+
+* `cargo fmt` enforced
+* `clippy` required in CI
+* avoid unnecessary `unsafe`
+* any `unsafe` must be isolated and justified
+
+## 19.2 Code Organization
+
+* business logic should not live in UI event handlers
+* public APIs documented
+* non-trivial features need tests and short design rationale
+
+## 19.3 PR Standards
+
+* small PRs preferred
+* issue or rationale linked
+* UI changes include screenshots/gifs when practical
+* user-visible behavior changes update docs or fixtures
+
+---
+
+# 20. Testing Strategy
+
+## 20.1 Unit Tests
+
+Cover:
+
+* parser behavior
+* cursor movement
+* selection logic
+* editing commands
+* undo/redo
+* serializer
+* settings and recovery
+
+## 20.2 Editing Invariant Regression Tests
+
+This is a key Typora-like requirement.
+
+Maintain fixture-based tests for scenarios such as:
+
+* Enter on list item
+* Enter on empty list item
+* Backspace at heading/list/quote boundaries
+* link text edits
+* cursor motion across inline code and emphasis
+* toggling task lists
+* table edit edge cases
+
+## 20.3 Fixture Tests
+
+Use real Markdown fixtures for:
+
+* parse expectations
+* roundtrip save behavior
+* export regressions
+* tricky documents from real-world authoring
+
+## 20.4 Snapshot Tests
+
+Useful for:
+
+* HTML export
+* semantic tree output
+* theme token outputs
+
+## 20.5 Integration Tests
+
+Test:
+
+* open/edit/save flows
+* open folder and navigate files
+* external file changes
+* recovery flows
+* export command flows
+
+## 20.6 Performance Benchmarks
+
+Track:
+
+* startup time
+* parse time
+* edit latency
+* serialization time
+* export time
+
+---
+
+# 21. Definition of Done
+
+A feature is done only when:
+
+* implementation is merged
+* tests added or updated
+* supported behavior documented if relevant
+* no known major data-loss risk remains
+* acceptance criteria are met
+* CI passes
+
+---
+
+# 22. Release Engineering
+
+## 22.1 Channels
+
+* nightly
+* beta
+* stable
+
+## 22.2 CI/CD
+
+* build matrix for macOS, Windows, Linux
+* lint + tests required on PRs
+* release notes generated consistently
+* checksums published with releases
+
+## 22.3 Versioning
+
+* semver for core crates where practical
+* semantic app releases preferred
+
+## 22.4 Packaging
+
+* native installers or archives for each OS
+* clear install docs in README/releases
+
+---
+
+# 23. Security and Dependency Policy
+
+## 23.1 Repo Files
+
+Include:
+
+* `SECURITY.md`
+* vulnerability reporting process
+* dependency update policy
+
+## 23.2 Threat Areas
+
+* malicious raw HTML in Markdown
+* unsafe asset or path handling
+* export-time injection issues
+* malformed documents triggering parser/editor bugs
+
+## 23.3 Dependency Rules
+
+* minimize unnecessary dependencies
+* prefer well-maintained crates
+* periodically audit dependencies
+
+---
+
+# 24. Documentation Requirements
+
+At minimum:
+
+* `README.md`
+* `CONTRIBUTING.md`
+* `CODE_OF_CONDUCT.md`
+* `SECURITY.md`
+* architecture overview
+* supported Markdown behavior doc
+* known limitations doc
+* testing strategy doc
+* roadmap or milestone doc
+
+---
+
+# 25. Governance Model
+
+Recommended initial structure:
+
+* 1–3 maintainers with merge rights
+* GitHub Issues for bugs/features
+* GitHub Discussions for design topics and Q&A
+* ADRs for key architectural changes
+* milestone-driven roadmap visible to contributors
+
+Recommended issue labels:
+
+* `good first issue`
+* `help wanted`
+* `bug`
+* `regression`
+* `performance`
+* `ux`
+* `parser`
+* `editor-engine`
+* `workspace`
+* `export`
+* `theme`
+* `testing`
+* `documentation`
+* `security`
+* `breaking change`
+
+---
+
+# 26. Risks and Trade-offs
+
+## 26.1 The hard problem is interaction semantics
+
+The biggest risk is not parsing Markdown. It is making live rendering, cursor movement, selection, and structural editing feel natural.
+
+Mitigation:
+
+* invest early in editor-engine design
+* maintain editing-invariant regression suites
+* treat cursor bugs as product-critical defects
+
+## 26.2 Table editing can consume the roadmap
+
+Mitigation:
+
+* start with constrained, safe table interactions
+* optimize for correctness before spreadsheet-like richness
+
+## 26.3 UI-layer logic creep can weaken architecture
+
+Mitigation:
+
+* keep correctness in Rust services
+* front-end should dispatch commands and render derived state
+
+## 26.4 Export disappointment can hurt adoption
+
+Mitigation:
+
+* prioritize HTML/PDF fidelity
+* test representative docs
+* document limits clearly
+
+---
+
+# 27. MVP Release Criteria
+
+RustNote is ready for MVP release when:
+
+1. users can reliably create, open, edit, save, and reopen Markdown files
+2. the single-pane editing experience feels readable and stable for supported syntax
+3. core authoring flows for headings, lists, links, images, code blocks, and tables are usable in real work
+4. focus mode and typewriter mode are available and genuinely useful
+5. folder-based workspace flow is viable
+6. autosave and recovery work in common tested scenarios
+7. HTML and PDF export are production-usable for ordinary documents
+8. editing invariants are covered by tests and fixtures
+9. stable builds are published for macOS, Windows, Linux
+
+---
+
+# 28. Recommended ADR Topics
+
+The project should write ADRs for:
+
+1. Why Tauri for V1
+2. Exact supported Markdown flavor
+3. Internal document model choice
+4. Source fidelity and serialization guarantees
+5. Table editing scope in MVP
+6. Raw HTML handling policy
+7. PDF export engine choice
+8. Future extension/plugin boundary
+9. Focus mode and typewriter implementation strategy
+
+---
+
+# 29. Initial Backlog Proposal
+
+## P0
+
+* repo bootstrap
+* open/save file
+* parser integration
+* live rendering basics
+* editor engine foundation
+* list/quote behaviors
+* autosave/recovery skeleton
+
+## P1
+
+* links/images/code blocks
+* workspace tree
+* tables
+* outline panel
+* find/replace
+* themes
+
+## P2
+
+* focus mode
+* typewriter mode
+* export polish
+* recent files/folders
+* settings persistence
+
+## P3
+
+* frontmatter helpers
+* local history
+* custom CSS
+* math support
+
+---
+
+# 30. Final Product Definition
+
+RustNote is an open-source, Rust-first, Typora-like Markdown editor whose defining promise is not merely Markdown support, but a **calm, seamless, writing-first editing experience** with plain Markdown as the durable source of truth.
+
+The project should be judged not only by whether features exist, but by whether writing feels smooth, readable, low-friction, and trustworthy.
+
+That is the standard this PRD sets for the implementation.

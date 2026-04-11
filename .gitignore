@@ -1,6 +1,10 @@
 # Skill sources - large cloned repositories
 skill-source/
 
+# Worktrees - isolated development workspaces
+.worktrees/
+worktrees/
+
 # OpenCode skills directories
 **/.opencode/
 
@@ -17,4 +21,56 @@ skill-source/
 **/.vercel/
 **/.vercel_build_cache/
 
-
+**/target/
+**/bin/
+**/obj/
+**/vendor/
+**/logs/
+**/tmp/
+**/.DS_Store
+**/.env
+**/.env.local
+**/.env.*.local
+**/.vscode/
+**/.idea/
+**/.vs/
+**/.cache/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.coverage
+**/.coverage.*
+**/coverage.xml
+**/nosetests.xml
+**/test-reports/
+**/pytest_cache/
+**/mypy_cache/
+**/logs/
+**/tmp/
+**/debug/
+**/debug.log
+**/error.log
+**/output.log
+**/results/
+**/reports/
+**/screenshots/
+**/*.log
+**/*.tmp
+**/*.bak
+**/*.swp
+**/*.swo
+**/*.zip
+**/*.tar.gz
+**/*.tar
+**/*.rar
+**/*.7z
+**/*.exe
+**/*.dll
+**/*.so
+**/*.dylib
+**/*.pyc
+**/*.pyo
+**/*.class
+**/*.jar
+**/*.war
+**/*.ear
+**/*.iml
