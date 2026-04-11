@@ -187,6 +187,16 @@ check_file() {
     return 0
 }
 
+check_file_quiet() {
+    if [ ! -f "$1" ]; then
+        return 1
+    fi
+    if [ ! -s "$1" ] || [ $(wc -c < "$1") -lt 10 ]; then
+        return 1
+    fi
+    return 0
+}
+
 rerun_if_missing() {
     local file="$1"
     local prompt="$2"
@@ -225,7 +235,10 @@ log ""
 log "[1/6] PRD Gap Analysis - 差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
-GAP_PROMPT="请分析当前实现与PRD的差距。
+if check_file_quiet "$GAP_ANALYSIS"; then
+    log "  ⏭️  跳过Gap Analysis（已存在）"
+else
+    GAP_PROMPT="请分析当前实现与PRD的差距。
 
 ## 重要约束
 - 禁止使用 subagent 或 task 工具 spawning 其他 agent
@@ -237,14 +250,18 @@ $PRD_CONTENT
 ## 输出
 将差距分析报告写入到: $GAP_ANALYSIS"
 
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_PROMPT"
-rerun_if_missing "$GAP_ANALYSIS" "$GAP_PROMPT"
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_PROMPT"
+    rerun_if_missing "$GAP_ANALYSIS" "$GAP_PROMPT"
+fi
 
 log ""
 log "[2/6] Constitution - 建立项目原则..."
 save_checkpoint "$NEXT_ITERATION" "phase2"
 
-CONSTITUTION_PROMPT="You are creating a project constitution.
+if check_file_quiet "$CONSTITUTION_FILE"; then
+    log "  ⏭️  跳过Constitution（已存在）"
+else
+    CONSTITUTION_PROMPT="You are creating a project constitution.
 
 ## Task
 Update the project constitution at \`$WORKSPACE_DIR/.specify/memory/constitution.md\`. This file is a TEMPLATE containing placeholder tokens in square brackets (e.g. \`[PROJECT_NAME]\`, \`[PRINCIPLE_1_NAME]\`). Your job is to (a) collect/derive concrete values, (b) fill the template precisely, and (c) propagate any amendments across dependent artifacts.
@@ -263,14 +280,18 @@ $PRD_CONTENT
 ## Output
 Save the final constitution to: $CONSTITUTION_FILE"
 
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$CONSTITUTION_PROMPT"
-rerun_if_missing "$CONSTITUTION_FILE" "$CONSTITUTION_PROMPT"
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$CONSTITUTION_PROMPT"
+    rerun_if_missing "$CONSTITUTION_FILE" "$CONSTITUTION_PROMPT"
+fi
 
 log ""
 log "[3/6] Specify - 定义需求规范..."
 save_checkpoint "$NEXT_ITERATION" "phase3"
 
-SPECIFY_PROMPT="You are creating a feature specification.
+if check_file_quiet "$SPEC_FILE"; then
+    log "  ⏭️  跳过Specify（已存在）"
+else
+    SPECIFY_PROMPT="You are creating a feature specification.
 
 ## Task
 Create a detailed specification based on the requirements document, focusing on WHAT users need and WHY (not HOW to implement).
@@ -292,14 +313,18 @@ $(cat "$WORKSPACE_DIR/.specify/memory/constitution.md" 2>/dev/null || echo "Not 
 ## Output
 Save the specification to: $SPEC_FILE"
 
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$SPECIFY_PROMPT"
-rerun_if_missing "$SPEC_FILE" "$SPECIFY_PROMPT"
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$SPECIFY_PROMPT"
+    rerun_if_missing "$SPEC_FILE" "$SPECIFY_PROMPT"
+fi
 
 log ""
 log "[4/6] Plan - 创建技术实现计划..."
 save_checkpoint "$NEXT_ITERATION" "phase4"
 
-PLAN_PROMPT="You are creating a technical implementation plan.
+if check_file_quiet "$PLAN_FILE"; then
+    log "  ⏭️  跳过Plan（已存在）"
+else
+    PLAN_PROMPT="You are creating a technical implementation plan.
 
 ## Task
 Create an implementation plan following the plan template structure.
@@ -321,14 +346,18 @@ $(cat "$WORKSPACE_DIR/.specify/memory/constitution.md" 2>/dev/null || echo "Cons
 ## Output
 Save the plan to: $PLAN_FILE"
 
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PLAN_PROMPT"
-rerun_if_missing "$PLAN_FILE" "$PLAN_PROMPT"
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PLAN_PROMPT"
+    rerun_if_missing "$PLAN_FILE" "$PLAN_PROMPT"
+fi
 
 log ""
 log "[5/6] Tasks - 生成任务清单..."
 save_checkpoint "$NEXT_ITERATION" "phase5"
 
-TASKS_PROMPT="You are generating an actionable task list.
+if check_file_quiet "$TASKS_FILE"; then
+    log "  ⏭️  跳过Tasks（已存在）"
+else
+    TASKS_PROMPT="You are generating an actionable task list.
 
 ## Task
 Create a detailed, dependency-ordered task list from the implementation plan.
@@ -352,8 +381,9 @@ $(cat "$PLAN_FILE" 2>/dev/null || echo "Plan not yet created")
 ## Output
 Save the task list to: $TASKS_FILE"
 
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$TASKS_PROMPT"
-rerun_if_missing "$TASKS_FILE" "$TASKS_PROMPT"
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$TASKS_PROMPT"
+    rerun_if_missing "$TASKS_FILE" "$TASKS_PROMPT"
+fi
 
 log ""
 log "[6/6] Implement - 执行实现..."

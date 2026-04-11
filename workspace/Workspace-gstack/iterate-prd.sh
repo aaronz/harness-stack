@@ -95,6 +95,16 @@ resolve_prd_path() {
     fi
 }
 
+check_file_quiet() {
+    if [ ! -f "$1" ]; then
+        return 1
+    fi
+    if [ ! -s "$1" ] || [ $(wc -c < "$1") -lt 10 ]; then
+        return 1
+    fi
+    return 0
+}
+
 GAP_ANALYSIS_PROMPT='分析当前实现与PRD的差距：
 
 ## 任务
@@ -176,15 +186,21 @@ log ""
 log "[1/6] 执行PRD差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
-log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
+if check_file_quiet "$OUTPUTS_DIR/gap-analysis.md"; then
+    log "  ⏭️  跳过Gap Analysis（已存在）"
+else
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
+    log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
+fi
 
 log ""
 log "[2/6] 生成增量文档..."
 save_checkpoint "$NEXT_ITERATION" "phase2"
 
-INCREMENT=$(cat << 'INCEOF'
+if check_file_quiet "$OUTPUTS_DIR/increment.md"; then
+    log "  ⏭️  跳过Increment（已存在）"
+else
+    INCREMENT=$(cat << 'INCEOF'
 # GStack 迭代增量文档 v3.0
 
 ## 一、迭代目标
@@ -205,16 +221,18 @@ INCREMENT=$(cat << 'INCEOF'
 INCEOF
 )
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$(echo "$INCREMENT"; cat "$OUTPUTS_DIR/gap-analysis.md")" > "$OUTPUTS_DIR/increment.md"
-log "增量文档完成: $OUTPUTS_DIR/increment.md"
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$(echo "$INCREMENT"; cat "$OUTPUTS_DIR/gap-analysis.md")" > "$OUTPUTS_DIR/increment.md"
+    log "增量文档完成: $OUTPUTS_DIR/increment.md"
+fi
 
 log ""
 log "[3/6] Office Hours - 需求理解..."
 save_checkpoint "$NEXT_ITERATION" "phase3"
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /office-hours 命令进行需求理解深化。
+if check_file_quiet "$OUTPUTS_DIR/design-v${NEXT_ITERATION}.md"; then
+    log "  ⏭️  跳过Office Hours（已存在）"
+else
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /office-hours 命令进行需求理解深化。
 
 ## PRD
 $(cat $PRD_PATH)
@@ -227,13 +245,17 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 
 ## 输出
 更新设计文档到: $OUTPUTS_DIR/design-v${NEXT_ITERATION}.md"
+    log "Office Hours完成: $OUTPUTS_DIR/design-v${NEXT_ITERATION}.md"
+fi
 
 log ""
 log "[4/6] CEO Review + Eng Review..."
 save_checkpoint "$NEXT_ITERATION" "phase4"
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /plan-ceo-review 和 /plan-eng-review 命令进行审查。
+if check_file_quiet "$OUTPUTS_DIR/review-v${NEXT_ITERATION}.md"; then
+    log "  ⏭️  跳过Review（已存在）"
+else
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /plan-ceo-review 和 /plan-eng-review 命令进行审查。
 
 ## 增量文档
 $(cat "$OUTPUTS_DIR/increment.md")
@@ -248,6 +270,8 @@ $WORKSPACE_DIR/outputs/design.md
 
 ## 输出
 审查结果保存到: $OUTPUTS_DIR/review-v${NEXT_ITERATION}.md"
+    log "Review完成: $OUTPUTS_DIR/review-v${NEXT_ITERATION}.md"
+fi
 
 log ""
 log "[5/6] 执行实现..."
@@ -278,8 +302,10 @@ log ""
 log "[6/6] 验证与QA..."
 save_checkpoint "$NEXT_ITERATION" "phase6"
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /review 和 /qa 命令进行验证。
+if check_file_quiet "$OUTPUTS_DIR/verification-report.md"; then
+    log "  ⏭️  跳过Verification（已存在）"
+else
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /review 和 /qa 命令进行验证。
 
 ## 代码审查
 $OUTPUTS_DIR/review-v${NEXT_ITERATION}.md
@@ -291,6 +317,8 @@ $OUTPUTS_DIR/review-v${NEXT_ITERATION}.md
 
 ## 输出
 验证报告保存到: $OUTPUTS_DIR/verification-report.md"
+    log "Verification完成: $OUTPUTS_DIR/verification-report.md"
+fi
 
 log ""
 log_section "GStack 迭代完成!"

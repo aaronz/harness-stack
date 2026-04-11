@@ -95,6 +95,16 @@ resolve_prd_path() {
     fi
 }
 
+check_file_quiet() {
+    if [ ! -f "$1" ]; then
+        return 1
+    fi
+    if [ ! -s "$1" ] || [ $(wc -c < "$1") -lt 10 ]; then
+        return 1
+    fi
+    return 0
+}
+
 GAP_ANALYSIS_PROMPT='分析当前实现与PRD的差距：
 
 ## 任务
@@ -175,14 +185,21 @@ log ""
 log "[1/5] 执行PRD差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
-log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
+if check_file_quiet "$OUTPUTS_DIR/gap-analysis.md"; then
+    log "  ⏭️  跳过Gap Analysis（已存在）"
+else
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
+    log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
+fi
 
 log ""
 log "[2/5] 生成增量文档..."
 save_checkpoint "$NEXT_ITERATION" "phase2"
 
-INCREMENT=$(cat << 'INCEOF'
+if check_file_quiet "$OUTPUTS_DIR/increment.md"; then
+    log "  ⏭️  跳过Increment（已存在）"
+else
+    INCREMENT=$(cat << 'INCEOF'
 基于差距分析，生成第二轮迭代的增量文档：
 
 ## 输出格式
@@ -212,8 +229,9 @@ INCREMENT=$(cat << 'INCEOF'
 INCEOF
 )
 
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$(echo "$INCREMENT"; echo ""; echo "## 差距分析结果"; cat "$OUTPUTS_DIR/gap-analysis.md")" > "$OUTPUTS_DIR/increment.md"
-log "增量文档完成: $OUTPUTS_DIR/increment.md"
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$(echo "$INCREMENT"; echo ""; echo "## 差距分析结果"; cat "$OUTPUTS_DIR/gap-analysis.md")" > "$OUTPUTS_DIR/increment.md"
+    log "增量文档完成: $OUTPUTS_DIR/increment.md"
+fi
 
 log ""
 log "[3/5] 执行迭代开发..."
@@ -254,7 +272,10 @@ log ""
 log "[4/5] 生成验证报告..."
 save_checkpoint "$NEXT_ITERATION" "phase4"
 
-VERIFY=$(cat << 'VEOF'
+if check_file_quiet "$OUTPUTS_DIR/verification-report.md"; then
+    log "  ⏭️  跳过Verification（已存在）"
+else
+    VERIFY=$(cat << 'VEOF'
 验证第二轮迭代的产出：
 
 ## 验证清单
@@ -281,8 +302,9 @@ VERIFY=$(cat << 'VEOF'
 VEOF
 )
 
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$(echo "$VERIFY"; echo ""; echo "## 当前实现"; find "$PROPOSAL_DIR" -name "*.ts" -o -name "*.tsx" 2>/dev/null | head -20)" > "$OUTPUTS_DIR/verification-report.md"
-log "验证报告完成: $OUTPUTS_DIR/verification-report.md"
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$(echo "$VERIFY"; echo ""; echo "## 当前实现"; find "$PROPOSAL_DIR" -name "*.ts" -o -name "*.tsx" 2>/dev/null | head -20)" > "$OUTPUTS_DIR/verification-report.md"
+    log "验证报告完成: $OUTPUTS_DIR/verification-report.md"
+fi
 
 log ""
 log "=============================================="

@@ -95,6 +95,16 @@ resolve_prd_path() {
     fi
 }
 
+check_file_quiet() {
+    if [ ! -f "$1" ]; then
+        return 1
+    fi
+    if [ ! -s "$1" ] || [ $(wc -c < "$1") -lt 10 ]; then
+        return 1
+    fi
+    return 0
+}
+
 GAP_ANALYSIS_PROMPT='分析当前实现与PRD的差距：
 
 ## 任务
@@ -176,16 +186,21 @@ log ""
 log "[1/5] 执行PRD差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
-log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
+if check_file_quiet "$OUTPUTS_DIR/gap-analysis.md"; then
+    log "  ⏭️  跳过Gap Analysis（已存在）"
+else
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
+    log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
+fi
 
 log ""
 log "[2/5] 更新任务计划..."
 save_checkpoint "$NEXT_ITERATION" "phase2"
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "更新任务计划文档。
+if check_file_quiet "$OUTPUTS_DIR/task_plan_v${NEXT_ITERATION}.md"; then
+    log "  ⏭️  跳过Task Plan（已存在）"
+else
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "更新任务计划文档。
 
 ## PRD
 $(cat $PRD_PATH)
@@ -203,6 +218,8 @@ $IMPL_DIR/task_plan.md
 
 ## 输出
 更新后的任务计划保存到: $OUTPUTS_DIR/task_plan_v${NEXT_ITERATION}.md"
+    log "Task Plan完成: $OUTPUTS_DIR/task_plan_v${NEXT_ITERATION}.md"
+fi
 
 log ""
 log "[3/5] 执行增量开发..."
@@ -233,8 +250,10 @@ log ""
 log "[4/5] 更新发现文档..."
 save_checkpoint "$NEXT_ITERATION" "phase4"
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "更新findings.md文档。
+if check_file_quiet "$OUTPUTS_DIR/findings_v${NEXT_ITERATION}.md"; then
+    log "  ⏭️  跳过Findings（已存在）"
+else
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "更新findings.md文档。
 
 ## 差距分析
 $(cat $OUTPUTS_DIR/gap-analysis.md)
@@ -249,13 +268,17 @@ $IMPL_DIR/progress.md
 
 ## 输出
 更新后的发现保存到: $OUTPUTS_DIR/findings_v${NEXT_ITERATION}.md"
+    log "Findings完成: $OUTPUTS_DIR/findings_v${NEXT_ITERATION}.md"
+fi
 
 log ""
 log "[5/5] 生成验证报告..."
 save_checkpoint "$NEXT_ITERATION" "phase5"
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "生成迭代验证报告。
+if check_file_quiet "$OUTPUTS_DIR/verification-report.md"; then
+    log "  ⏭️  跳过Verification（已存在）"
+else
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "生成迭代验证报告。
 
 ## 差距分析
 $(cat $OUTPUTS_DIR/gap-analysis.md)
@@ -280,6 +303,8 @@ $OUTPUTS_DIR/task_plan_v${NEXT_ITERATION}.md
 
 ## 输出
 验证报告保存到: $OUTPUTS_DIR/verification-report.md"
+    log "Verification完成: $OUTPUTS_DIR/verification-report.md"
+fi
 
 log ""
 log_section "Planning with Files 迭代完成!"

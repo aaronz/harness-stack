@@ -95,6 +95,16 @@ resolve_prd_path() {
     fi
 }
 
+check_file_quiet() {
+    if [ ! -f "$1" ]; then
+        return 1
+    fi
+    if [ ! -s "$1" ] || [ $(wc -c < "$1") -lt 10 ]; then
+        return 1
+    fi
+    return 0
+}
+
 GAP_ANALYSIS_PROMPT='分析当前实现与PRD的差距：
 
 ## 任务
@@ -176,16 +186,21 @@ log ""
 log "[1/5] 执行PRD差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
-log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
+if check_file_quiet "$OUTPUTS_DIR/gap-analysis.md"; then
+    log "  ⏭️  跳过Gap Analysis（已存在）"
+else
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
+    log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
+fi
 
 log ""
 log "[2/5] Plan - 创建计划..."
 save_checkpoint "$NEXT_ITERATION" "phase2"
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /plan 命令创建实现计划。
+if check_file_quiet "$OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md"; then
+    log "  ⏭️  跳过Plan（已存在）"
+else
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /plan 命令创建实现计划。
 
 ## PRD
 $(cat $PRD_PATH)
@@ -200,6 +215,8 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 
 ## 输出
 计划保存到: $OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md"
+    log "Plan完成: $OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md"
+fi
 
 log ""
 log "[3/5] Execute - 执行实现..."
@@ -247,8 +264,10 @@ log ""
 log "[5/5] Verify & Review - 验证..."
 save_checkpoint "$NEXT_ITERATION" "phase5"
 
-cd "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /verify 和 /code-review 命令进行验证。
+if check_file_quiet "$OUTPUTS_DIR/verification-report.md"; then
+    log "  ⏭️  跳过Verification（已存在）"
+else
+    cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /verify 和 /code-review 命令进行验证。
 
 ## 计划
 $OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md
@@ -273,6 +292,8 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 
 ## 输出
 验证报告保存到: $OUTPUTS_DIR/verification-report.md"
+    log "Verification完成: $OUTPUTS_DIR/verification-report.md"
+fi
 
 log ""
 log_section "Everything Claude Code 迭代完成!"
