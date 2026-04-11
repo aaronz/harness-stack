@@ -65,6 +65,11 @@ run_phase_constitution() {
         return 0
     fi
 
+    local constitution_content="No Constitution file found"
+    if [ -n "$constitution_path" ] && [ -f "$constitution_path" ]; then
+        constitution_content=$(cat "$constitution_path" 2>/dev/null || echo "Constitution does not exist")
+    fi
+
     PROMPT_CONSTITUTION="Check if Constitution needs updating and write update suggestions to file: $const_update_file
 
 ## Important Constraints
@@ -74,7 +79,7 @@ run_phase_constitution() {
 - Use only Read, Write, Edit, Grep, LSP and other direct tools
 
 ## Constitution
-$(cat $constitution_path 2>/dev/null || echo "Constitution does not exist")
+$constitution_content
 
 ## Gap Analysis
 $(cat $gap_analysis)
@@ -104,6 +109,11 @@ run_phase_spec() {
         return 0
     fi
 
+    local constitution_content="Use default Constitution"
+    if [ -n "$constitution" ] && [ -f "$constitution" ]; then
+        constitution_content=$(cat "$constitution" 2>/dev/null || echo "Use default Constitution")
+    fi
+
     PROMPT_SPEC="Based on PRD and gap analysis, update the specification document and write to file: $spec_file
 
 ## Important Constraints
@@ -119,7 +129,7 @@ $(cat $prd_path)
 $(cat $gap_analysis)
 
 ## Constitution
-$(cat $constitution 2>/dev/null || echo "Use default Constitution")
+$constitution_content
 
 ## Task
 1. Based on gap analysis, update spec.md
@@ -148,6 +158,11 @@ run_phase_plan() {
         return 0
     fi
 
+    local constitution_content=""
+    if [ -n "$constitution" ] && [ -f "$constitution" ]; then
+        constitution_content=$(cat "$constitution" 2>/dev/null || echo "")
+    fi
+
     PROMPT_PLAN="Based on Spec, update implementation plan and task list, and write them to files.
 
 ## Important Constraints
@@ -160,7 +175,7 @@ run_phase_plan() {
 $(cat $spec_file)
 
 ## Constitution
-$(cat $constitution 2>/dev/null || echo "")
+$constitution_content
 
 ## Gap Analysis
 $(cat $gap_analysis)
@@ -324,6 +339,11 @@ implement_task() {
     echo ""
     echo "Starting implementation..."
 
+    local constitution_content="Use default Constitution"
+    if [ -n "$constitution" ] && [ -f "$constitution" ]; then
+        constitution_content=$(cat "$constitution" 2>/dev/null || echo "Use default Constitution")
+    fi
+
     local prompt="Implement task: $task_id
 
 ## Important Constraints
@@ -339,7 +359,7 @@ $(echo "$task_details" | python3 -c "import sys,json; d=json.load(sys.stdin); pr
 $(cat $spec_file)
 
 ## Constitution
-$(cat $constitution 2>/dev/null || echo "Use default Constitution")
+$constitution_content
 
 ## Implementation Directory
 ./iterations/src/
