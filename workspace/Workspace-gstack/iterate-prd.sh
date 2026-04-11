@@ -324,13 +324,13 @@ $(cat "$OUTPUTS_DIR/increment.md")
 
 ## 输出格式
 将以下格式的状态报告写入到: $TASK_STATUS_FILE
-```
+\`\`\`
 COMPLETED_TASKS=<逗号分隔的任务描述>
 REMAINING_TASKS=<逗号分隔的任务描述>
 P0_REMAINING=<数字：P0剩余数量>
 P1_REMAINING=<数字：P1剩余数量>
 TOTAL_PROGRESS=<已完成数>/<总数>
-```
+\`\`\`
 
 如果所有P0任务已完成，输出: READY_FOR_VERIFICATION=true
 如果还有P0任务未完成，输出: READY_FOR_VERIFICATION=false")
