@@ -50,7 +50,7 @@ log "[1/5] 执行PRD差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
 log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
 
 log ""
@@ -88,7 +88,7 @@ INCEOF
 )
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$(echo "$INCREMENT"; echo ""; echo "## 差距分析结果"; cat "$OUTPUTS_DIR/gap-analysis.md")" > "$OUTPUTS_DIR/increment.md"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$(echo "$INCREMENT"; echo ""; echo "## 差距分析结果"; cat "$OUTPUTS_DIR/gap-analysis.md")" > "$OUTPUTS_DIR/increment.md"
 log "增量文档完成: $OUTPUTS_DIR/increment.md"
 
 log ""
@@ -124,7 +124,7 @@ ITEOF
 )
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$(eval echo \"$ITERATION_TASK\")"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$(eval echo \"$ITERATION_TASK\")"
 log "迭代开发完成"
 
 log ""
@@ -159,7 +159,7 @@ VEOF
 )
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$(echo "$VERIFY"; echo ""; echo "## 当前实现"; find "$PROPOSAL_DIR" -name "*.ts" -o -name "*.tsx" 2>/dev/null | head -20)" > "$OUTPUTS_DIR/verification-report.md"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$(echo "$VERIFY"; echo ""; echo "## 当前实现"; find "$PROPOSAL_DIR" -name "*.ts" -o -name "*.tsx" 2>/dev/null | head -20)" > "$OUTPUTS_DIR/verification-report.md"
 log "验证报告完成: $OUTPUTS_DIR/verification-report.md"
 
 log ""

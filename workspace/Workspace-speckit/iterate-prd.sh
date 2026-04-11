@@ -73,7 +73,7 @@ rerun_if_missing() {
         if [ $attempt -lt $max_retries ]; then
             log "  🔄 重新生成 ($attempt/$max_retries)..."
             cd "$WORKSPACE_DIR"
-            opencode run -m "$MODEL" "$prompt"
+            opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$prompt"
         fi
     done
 
@@ -111,7 +111,7 @@ $PRD_CONTENT
 将差距分析报告写入到: $GAP_ANALYSIS"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$GAP_PROMPT"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$GAP_PROMPT"
 rerun_if_missing "$GAP_ANALYSIS" "$GAP_PROMPT"
 
 log ""
@@ -138,7 +138,7 @@ $PRD_CONTENT
 Save the final constitution to: $CONSTITUTION_FILE"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$CONSTITUTION_PROMPT"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$CONSTITUTION_PROMPT"
 rerun_if_missing "$CONSTITUTION_FILE" "$CONSTITUTION_PROMPT"
 
 log ""
@@ -168,7 +168,7 @@ $(cat "$WORKSPACE_DIR/.specify/memory/constitution.md" 2>/dev/null || echo "Not 
 Save the specification to: $SPEC_FILE"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$SPECIFY_PROMPT"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$SPECIFY_PROMPT"
 rerun_if_missing "$SPEC_FILE" "$SPECIFY_PROMPT"
 
 log ""
@@ -198,7 +198,7 @@ $(cat "$WORKSPACE_DIR/.specify/memory/constitution.md" 2>/dev/null || echo "Cons
 Save the plan to: $PLAN_FILE"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$PLAN_PROMPT"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$PLAN_PROMPT"
 rerun_if_missing "$PLAN_FILE" "$PLAN_PROMPT"
 
 log ""
@@ -230,7 +230,7 @@ $(cat "$PLAN_FILE" 2>/dev/null || echo "Plan not yet created")
 Save the task list to: $TASKS_FILE"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$TASKS_PROMPT"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$TASKS_PROMPT"
 rerun_if_missing "$TASKS_FILE" "$TASKS_PROMPT"
 
 log ""
@@ -262,7 +262,7 @@ $(cat "$GAP_ANALYSIS")
 Implement all code files according to the task list. Create the complete working application."
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$IMPLEMENT_PROMPT"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$IMPLEMENT_PROMPT"
 
 log ""
 log_section "Spec Kit 迭代完成!"

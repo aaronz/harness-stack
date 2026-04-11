@@ -45,7 +45,7 @@ log "[1/5] 执行PRD差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
 log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
 
 log ""
@@ -53,7 +53,7 @@ log "[2/5] 更新任务计划..."
 save_checkpoint "$NEXT_ITERATION" "phase2"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "更新任务计划文档。
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "更新任务计划文档。
 
 ## PRD
 $(cat $PRD_PATH)
@@ -77,7 +77,7 @@ log "[3/5] 执行增量开发..."
 save_checkpoint "$NEXT_ITERATION" "phase3"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "基于任务计划执行迭代开发。
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "基于任务计划执行迭代开发。
 
 ## 任务计划
 $OUTPUTS_DIR/task_plan_v${NEXT_ITERATION}.md
@@ -102,7 +102,7 @@ log "[4/5] 更新发现文档..."
 save_checkpoint "$NEXT_ITERATION" "phase4"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "更新findings.md文档。
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "更新findings.md文档。
 
 ## 差距分析
 $(cat $OUTPUTS_DIR/gap-analysis.md)
@@ -123,7 +123,7 @@ log "[5/5] 生成验证报告..."
 save_checkpoint "$NEXT_ITERATION" "phase5"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "生成迭代验证报告。
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "生成迭代验证报告。
 
 ## 差距分析
 $(cat $OUTPUTS_DIR/gap-analysis.md)

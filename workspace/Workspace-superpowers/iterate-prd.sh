@@ -44,7 +44,7 @@ log "[1/5] 执行PRD差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
 log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
 
 log ""
@@ -52,7 +52,7 @@ log "[2/5] Brainstorming - 需求理解..."
 save_checkpoint "$NEXT_ITERATION" "phase2"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "请使用 brainstorming skill 分析差距并深化设计。
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "请使用 brainstorming skill 分析差距并深化设计。
 
 ## PRD
 $(cat $PRD_PATH)
@@ -73,7 +73,7 @@ log "[3/5] Writing Plans - 创建计划..."
 save_checkpoint "$NEXT_ITERATION" "phase3"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "请使用 writing-plans skill 创建详细实现计划。
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "请使用 writing-plans skill 创建详细实现计划。
 
 ## 设计文档
 $OUTPUTS_DIR/design_v${NEXT_ITERATION}.md
@@ -98,7 +98,7 @@ log "[4/5] Subagent-Driven Development..."
 save_checkpoint "$NEXT_ITERATION" "phase4"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "请使用 subagent-driven-development skill 执行实现。
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "请使用 subagent-driven-development skill 执行实现。
 
 ## 实现计划
 $OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md
@@ -123,7 +123,7 @@ log "[5/5] Verification - 验证..."
 save_checkpoint "$NEXT_ITERATION" "phase5"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "请使用 verification-before-completion skill 进行最终验证。
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "请使用 verification-before-completion skill 进行最终验证。
 
 ## 实现产出
 检查$IMPL_DIR/目录

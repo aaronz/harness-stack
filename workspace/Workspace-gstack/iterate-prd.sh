@@ -45,7 +45,7 @@ log "[1/6] 执行PRD差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
 log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
 
 log ""
@@ -74,7 +74,7 @@ INCEOF
 )
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "$(echo "$INCREMENT"; cat "$OUTPUTS_DIR/gap-analysis.md")" > "$OUTPUTS_DIR/increment.md"
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$(echo "$INCREMENT"; cat "$OUTPUTS_DIR/gap-analysis.md")" > "$OUTPUTS_DIR/increment.md"
 log "增量文档完成: $OUTPUTS_DIR/increment.md"
 
 log ""
@@ -82,7 +82,7 @@ log "[3/6] Office Hours - 需求理解..."
 save_checkpoint "$NEXT_ITERATION" "phase3"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "使用 /office-hours 命令进行需求理解深化。
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "使用 /office-hours 命令进行需求理解深化。
 
 ## PRD
 $(cat $PRD_PATH)
@@ -101,7 +101,7 @@ log "[4/6] CEO Review + Eng Review..."
 save_checkpoint "$NEXT_ITERATION" "phase4"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "使用 /plan-ceo-review 和 /plan-eng-review 命令进行审查。
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "使用 /plan-ceo-review 和 /plan-eng-review 命令进行审查。
 
 ## 增量文档
 $(cat "$OUTPUTS_DIR/increment.md")
@@ -122,7 +122,7 @@ log "[5/6] 执行实现..."
 save_checkpoint "$NEXT_ITERATION" "phase5"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "使用 gstack 的实现模式执行迭代开发。
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "使用 gstack 的实现模式执行迭代开发。
 
 ## 增量文档
 $(cat "$OUTPUTS_DIR/increment.md")
@@ -147,7 +147,7 @@ log "[6/6] 验证与QA..."
 save_checkpoint "$NEXT_ITERATION" "phase6"
 
 cd "$WORKSPACE_DIR"
-opencode run -m "$MODEL" "使用 /review 和 /qa 命令进行验证。
+opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "使用 /review 和 /qa 命令进行验证。
 
 ## 代码审查
 $OUTPUTS_DIR/review-v${NEXT_ITERATION}.md
