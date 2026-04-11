@@ -43,9 +43,13 @@ rerun_if_missing() {
             return 0
         fi
         attempt=$((attempt + 1))
-        if [ $attempt -lt $max_retries ]; then
-            echo "Retrying ($attempt/$max_retries)..."
-            run_opencode_with_session_export "$prompt" "$SESSION_EXPORT_DIR/${phase_name}_retry${attempt}.json" "$MODEL"
+        echo "Attempt $attempt/$max_retries for: $file"
+        echo "Running opencode..."
+        run_opencode_with_session_export "$prompt" "$SESSION_EXPORT_DIR/${phase_name}_retry${attempt}.json" "$MODEL"
+        echo "opencode command finished"
+        if check_file "$file"; then
+            echo "File generated successfully: $file"
+            return 0
         fi
     done
 
@@ -144,16 +148,22 @@ run_opencode_with_session_export() {
     local prompt="$1"
     local export_file="${2:-}"
     local model="${3:-$MODEL}"
-    
+
+    echo "DEBUG: run_opencode_with_session_export called with model=$model"
+
     local timestamp
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
     local temp_output
     temp_output=$(mktemp)
+    echo "DEBUG: temp_output=$temp_output"
 
+    echo "DEBUG: Executing: opencode run -m \"$model\" \"$prompt\" 2>&1 > $temp_output"
     opencode run -m "$model" "$prompt" 2>&1 > "$temp_output" || true
 
+    echo "DEBUG: opencode command completed, checking output"
     if [ -f "$temp_output" ] && [ -s "$temp_output" ]; then
+        echo "DEBUG: temp_output has content"
         local session_id
         session_id=$(grep -oE '"sessionID":"[^"]+"' "$temp_output" | head -1 | sed 's/"sessionID":"//;s/"$//')
 
@@ -161,9 +171,12 @@ run_opencode_with_session_export() {
             echo "Exporting session: $session_id -> $export_file"
             opencode export "$session_id" > "$export_file" 2>/dev/null || true
         fi
+    else
+        echo "DEBUG: temp_output is empty or not found"
     fi
 
     rm -f "$temp_output"
+    echo "DEBUG: run_opencode_with_session_export done"
 }
 
 export_session_by_id() {
