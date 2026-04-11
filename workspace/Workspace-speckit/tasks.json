@@ -1,0 +1,81 @@
+{
+  "tasks": [
+    {
+      "id": "IT-001",
+      "priority": "P0",
+      "title": "Create scripts/ directory structure",
+      "description": "Create scripts/ directory for modular script organization",
+      "status": "done",
+      "test_criteria": ["scripts/ directory exists"],
+      "test_commands": ["test -d scripts"],
+      "impl_notes": "Directory created for housing modular bash scripts",
+      "dependencies": []
+    },
+    {
+      "id": "IT-002",
+      "priority": "P0",
+      "title": "Create scripts/task-json.sh",
+      "description": "Create task-json.sh for task JSON generation, status management, and retrieval functions",
+      "status": "done",
+      "test_criteria": ["task-json.sh exists and is executable"],
+      "test_commands": ["test -f scripts/task-json.sh && test -x scripts/task-json.sh"],
+      "impl_notes": "Includes get_next_todo_task, check_remaining_p0_p1, update_task_status, generate_tasks_json functions",
+      "dependencies": ["IT-001"]
+    },
+    {
+      "id": "IT-003",
+      "priority": "P0",
+      "title": "Create scripts/constitution.sh",
+      "description": "Create constitution.sh for loading and validating project constitutions",
+      "status": "done",
+      "test_criteria": ["constitution.sh exists and is executable"],
+      "test_commands": ["test -f scripts/constitution.sh && test -x scripts/constitution.sh"],
+      "impl_notes": "Includes load_constitution, validate_constitution, get_constitution_summary functions",
+      "dependencies": ["IT-001"]
+    },
+    {
+      "id": "IT-004",
+      "priority": "P0",
+      "title": "Create scripts/opencode-wrapper.sh",
+      "description": "Create opencode-wrapper.sh for opencode CLI execution and session management",
+      "status": "done",
+      "test_criteria": ["opencode-wrapper.sh exists and is executable"],
+      "test_commands": ["test -f scripts/opencode-wrapper.sh && test -x scripts/opencode-wrapper.sh"],
+      "impl_notes": "Includes check_file, generate_if_missing, run_phase, run_opencode_with_session_export functions",
+      "dependencies": ["IT-001"]
+    },
+    {
+      "id": "IT-005",
+      "priority": "P0",
+      "title": "Create scripts/phases.sh",
+      "description": "Create phases.sh containing phase execution logic for the iteration workflow",
+      "status": "done",
+      "test_criteria": ["phases.sh exists and is executable"],
+      "test_commands": ["test -f scripts/phases.sh && test -x scripts/phases.sh"],
+      "impl_notes": "Includes run_phase_gap_analysis, run_phase_constitution, run_phase_spec, run_phase_plan, run_phase_implementation, run_phase_verification, implement_task functions",
+      "dependencies": ["IT-001", "IT-002", "IT-003", "IT-004"]
+    },
+    {
+      "id": "IT-006",
+      "priority": "P0",
+      "title": "Create iterate-prd.sh main script",
+      "description": "Create the main iterate-prd.sh script that orchestrates the 6-phase iteration workflow",
+      "status": "done",
+      "test_criteria": ["iterate-prd.sh exists and is executable"],
+      "test_commands": ["test -f iterate-prd.sh && test -x iterate-prd.sh"],
+      "impl_notes": "Main entry point that sources all scripts and runs phases 1-6",
+      "dependencies": ["IT-002", "IT-003", "IT-004", "IT-005"]
+    },
+    {
+      "id": "IT-007",
+      "priority": "P0",
+      "title": "Verify all scripts are executable",
+      "description": "Ensure all created scripts have correct execute permissions",
+      "status": "todo",
+      "test_criteria": ["All scripts are executable"],
+      "test_commands": ["chmod +x iterate-prd.sh scripts/*.sh"],
+      "impl_notes": "Set executable bit on all bash scripts",
+      "dependencies": ["IT-001", "IT-002", "IT-003", "IT-004", "IT-005", "IT-006"]
+    }
+  ]
+}
