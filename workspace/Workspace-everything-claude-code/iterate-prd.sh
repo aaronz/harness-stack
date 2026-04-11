@@ -45,7 +45,7 @@ log "[1/5] 执行PRD差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
 cd "$WORKSPACE_DIR"
-opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
+cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
 log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
 
 log ""
@@ -53,7 +53,7 @@ log "[2/5] Plan - 创建计划..."
 save_checkpoint "$NEXT_ITERATION" "phase2"
 
 cd "$WORKSPACE_DIR"
-opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "使用 /plan 命令创建实现计划。
+cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /plan 命令创建实现计划。
 
 ## PRD
 $(cat $PRD_PATH)
@@ -74,7 +74,7 @@ log "[3/5] Execute - 执行实现..."
 save_checkpoint "$NEXT_ITERATION" "phase3"
 
 cd "$WORKSPACE_DIR"
-opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "执行实现。
+cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "执行实现。
 
 ## 计划
 $OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md
@@ -98,7 +98,7 @@ log "[4/5] TDD - 测试驱动（如需要）..."
 save_checkpoint "$NEXT_ITERATION" "phase4"
 
 cd "$WORKSPACE_DIR"
-opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "使用 /tdd 命令为P0功能编写测试。
+cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /tdd 命令为P0功能编写测试。
 
 ## 计划
 $OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md
@@ -116,7 +116,7 @@ log "[5/5] Verify & Review - 验证..."
 save_checkpoint "$NEXT_ITERATION" "phase5"
 
 cd "$WORKSPACE_DIR"
-opencode run --dir "$WORKSPACE_DIR" -m "$MODEL" "使用 /verify 和 /code-review 命令进行验证。
+cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "使用 /verify 和 /code-review 命令进行验证。
 
 ## 计划
 $OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md
