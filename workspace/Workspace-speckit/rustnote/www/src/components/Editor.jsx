@@ -10,6 +10,14 @@ export default function Editor() {
   const [cursorOffset, setCursorOffset] = useState(0);
   const renderTimeoutRef = useRef(null);
 
+  // Search state management
+  const [searchQuery, setSearchQuery] = useState('');
+  const [replaceQuery, setReplaceQuery] = useState('');
+  const [caseSensitive, setCaseSensitive] = useState(false);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(-1);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isReplaceOpen, setIsReplaceOpen] = useState(false);
+
   useEffect(() => {
     if (editorRef.current && currentDocument?.content !== undefined) {
       const currentContent = editorRef.current.textContent;
@@ -93,6 +101,20 @@ export default function Editor() {
     if (modifier && e.key === 'i') {
       e.preventDefault();
       wrapSelection('*', '*');
+      return;
+    }
+
+    if (modifier && e.key === 'f') {
+      e.preventDefault();
+      setIsSearchOpen(true);
+      setIsReplaceOpen(false);
+      return;
+    }
+
+    if (modifier && e.key === 'h') {
+      e.preventDefault();
+      setIsSearchOpen(true);
+      setIsReplaceOpen(true);
       return;
     }
 

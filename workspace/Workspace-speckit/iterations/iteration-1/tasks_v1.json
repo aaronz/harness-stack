@@ -5,7 +5,7 @@
       "priority": "P0",
       "title": "Find/Replace UI - SearchPanel Component",
       "description": "Create SearchPanel component (www/src/components/SearchPanel.jsx) with search input, replace input, Replace/Replace All buttons, case-sensitive toggle, match count display, and close button",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "SearchPanel renders correctly",
         "All form inputs are functional",
@@ -23,7 +23,7 @@
       "priority": "P0",
       "title": "Find/Replace UI - Search State Management",
       "description": "Add search state management to Editor: searchQuery, replaceQuery, caseSensitive, currentMatchIndex, isSearchOpen, isReplaceOpen states",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Editor component has all required search states",
         "State updates correctly on user interaction"
