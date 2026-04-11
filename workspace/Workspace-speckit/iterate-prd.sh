@@ -400,6 +400,49 @@ Implement all code files according to the task list. Create the complete working
 cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$IMPLEMENT_PROMPT"
 
 log ""
+log "[6/6] 更新任务状态..."
+save_checkpoint "$NEXT_ITERATION" "phase6b"
+
+TASK_STATUS_FILE="$OUTPUTS_DIR/task_status.txt"
+PROMPT=$(build_prompt "分析任务完成情况并输出状态报告。
+
+## 任务列表
+$(cat "$TASKS_FILE")
+
+## 任务
+1. 读取任务列表中所有任务的状态
+2. 统计已完成和剩余任务
+3. 输出状态报告到文件
+
+## 输出格式
+将以下格式的状态报告写入到: $TASK_STATUS_FILE
+```
+COMPLETED_TASKS=<逗号分隔的任务ID列表>
+REMAINING_TASKS=<逗号分隔的任务ID列表>
+P0_REMAINING=<数字：P0剩余数量>
+P1_REMAINING=<数字：P1剩余数量>
+TOTAL_PROGRESS=<已完成数>/<总数>
+```
+
+如果所有P0任务已完成，输出: READY_FOR_VERIFICATION=true
+如果还有P0任务未完成，输出: READY_FOR_VERIFICATION=false")
+cd "$WORKSPACE_DIR" && opencode run -m "$MODEL" "$PROMPT" 2>/dev/null || true
+
+if [ -f "$TASK_STATUS_FILE" ]; then
+    log "任务状态已更新:"
+    cat "$TASK_STATUS_FILE" | while read line; do log "  $line"; done
+    
+    READY_FOR_VERIFY=$(grep "READY_FOR_VERIFICATION=" "$TASK_STATUS_FILE" 2>/dev/null | cut -d= -f2)
+    if [ "$READY_FOR_VERIFY" = "true" ]; then
+        log "  ✅ 所有P0任务完成，可以进入验证阶段"
+    else
+        log "  ⚠️  仍有P0任务未完成，建议继续实现"
+    fi
+else
+    log "  ⚠️  任务状态文件未生成"
+fi
+
+log ""
 log_section "Spec Kit 迭代完成!"
 log "产出文件:"
 log "  - Gap Analysis: $GAP_ANALYSIS"
@@ -407,4 +450,5 @@ log "  - Constitution: $CONSTITUTION_FILE"
 log "  - Specification: $SPEC_FILE"
 log "  - Implementation Plan: $PLAN_FILE"
 log "  - Task List: $TASKS_FILE"
+log "  - Task Status: $TASK_STATUS_FILE"
 log "日志保存于: $LOG_FILE"
