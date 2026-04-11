@@ -54,7 +54,11 @@ parse_args() {
 log() {
     local timestamp
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    echo "[$timestamp] $1"
+    local message="[$timestamp] $1"
+    echo "$message"
+    if [ -n "$LOG_FILE" ]; then
+        echo "$message" >> "$LOG_FILE"
+    fi
 }
 
 log_section() {
