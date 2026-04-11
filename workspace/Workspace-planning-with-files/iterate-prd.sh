@@ -30,6 +30,7 @@ fi
 
 PRD_PATH=$(resolve_prd_path "$PRD_INPUT" "$WORKSPACE_DIR")
 IMPL_DIR="$WORKSPACE_DIR/outputs"
+mkdir -p "$IMPL_DIR"
 
 log_section "Planning with Files 迭代开发 v3.0"
 log "工作目录: $WORKSPACE_DIR"
@@ -42,6 +43,7 @@ log ""
 log "[1/5] 执行PRD差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
 log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
 
@@ -49,6 +51,7 @@ log ""
 log "[2/5] 更新任务计划..."
 save_checkpoint "$NEXT_ITERATION" "phase2"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "更新任务计划文档。
 
 ## PRD
@@ -58,7 +61,7 @@ $(cat $PRD_PATH)
 $(cat $OUTPUTS_DIR/gap-analysis.md)
 
 ## 现有任务计划
-./outputs/task_plan.md
+$IMPL_DIR/task_plan.md
 
 ## 任务
 1. 基于差距分析，更新task_plan.md
@@ -66,27 +69,28 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 3. 更新进度追踪
 
 ## 输出
-更新后的任务计划保存到: ./outputs/iteration-${NEXT_ITERATION}/task_plan_v${NEXT_ITERATION}.md"
+更新后的任务计划保存到: $OUTPUTS_DIR/task_plan_v${NEXT_ITERATION}.md"
 
 log ""
 log "[3/5] 执行增量开发..."
 save_checkpoint "$NEXT_ITERATION" "phase3"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "基于任务计划执行迭代开发。
 
 ## 任务计划
-./outputs/iteration-${NEXT_ITERATION}/task_plan_v${NEXT_ITERATION}.md
+$OUTPUTS_DIR/task_plan_v${NEXT_ITERATION}.md
 
 ## PRD
 $(cat $PRD_PATH)
 
 ## 实现目录
-$IMPL_DIR
+$IMPL_DIR/
 
 ## 任务
 1. 优先实现P0任务
-2. 更新进度到progress.md
-3. 添加新发现到findings.md
+2. 更新进度到$IMPL_DIR/progress.md
+3. 添加新发现到$IMPL_DIR/findings.md
 4. 确保Build通过
 
 ## 验证
@@ -96,13 +100,14 @@ log ""
 log "[4/5] 更新发现文档..."
 save_checkpoint "$NEXT_ITERATION" "phase4"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "更新findings.md文档。
 
 ## 差距分析
 $(cat $OUTPUTS_DIR/gap-analysis.md)
 
 ## 任务执行情况
-./outputs/progress.md
+$IMPL_DIR/progress.md
 
 ## 任务
 1. 记录新发现的问题
@@ -110,22 +115,23 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 3. 更新LLM Provider对比分析（如有）
 
 ## 输出
-更新后的发现保存到: ./outputs/iteration-${NEXT_ITERATION}/findings_v${NEXT_ITERATION}.md"
+更新后的发现保存到: $OUTPUTS_DIR/findings_v${NEXT_ITERATION}.md"
 
 log ""
 log "[5/5] 生成验证报告..."
 save_checkpoint "$NEXT_ITERATION" "phase5"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "生成迭代验证报告。
 
 ## 差距分析
 $(cat $OUTPUTS_DIR/gap-analysis.md)
 
 ## 任务计划
-./outputs/iteration-${NEXT_ITERATION}/task_plan_v${NEXT_ITERATION}.md
+$OUTPUTS_DIR/task_plan_v${NEXT_ITERATION}.md
 
 ## 实现状态
-检查./outputs/目录下的代码
+检查$IMPL_DIR/目录下的代码
 
 ## 输出格式
 # 迭代验证报告
@@ -140,7 +146,7 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 ## 下一步建议
 
 ## 输出
-验证报告保存到: ./outputs/iteration-${NEXT_ITERATION}/verification-report.md"
+验证报告保存到: $OUTPUTS_DIR/verification-report.md"
 
 log ""
 log_section "Planning with Files 迭代完成!"

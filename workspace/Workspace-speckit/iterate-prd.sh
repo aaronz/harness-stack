@@ -71,6 +71,7 @@ rerun_if_missing() {
         attempt=$((attempt + 1))
         if [ $attempt -lt $max_retries ]; then
             log "  🔄 重新生成 ($attempt/$max_retries)..."
+            cd "$WORKSPACE_DIR"
             opencode run -m "$MODEL" "$prompt"
         fi
     done
@@ -108,6 +109,7 @@ $PRD_CONTENT
 ## 输出
 将差距分析报告写入到: $GAP_ANALYSIS"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "$GAP_PROMPT"
 rerun_if_missing "$GAP_ANALYSIS" "$GAP_PROMPT"
 
@@ -118,22 +120,23 @@ save_checkpoint "$NEXT_ITERATION" "phase2"
 CONSTITUTION_PROMPT="You are creating a project constitution.
 
 ## Task
-Update the project constitution at \`.specify/memory/constitution.md\`. This file is a TEMPLATE containing placeholder tokens in square brackets (e.g. \`[PROJECT_NAME]\`, \`[PRINCIPLE_1_NAME]\`). Your job is to (a) collect/derive concrete values, (b) fill the template precisely, and (c) propagate any amendments across dependent artifacts.
+Update the project constitution at \`$WORKSPACE_DIR/.specify/memory/constitution.md\`. This file is a TEMPLATE containing placeholder tokens in square brackets (e.g. \`[PROJECT_NAME]\`, \`[PRINCIPLE_1_NAME]\`). Your job is to (a) collect/derive concrete values, (b) fill the template precisely, and (c) propagate any amendments across dependent artifacts.
 
 ## Requirements Document
 $PRD_CONTENT
 
 ## Execution Steps
-1. Load the existing constitution at \`.specify/memory/constitution.md\`
+1. Load the existing constitution at \`$WORKSPACE_DIR/.specify/memory/constitution.md\`
 2. Analyze the requirements document to understand the project
 3. Fill all placeholder tokens with concrete values derived from the requirements
 4. Define principles appropriate for this specific project based on what the requirements demand
 5. Ensure each Principle section has: succinct name, non-negotiable rules, explicit rationale
-6. Write the completed constitution to \`.specify/memory/constitution.md\`
+6. Write the completed constitution to \`$CONSTITUTION_FILE\`
 
 ## Output
 Save the final constitution to: $CONSTITUTION_FILE"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "$CONSTITUTION_PROMPT"
 rerun_if_missing "$CONSTITUTION_FILE" "$CONSTITUTION_PROMPT"
 
@@ -163,6 +166,7 @@ $(cat "$WORKSPACE_DIR/.specify/memory/constitution.md" 2>/dev/null || echo "Not 
 ## Output
 Save the specification to: $SPEC_FILE"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "$SPECIFY_PROMPT"
 rerun_if_missing "$SPEC_FILE" "$SPECIFY_PROMPT"
 
@@ -192,6 +196,7 @@ $(cat "$WORKSPACE_DIR/.specify/memory/constitution.md" 2>/dev/null || echo "Cons
 ## Output
 Save the plan to: $PLAN_FILE"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "$PLAN_PROMPT"
 rerun_if_missing "$PLAN_FILE" "$PLAN_PROMPT"
 
@@ -223,6 +228,7 @@ $(cat "$PLAN_FILE" 2>/dev/null || echo "Plan not yet created")
 ## Output
 Save the task list to: $TASKS_FILE"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "$TASKS_PROMPT"
 rerun_if_missing "$TASKS_FILE" "$TASKS_PROMPT"
 
@@ -254,6 +260,7 @@ $(cat "$GAP_ANALYSIS")
 ## Output
 Implement all code files according to the task list. Create the complete working application."
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "$IMPLEMENT_PROMPT"
 
 log ""

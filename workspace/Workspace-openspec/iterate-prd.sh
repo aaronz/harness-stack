@@ -12,8 +12,6 @@ WORKSPACE_DIR="$SCRIPT_DIR"
 SESSION_LOG_DIR="$WORKSPACE_DIR/sessions"
 mkdir -p "$SESSION_LOG_DIR"
 
-setup_iteration_output "$WORKSPACE_DIR" "openspec"
-
 if [ -n "$RESUME_ITERATION" ]; then
     NEXT_ITERATION="$RESUME_ITERATION"
     OUTPUTS_DIR="$WORKSPACE_DIR/outputs/iteration-${NEXT_ITERATION}"
@@ -32,13 +30,16 @@ if [ -z "$LOG_FILE" ]; then
     LOG_FILE="$SESSION_LOG_DIR/iteration-${NEXT_ITERATION}_$(date +%Y%m%d_%H%M%S).log"
 fi
 
+PRD_PATH=$(resolve_prd_path "$PRD_INPUT" "$WORKSPACE_DIR")
+PROPOSAL_DIR="$WORKSPACE_DIR/outputs/proposal"
+mkdir -p "$PROPOSAL_DIR"
+
 log_section "OpenSpec 迭代开发 v3.0"
 log "工作目录: $WORKSPACE_DIR"
 log "迭代目录: $OUTPUTS_DIR"
 log "模型: $MODEL"
 log "日志文件: $LOG_FILE"
 
-PRD_PATH=$(resolve_prd_path "$PRD_INPUT" "$WORKSPACE_DIR")
 log "PRD路径: $PRD_PATH"
 
 mkdir -p "$OUTPUTS_DIR"
@@ -47,6 +48,7 @@ log ""
 log "[1/5] 执行PRD差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
 log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
 
@@ -84,6 +86,7 @@ INCREMENT=$(cat << 'INCEOF'
 INCEOF
 )
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "$(echo "$INCREMENT"; echo ""; echo "## 差距分析结果"; cat "$OUTPUTS_DIR/gap-analysis.md")" > "$OUTPUTS_DIR/increment.md"
 log "增量文档完成: $OUTPUTS_DIR/increment.md"
 
@@ -95,13 +98,13 @@ ITERATION_TASK=$(cat << 'ITEOF'
 基于增量文档，执行第二轮开发：
 
 ## 增量文档位置
-./outputs/iteration-N/increment.md
+$OUTPUTS_DIR/increment.md
 
 ## PRD位置
-./PRD.md
+$WORKSPACE_DIR/PRD.md
 
 ## 实现目录
-./outputs/proposal/
+$PROPOSAL_DIR/
 
 ## 任务
 1. 优先实现P0级别的功能
@@ -115,11 +118,12 @@ ITERATION_TASK=$(cat << 'ITEOF'
 - 遵循原有架构模式
 
 ## 输出
-完成后，更新 ./outputs/iteration-N/increment.md，标记已完成的任务。
+完成后，更新 $OUTPUTS_DIR/increment.md，标记已完成的任务。
 ITEOF
 )
 
-opencode run -m "$MODEL" "$ITERATION_TASK"
+cd "$WORKSPACE_DIR"
+opencode run -m "$MODEL" "$(eval echo \"$ITERATION_TASK\")"
 log "迭代开发完成"
 
 log ""
@@ -153,7 +157,8 @@ VERIFY=$(cat << 'VEOF'
 VEOF
 )
 
-opencode run -m "$MODEL" "$(echo "$VEOF"; echo ""; echo "## 当前实现"; find ./outputs/proposal/packages -name "*.ts" -o -name "*.tsx" | head -20)" > "$OUTPUTS_DIR/verification-report.md"
+cd "$WORKSPACE_DIR"
+opencode run -m "$MODEL" "$(echo "$VERIFY"; echo ""; echo "## 当前实现"; find "$PROPOSAL_DIR" -name "*.ts" -o -name "*.tsx" 2>/dev/null | head -20)" > "$OUTPUTS_DIR/verification-report.md"
 log "验证报告完成: $OUTPUTS_DIR/verification-report.md"
 
 log ""

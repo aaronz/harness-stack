@@ -29,6 +29,7 @@ if [ -z "$LOG_FILE" ]; then
 fi
 
 PRD_PATH=$(resolve_prd_path "$PRD_INPUT" "$WORKSPACE_DIR")
+IMPL_DIR="$WORKSPACE_DIR/outputs/src"
 
 log_section "Superpowers 迭代开发 v3.0"
 log "工作目录: $WORKSPACE_DIR"
@@ -41,6 +42,7 @@ log ""
 log "[1/5] 执行PRD差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
 log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
 
@@ -48,6 +50,7 @@ log ""
 log "[2/5] Brainstorming - 需求理解..."
 save_checkpoint "$NEXT_ITERATION" "phase2"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "请使用 brainstorming skill 分析差距并深化设计。
 
 ## PRD
@@ -62,16 +65,17 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 3. 展示设计sections获取批准
 
 ## 输出
-设计文档保存到: ./outputs/iteration-${NEXT_ITERATION}/design_v${NEXT_ITERATION}.md"
+设计文档保存到: $OUTPUTS_DIR/design_v${NEXT_ITERATION}.md"
 
 log ""
 log "[3/5] Writing Plans - 创建计划..."
 save_checkpoint "$NEXT_ITERATION" "phase3"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "请使用 writing-plans skill 创建详细实现计划。
 
 ## 设计文档
-./outputs/iteration-${NEXT_ITERATION}/design_v${NEXT_ITERATION}.md
+$OUTPUTS_DIR/design_v${NEXT_ITERATION}.md
 
 ## PRD
 $(cat $PRD_PATH)
@@ -86,22 +90,23 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 4. 优先P0任务
 
 ## 输出
-计划保存到: ./outputs/iteration-${NEXT_ITERATION}/plan_v${NEXT_ITERATION}.md"
+计划保存到: $OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md"
 
 log ""
 log "[4/5] Subagent-Driven Development..."
 save_checkpoint "$NEXT_ITERATION" "phase4"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "请使用 subagent-driven-development skill 执行实现。
 
 ## 实现计划
-./outputs/iteration-${NEXT_ITERATION}/plan_v${NEXT_ITERATION}.md
+$OUTPUTS_DIR/plan_v${NEXT_ITERATION}.md
 
 ## PRD
 $(cat $PRD_PATH)
 
 ## 实现目录
-./outputs/src/
+$IMPL_DIR/
 
 ## 任务
 1. 每个任务由fresh subagent执行
@@ -116,10 +121,11 @@ log ""
 log "[5/5] Verification - 验证..."
 save_checkpoint "$NEXT_ITERATION" "phase5"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "请使用 verification-before-completion skill 进行最终验证。
 
 ## 实现产出
-检查./outputs/src/目录
+检查$IMPL_DIR/目录
 
 ## PRD
 $(cat $PRD_PATH)
@@ -133,7 +139,7 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 3. 功能是否完整？
 
 ## 输出
-验证报告保存到: ./outputs/iteration-${NEXT_ITERATION}/verification-report.md"
+验证报告保存到: $OUTPUTS_DIR/verification-report.md"
 
 log ""
 log_section "Superpowers 迭代完成!"

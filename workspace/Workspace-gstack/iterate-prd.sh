@@ -30,6 +30,7 @@ fi
 
 PRD_PATH=$(resolve_prd_path "$PRD_INPUT" "$WORKSPACE_DIR")
 IMPL_DIR="$WORKSPACE_DIR/outputs/worktrees/ai-ready-evaluator"
+mkdir -p "$IMPL_DIR"
 
 log_section "GStack 迭代开发 v3.0"
 log "工作目录: $WORKSPACE_DIR"
@@ -42,6 +43,7 @@ log ""
 log "[1/6] 执行PRD差距分析..."
 save_checkpoint "$NEXT_ITERATION" "phase1"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "$GAP_ANALYSIS_PROMPT" > "$OUTPUTS_DIR/gap-analysis.md"
 log "差距分析完成: $OUTPUTS_DIR/gap-analysis.md"
 
@@ -70,6 +72,7 @@ INCREMENT=$(cat << 'INCEOF'
 INCEOF
 )
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "$(echo "$INCREMENT"; cat "$OUTPUTS_DIR/gap-analysis.md")" > "$OUTPUTS_DIR/increment.md"
 log "增量文档完成: $OUTPUTS_DIR/increment.md"
 
@@ -77,6 +80,7 @@ log ""
 log "[3/6] Office Hours - 需求理解..."
 save_checkpoint "$NEXT_ITERATION" "phase3"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "使用 /office-hours 命令进行需求理解深化。
 
 ## PRD
@@ -89,19 +93,20 @@ $(cat $OUTPUTS_DIR/gap-analysis.md)
 重点关注差距分析中识别的P0问题，重新审视产品设计。
 
 ## 输出
-更新设计文档到: ./outputs/iteration-${NEXT_ITERATION}/design-v${NEXT_ITERATION}.md"
+更新设计文档到: $OUTPUTS_DIR/design-v${NEXT_ITERATION}.md"
 
 log ""
 log "[4/6] CEO Review + Eng Review..."
 save_checkpoint "$NEXT_ITERATION" "phase4"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "使用 /plan-ceo-review 和 /plan-eng-review 命令进行审查。
 
 ## 增量文档
 $(cat "$OUTPUTS_DIR/increment.md")
 
 ## 现有设计
-./outputs/design.md
+$WORKSPACE_DIR/outputs/design.md
 
 ## 审查重点
 1. 架构调整是否合理？
@@ -109,19 +114,20 @@ $(cat "$OUTPUTS_DIR/increment.md")
 3. 多Provider支持方案
 
 ## 输出
-审查结果保存到: ./outputs/iteration-${NEXT_ITERATION}/review-v${NEXT_ITERATION}.md"
+审查结果保存到: $OUTPUTS_DIR/review-v${NEXT_ITERATION}.md"
 
 log ""
 log "[5/6] 执行实现..."
 save_checkpoint "$NEXT_ITERATION" "phase5"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "使用 gstack 的实现模式执行迭代开发。
 
 ## 增量文档
 $(cat "$OUTPUTS_DIR/increment.md")
 
 ## 审查结果
-./outputs/iteration-${NEXT_ITERATION}/review-v${NEXT_ITERATION}.md
+$OUTPUTS_DIR/review-v${NEXT_ITERATION}.md
 
 ## 目录
 $IMPL_DIR
@@ -139,10 +145,11 @@ log ""
 log "[6/6] 验证与QA..."
 save_checkpoint "$NEXT_ITERATION" "phase6"
 
+cd "$WORKSPACE_DIR"
 opencode run -m "$MODEL" "使用 /review 和 /qa 命令进行验证。
 
 ## 代码审查
-./outputs/iteration-${NEXT_ITERATION}/review-v${NEXT_ITERATION}.md
+$OUTPUTS_DIR/review-v${NEXT_ITERATION}.md
 
 ## 要求
 1. 找到所有P0问题的修复
@@ -150,7 +157,7 @@ opencode run -m "$MODEL" "使用 /review 和 /qa 命令进行验证。
 3. 生成验证报告
 
 ## 输出
-验证报告保存到: ./outputs/iteration-${NEXT_ITERATION}/verification-report.md"
+验证报告保存到: $OUTPUTS_DIR/verification-report.md"
 
 log ""
 log_section "GStack 迭代完成!"
