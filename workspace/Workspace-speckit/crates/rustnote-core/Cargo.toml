@@ -1,0 +1,28 @@
+[package]
+name = "rustnote-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+rope.workspace = true
+unicode-segmentation.workspace = true
+pulldown-cmark.workspace = true
+comrak.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+walkdir.workspace = true
+notify.workspace = true
+tempfile.workspace = true
+tokio.workspace = true
+log.workspace = true
+env_logger.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+dirs.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

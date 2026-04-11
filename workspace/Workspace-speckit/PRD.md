@@ -586,7 +586,854 @@ A Typora-like editor fails when too much logic leaks into ad hoc UI behavior. Th
 
 ---
 
-# 13. Repository Structure
+# 13. Frontend Design Goals
+
+The frontend is not a thin decorative layer. It is the visible embodiment of the product promise.
+
+A Typora-like product succeeds or fails in the frontend because users directly experience:
+
+* readability while editing
+* the amount of visual distraction
+* cursor and selection predictability
+* interaction smoothness around structured Markdown content
+* speed of common authoring tasks
+
+Therefore the frontend design must optimize for three things simultaneously:
+
+1. **calmness** — the interface should visually disappear during writing
+2. **clarity** — rendered content, controls, states, and transitions should be understandable
+3. **control** — advanced authoring actions should remain discoverable and precise
+
+The frontend must never feel like a generic admin panel, IDE clone, or document app overloaded with chrome.
+
+---
+
+# 14. Frontend Product Principles
+
+## 14.1 Writing Surface First
+
+The central editor canvas is the product. Sidebars, toolbars, dialogs, menus, and status surfaces exist to support it, not compete with it.
+
+## 14.2 Chrome Minimization
+
+Anything persistent on screen must justify its presence. Default UI should be sparse. Optional surfaces may be shown contextually or by explicit user action.
+
+## 14.3 Readable While Editable
+
+The frontend must preserve the feeling that the user is reading a real document while still allowing precise editing of Markdown-backed structures.
+
+## 14.4 Progressive Disclosure
+
+Simple users should see very little UI. Power users should still be able to reach commands, shortcuts, file operations, and configuration without clutter.
+
+## 14.5 Interaction Consistency
+
+Selections, hover states, click targets, keyboard actions, and structural editing interactions must behave consistently across content types.
+
+## 14.6 Platform Familiarity
+
+The product should feel native enough on macOS, Windows, and Linux in menu behavior, shortcut display, window handling, and file dialogs.
+
+---
+
+# 15. Frontend Architecture
+
+## 15.1 Recommended Frontend Stack Direction
+
+For V1 within Tauri:
+
+* frontend view layer with a mature reactive framework
+* typed message boundary between UI layer and Rust services
+* design token based styling system
+* command/event architecture for editor actions
+
+A pragmatic choice is:
+
+* **Tauri shell**
+* **Rust core services**
+* **TypeScript frontend UI** inside the desktop shell
+
+The PRD does not strictly require a specific UI framework, but the frontend must satisfy these constraints:
+
+* strong component composition
+* predictable local and global state handling
+* efficient updates under frequent editor changes
+* clean keyboard and event handling
+* testability for complex UI interactions
+
+## 15.2 Frontend Layer Model
+
+The frontend should be divided into the following layers:
+
+### A. Presentation Layer
+
+Responsible for:
+
+* layout containers
+* typography
+* colors and spacing
+* visual states
+* menus, dialogs, panels, buttons, inputs
+
+### B. Editor Interaction Layer
+
+Responsible for:
+
+* editor canvas rendering
+* selection and caret visualization
+* keyboard event dispatch
+* mouse/pointer interactions
+* drag-and-drop handling
+* contextual affordances around document elements
+
+### C. App State Layer
+
+Responsible for:
+
+* active workspace
+* open document metadata
+* visible panels and dialogs
+* user preferences currently applied
+* command palette state
+* search/replace state
+* notifications and transient UI states
+
+### D. Service Bridge Layer
+
+Responsible for:
+
+* calling Rust-owned services
+* serializing requests/responses
+* subscribing to events from core modules
+* enforcing typed contracts
+
+## 15.3 Core Architectural Rule for Frontend
+
+The frontend may control **presentation and transient interaction state**, but it must not become the owner of:
+
+* Markdown correctness
+* structural editing semantics
+* save/recovery correctness
+* source serialization rules
+* export correctness
+
+Those responsibilities remain owned by Rust services.
+
+---
+
+# 16. Frontend Information Architecture
+
+## 16.1 Primary UI Regions
+
+The desktop app should contain the following regions:
+
+1. **Window frame / title bar region**
+2. **App menu / top command surface**
+3. **Left workspace sidebar**
+4. **Main editor canvas**
+5. **Optional right-side outline or utility panel**
+6. **Transient bottom or top status surface**
+7. **Modal and popover layer**
+
+## 16.2 Default Layout
+
+Recommended default layout:
+
+* left sidebar visible on workspace open
+* right outline panel collapsed by default or user-configurable
+* center editor canvas occupying dominant width
+* minimal top bar with only essential controls
+* no permanently visible heavy formatting toolbar
+
+## 16.3 Layout Priorities
+
+Visual dominance should follow this order:
+
+1. editor canvas
+2. current document title and file context
+3. workspace/sidebar navigation
+4. command surfaces
+5. secondary metadata and settings
+
+The editor should always feel like the largest and most important object on screen.
+
+---
+
+# 17. Detailed Screen and Surface Design
+
+## 17.1 Launch / Home Screen
+
+### Purpose
+
+Provide a minimal but helpful starting point before a workspace or file is opened.
+
+### Required Elements
+
+* app name / simple identity mark
+* primary actions: New File, Open File, Open Folder
+* recent files list
+* recent folders list
+* optional “resume recovery” surface if a crash snapshot exists
+* optional lightweight tip or shortcut hint
+
+### UX Requirements
+
+* should open quickly
+* should not resemble a busy dashboard
+* should allow keyboard navigation through recent items
+* should disappear as soon as a file/workspace is open
+
+## 17.2 Main Writing Screen
+
+### Purpose
+
+The primary authoring environment.
+
+### Required Regions
+
+* top bar or title row
+* optional left sidebar
+* central editor canvas
+* optional right outline panel
+* status micro-surface for save/search/export states
+
+### UX Constraints
+
+* the canvas must remain visually dominant
+* panel toggling should be fast and non-jarring
+* resizing panels should be supported if practical
+* panel widths should persist between sessions
+
+## 17.3 Preferences Screen / Dialog
+
+### Sections
+
+* appearance
+* editor
+* behavior
+* workspace
+* export
+* keyboard shortcuts overview
+* about/version/license
+
+### UX Constraints
+
+* settings should be organized by user mental model, not internal implementation
+* advanced settings should not overwhelm common preferences
+* changes should apply live where safe
+
+## 17.4 Export Dialog
+
+### Purpose
+
+Allow users to export without overwhelming them with publishing jargon.
+
+### Required Controls
+
+* export format selector
+* destination path
+* page size and margin controls for PDF
+* style/theme selector if applicable
+* embed or link assets mode for HTML if supported
+* preview summary of export target settings
+
+### UX Constraints
+
+* default options should work for most users
+* dialog should clearly explain what happens to images/assets
+* errors should be human-readable
+
+## 17.5 Find / Replace Surface
+
+### Required Elements
+
+* search input
+* replace input
+* next / previous controls
+* replace one / replace all
+* case-sensitive toggle
+* match count or current result indicator
+
+### UX Constraints
+
+* should be lightweight and keyboard-first
+* should not obscure too much of the document
+* focus should move smoothly between document and search controls
+
+## 17.6 Command Palette
+
+### Purpose
+
+Provide fast access to all important actions without increasing visible UI complexity.
+
+### Requirements
+
+* open via shortcut
+* fuzzy search commands
+* support keyboard navigation and execution
+* show shortcut hints when available
+* include document, workspace, view, export, and settings actions
+
+### Importance
+
+This is a major power-user surface and should reduce the need for a cluttered toolbar.
+
+---
+
+# 18. Editor Canvas Frontend Design
+
+## 18.1 Canvas Role
+
+The editor canvas is the central interface element and should behave like a calm, readable document with precise editing capabilities.
+
+## 18.2 Canvas Layout Rules
+
+* content should be horizontally centered by default
+* readable max content width should be enforced
+* content width should be configurable
+* outer whitespace should help reading, not waste space excessively
+* vertical rhythm between headings, paragraphs, lists, quotes, tables, and code blocks must be visually consistent
+
+## 18.3 Typography Requirements
+
+The default typography system must optimize for long-form reading and writing.
+
+### Required typography controls
+
+* base font size
+* line height or readable equivalent spacing control
+* content width
+* theme-adjusted text contrast
+
+### Typography guidance
+
+* heading hierarchy must be visually distinct
+* paragraph rhythm should feel book-like rather than code-editor-like
+* inline code should be visually clear without becoming noisy
+* link styling should be identifiable without overpowering the text
+
+## 18.4 Caret and Selection Design
+
+* caret must remain clearly visible on both light and dark themes
+* selection highlight must preserve readability
+* selections across formatted content should look stable
+* selection rendering in code blocks, tables, and quotes must not appear broken or offset
+
+## 18.5 Scroll Behavior
+
+* scrolling should be smooth and precise
+* scroll anchoring should minimize jarring jumps during re-render
+* typewriter mode must not create erratic scroll oscillation
+* programmatic jumps from outline/search should preserve user orientation
+
+## 18.6 Focus Mode Visual Behavior
+
+Possible design pattern:
+
+* current paragraph or block remains fully emphasized
+* surrounding content is gently de-emphasized
+* dimming must remain subtle enough for context retention
+
+Focus mode should never make the document look disabled or hard to navigate.
+
+## 18.7 Typewriter Mode Visual Behavior
+
+Possible design pattern:
+
+* keep active line or paragraph near vertical center
+* transitions should be smooth and not “snap” aggressively
+* the feature should remain stable when editing large blocks, lists, or code fences
+
+---
+
+# 19. Component Hierarchy and UI Composition
+
+The frontend should be designed as a composable component system.
+
+## 19.1 App-Level Components
+
+* `AppShell`
+* `TitleBar`
+* `MenuBarBridge`
+* `WorkspaceSidebar`
+* `EditorWorkspace`
+* `OutlinePanel`
+* `StatusSurface`
+* `ModalHost`
+* `ToastHost`
+* `CommandPalette`
+
+## 19.2 Workspace Components
+
+* `WorkspaceTree`
+* `WorkspaceTreeNode`
+* `FileRow`
+* `FolderRow`
+* `WorkspaceContextMenu`
+* `RecentItemsList`
+
+## 19.3 Editor Components
+
+* `EditorCanvas`
+* `DocumentViewport`
+* `BlockRenderer`
+* `InlineRenderer`
+* `CaretLayer`
+* `SelectionLayer`
+* `DropCursorLayer`
+* `LinkPopover`
+* `ImageBlock`
+* `CodeFenceBlock`
+* `TableBlock`
+* `QuoteBlock`
+* `TaskListItem`
+* `HeadingBlock`
+
+## 19.4 Utility Components
+
+* `SearchBar`
+* `ReplaceBar`
+* `ExportDialog`
+* `PreferencesDialog`
+* `ShortcutHint`
+* `EmptyState`
+* `RecoveryBanner`
+* `InlineNotice`
+
+## 19.5 Design Rule
+
+Complex blocks such as images, tables, code fences, and links should have dedicated renderers and interaction logic rather than ad hoc conditional branches spread across the editor.
+
+---
+
+# 20. Frontend State Model
+
+## 20.1 State Categories
+
+The frontend should explicitly separate the following state types:
+
+### A. Persistent User State
+
+* theme
+* focus mode default
+* typewriter mode default
+* content width
+* font preferences
+* panel visibility preferences
+* recent items cache display preferences
+
+### B. Session App State
+
+* active workspace
+* current document ID/path
+* open panel states
+* current search query
+* current replace query
+* export dialog state
+* modal visibility
+* pending notifications
+
+### C. Transient Interaction State
+
+* hover states
+* context menu anchor
+* drag target
+* current pointer selection preview
+* temporary link editing popover state
+* inline suggestion visibility if later introduced
+
+### D. Derived View State
+
+* outline tree from current document
+* current dirty state indicator
+* export availability
+* save/recovery banners
+* current section in viewport if tracked
+
+## 20.2 State Ownership Rules
+
+* Rust owns document truth and editing semantics
+* frontend owns ephemeral view state and interaction affordances
+* duplicated source-of-truth state between frontend and Rust should be minimized
+
+## 20.3 Event Model
+
+The frontend should use an explicit event/command model for important actions.
+
+Example categories:
+
+* app commands
+* editor commands
+* workspace commands
+* view commands
+* export commands
+* preferences commands
+
+This improves consistency across:
+
+* keyboard shortcuts
+* menu bar actions
+* toolbar buttons
+* command palette execution
+* context menu actions
+
+---
+
+# 21. Frontend Interaction Design by Content Type
+
+## 21.1 Headings
+
+* headings should have strong visual hierarchy
+* clicking into heading should make editing obvious
+* inserting/deleting heading markers should not feel fragile
+* outline syncing should update promptly
+
+## 21.2 Paragraphs and Inline Formatting
+
+* plain paragraphs must remain visually clean
+* inline emphasis boundaries should be editable without cursor confusion
+* invisible syntax strategy must not hide editing affordances completely
+
+## 21.3 Links
+
+* distinguish between selecting link text, editing link target, and opening the link
+* hover affordance may show URL preview or action affordance if design allows
+* accidental navigation while editing should be avoided
+
+## 21.4 Lists and Task Lists
+
+* bullet/number alignment must be visually stable
+* nested indentation must remain readable
+* checkbox interaction should be simple and fast
+* task toggling must synchronize with Markdown faithfully
+
+## 21.5 Blockquotes
+
+* quote styling should be calm and readable
+* boundary between quoted and non-quoted text should be clear during editing
+
+## 21.6 Code Fences
+
+* syntax highlighting must enhance readability without resembling a full IDE
+* copy affordance may exist but should stay unobtrusive
+* code block entry/exit must feel stable with keyboard navigation
+
+## 21.7 Tables
+
+* table borders and cell spacing should be readable
+* editing affordances must be clear if interactive editing is supported
+* the design should avoid pretending to be a spreadsheet unless the behavior truly supports it
+
+## 21.8 Images
+
+* images should sit naturally within document flow
+* oversize images should scale to content width with clear behavior
+* broken asset rendering should not destroy layout
+* image selection state should be visually distinct from text selection state
+
+## 21.9 Horizontal Rules and Dividers
+
+* should be visible but subtle
+* should not appear like accidental UI separators instead of document content
+
+---
+
+# 22. Menus, Toolbars, and Contextual Controls
+
+## 22.1 Top-Level Menu Strategy
+
+The product should rely on:
+
+* native application menus where appropriate
+* command palette for broad action access
+* small contextual controls for specific content types
+
+It should avoid heavy always-visible formatting ribbons.
+
+## 22.2 Minimal Top Bar
+
+Recommended elements only:
+
+* sidebar toggle
+* current document title or path context
+* quick search entry or command access if justified
+* minimal export/share action if necessary
+
+## 22.3 Context Menus
+
+Context menus should exist for:
+
+* workspace items
+* selected text or block
+* links
+* images
+* tables
+* code blocks
+
+They should expose the most relevant actions without duplicating every command.
+
+## 22.4 Inline Controls
+
+Inline controls may appear for:
+
+* links
+* images
+* tables
+* code fences
+
+But these must remain subtle and not make the editor feel like a block-based page builder.
+
+---
+
+# 23. Visual Design System
+
+## 23.1 Design Token System
+
+The frontend should use tokens for:
+
+* colors
+* spacing
+* typography scale
+* radii
+* shadows
+* border treatments
+* panel widths
+* transition timing
+
+This is required for theme consistency and future theming/custom CSS support.
+
+## 23.2 Color Philosophy
+
+* document text should prioritize readability
+* UI chrome should recede behind content
+* accent color should be used sparingly for selection, focus, links, active controls
+* dark mode should avoid overly saturated or low-contrast text
+
+## 23.3 Spacing Philosophy
+
+* spacing should support reading rhythm
+* avoid cramped admin-tool density
+* avoid excessive airy emptiness that wastes editor area
+
+## 23.4 Motion and Transitions
+
+* use motion sparingly
+* transitions should aid continuity, not decorate
+* panel open/close, hover, focus, and dialog transitions should be subtle and fast
+* no flashy animation in core writing path
+
+## 23.5 Iconography
+
+* icons should be simple and neutral
+* labels should accompany ambiguous icons
+* icon-only controls should be limited to well-known actions
+
+---
+
+# 24. Responsiveness and Window Adaptation
+
+Although desktop-first, the frontend must handle different window sizes gracefully.
+
+## 24.1 Large Windows
+
+* maintain readable content width
+* avoid stretching paragraphs too wide
+* allow side panels without shrinking canvas excessively
+
+## 24.2 Narrow Windows
+
+* collapse secondary panels automatically or on preference
+* preserve access to command palette and basic file actions
+* maintain editing usability without overlapping controls
+
+## 24.3 Fullscreen
+
+* fullscreen should feel especially strong for writing
+* top chrome may simplify further in fullscreen where platform conventions allow
+
+---
+
+# 25. Accessibility and Keyboard Design
+
+## 25.1 Keyboard-First Navigation
+
+Essential actions must be reachable via keyboard:
+
+* new/open/save
+* panel toggle
+* search/replace
+* command palette
+* export
+* focus/typewriter mode toggle
+* heading/list/link/image/code/table insertion actions
+
+## 25.2 Focus Management
+
+* visible focus indicators required for interactive controls
+* modals and popovers must trap and restore focus correctly
+* command palette and search bar should return focus to editor appropriately
+
+## 25.3 Contrast and Legibility
+
+* default themes must meet a reasonable accessibility baseline
+* selected text, inactive dimmed text, code spans, and links must remain legible
+
+## 25.4 Screen Reader Considerations
+
+Full screen reader support for a richly rendered editor may be difficult, but the architecture should avoid unnecessary barriers:
+
+* semantic labeling on controls
+* accessible dialogs and menus
+* sensible reading order outside the editing canvas
+
+---
+
+# 26. Error States, Empty States, and Recovery UX
+
+## 26.1 Empty States
+
+Examples:
+
+* no file open
+* empty workspace
+* no search results
+* no recent files
+* no outline items
+
+These should guide action without feeling verbose.
+
+## 26.2 Error Surfaces
+
+The frontend should distinguish:
+
+* blocking errors
+* recoverable errors
+* transient notifications
+* background warnings
+
+Examples:
+
+* file save failed
+* export failed
+* image missing
+* workspace path unavailable
+* file changed externally
+
+## 26.3 Recovery UX
+
+When recovery data exists:
+
+* clearly communicate that unsaved work was found
+* allow restore, inspect, or dismiss flow
+* avoid alarming language if recovery is normal and safe
+
+---
+
+# 27. Frontend Performance Requirements
+
+## 27.1 Rendering Efficiency
+
+* frontend should avoid full-canvas re-render for trivial updates where possible
+* block-level or region-level update strategy is preferred
+* panel state changes should not noticeably disturb editor performance
+
+## 27.2 Input Responsiveness
+
+* keyboard input should remain responsive under normal authoring load
+* UI reactions to typing, selection, and structure changes should feel immediate
+
+## 27.3 Scroll Stability
+
+* avoid layout thrashing
+* maintain stable scroll positions during document updates
+* large images and code blocks should not create major jank
+
+## 27.4 Startup Behavior
+
+* initial shell should appear quickly
+* expensive non-critical frontend initialization should not delay basic usability
+
+---
+
+# 28. Frontend Testing Strategy
+
+## 28.1 Component Tests
+
+Test isolated components such as:
+
+* sidebar nodes
+* search/replace surface
+* export dialog
+* command palette
+* outline panel
+* recovery banners
+
+## 28.2 Interaction Tests
+
+Test flows such as:
+
+* opening a file from sidebar
+* toggling focus mode and typewriter mode
+* editing links/images/tables through intended UI affordances
+* dialog open/apply/cancel flows
+* context menu actions
+
+## 28.3 Visual Regression Tests
+
+Use visual snapshots for:
+
+* light/dark theme rendering
+* headings/lists/quotes/code blocks/tables/images
+* focus mode and typewriter mode
+* dialogs and panels
+
+## 28.4 End-to-End Tests
+
+Test full flows including:
+
+* launch app
+* open document
+* edit content
+* search and replace
+* export document
+* restore recovery content
+
+## 28.5 Manual UX Test Checklists
+
+Given the interaction-heavy nature of the product, manual QA checklists are required for:
+
+* cursor predictability
+* selection correctness
+* link interactions
+* image interactions
+* table editing behavior
+* panel and modal focus behavior
+* theme readability
+
+---
+
+# 29. Frontend Implementation Guidance
+
+## 29.1 Avoid These Failure Modes
+
+* turning the product into a generic IDE layout
+* adding a permanent formatting ribbon
+* duplicating too much editor truth in frontend state
+* implementing ad hoc special cases for every block type
+* allowing contextual affordances to clutter the writing surface
+* over-animating common authoring interactions
+
+## 29.2 Preferred Design Approach
+
+* start from calm document rendering
+* add only the smallest amount of interface needed for precision
+* centralize command handling
+* make structural editing feel consistent before adding visual flourish
+* ship fewer, more polished interactions rather than many half-finished ones
+
+---
+
+# 30. Repository Structure
 
 ```text
 rustnote/
@@ -600,6 +1447,7 @@ rustnote/
   ADR/
   docs/
     architecture/
+    frontend/
     product/
     testing/
     release/
@@ -616,6 +1464,18 @@ rustnote/
     app-services/
   apps/
     desktop/
+      src/
+        app/
+        components/
+        editor/
+        panels/
+        dialogs/
+        hooks/
+        services/
+        state/
+        styles/
+        commands/
+        tests/
   fixtures/
     markdown/
     editor/
@@ -628,20 +1488,20 @@ rustnote/
 
 ---
 
-# 14. Crate Responsibilities
+# 31. Crate Responsibilities
 
-## 14.1 `core-model`
+## 31.1 `core-model`
 
 * semantic document structures
 * positions, ranges, identifiers
 * shared core types and errors
 
-## 14.2 `markdown-parser`
+## 31.2 `markdown-parser`
 
 * parse Markdown to semantic/intermediate representation
 * document supported flavor behavior
 
-## 14.3 `editor-engine`
+## 31.3 `editor-engine`
 
 * cursor movement rules
 * selection logic
@@ -650,48 +1510,48 @@ rustnote/
 * undo/redo
 * editing invariants and regression coverage
 
-## 14.4 `serializer`
+## 31.4 `serializer`
 
 * semantic model to Markdown output
 * preserve supported constructs predictably
 
-## 14.5 `workspace`
+## 31.5 `workspace`
 
 * file IO
 * recent files/folders
 * file watching
 * asset path resolution
 
-## 14.6 `export`
+## 31.6 `export`
 
 * HTML export
 * PDF export
 * export option types and pipelines
 
-## 14.7 `theme`
+## 31.7 `theme`
 
 * theme tokens
 * typography defaults
 * focus/typewriter presentation config as needed
 
-## 14.8 `settings`
+## 31.8 `settings`
 
 * persisted configuration
 * schema versioning
 
-## 14.9 `recovery`
+## 31.9 `recovery`
 
 * autosave snapshots
 * crash recovery metadata
 * stale cleanup
 
-## 14.10 `app-services`
+## 31.10 `app-services`
 
 * orchestration layer between UI shell and Rust core modules
 
 ---
 
-# 15. Public Service Boundaries
+# 32. Public Service Boundaries
 
 Prefer narrow service interfaces over exposing many unstable internal types.
 
@@ -715,26 +1575,26 @@ Suggested operation families:
 
 ---
 
-# 16. Data Model Layers
+# 33. Data Model Layers
 
 The implementation should keep these layers separate:
 
-## 16.1 Source Layer
+## 33.1 Source Layer
 
 * raw Markdown text
 
-## 16.2 Semantic Layer
+## 33.2 Semantic Layer
 
 * parsed structures: headings, paragraphs, list items, tables, links, code blocks, images
 
-## 16.3 Editing Layer
+## 33.3 Editing Layer
 
 * selection state
 * cursor mapping
 * commands
 * undo/redo history
 
-## 16.4 Presentation Layer
+## 33.4 Presentation Layer
 
 * rendered spans/blocks
 * visual decorations
@@ -744,9 +1604,9 @@ The UI should render state, not become the source of truth.
 
 ---
 
-# 17. UX Requirements
+# 34. UX Requirements
 
-## 17.1 Layout
+## 34.1 Layout
 
 * left sidebar for workspace tree
 * central editor canvas
@@ -756,20 +1616,20 @@ The UI should render state, not become the source of truth.
 * export dialog
 * preferences dialog
 
-## 17.2 Interaction Rules
+## 34.2 Interaction Rules
 
 * split preview is not primary mode
 * visible chrome must stay minimal
 * command palette recommended
 * link, image, and table interactions must be intentional and documented
 
-## 17.3 Quality Bar
+## 34.3 Quality Bar
 
 The product should feel calm enough for long writing sessions and precise enough for technical documentation.
 
 ---
 
-# 18. Implementation Milestones
+# 35. Implementation Milestones
 
 ## Milestone 0: Bootstrap
 

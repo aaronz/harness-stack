@@ -1,0 +1,55 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/rustnote-core",
+    "src-tauri",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["RustNote Team"]
+license = "MIT"
+
+[workspace.dependencies]
+# Text editing
+rope = "0.5"
+unicode-segmentation = "1.10"
+
+# Markdown parsing
+pulldown-cmark = "0.9"
+comrak = "0.34"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# File operations
+walkdir = "2"
+notify = "6"
+tempfile = "3"
+
+# Async
+tokio = { version = "1", features = ["sync", "rt-multi-thread"] }
+
+# Logging
+log = "0.4"
+env_logger = "0.10"
+
+# Error handling
+thiserror = "1"
+anyhow = "1"
+
+# Date/time
+chrono = { version = "0.4", features = ["serde"] }
+
+# UUID
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# Platform directories
+dirs = "5"
+
+# Tauri
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.workspace.dependencies]
+tauri = { version = "1", features = ["shell-open"] }
+tauri-build = "1"
