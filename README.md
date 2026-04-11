@@ -1,14 +1,13 @@
-# My Haness - AI Coding Workspace Framework
+# Harness Stack - AI Coding Workspace Framework
 
 基于 opencode CLI 实现 PRD.md 需求的多方法论实现框架。
 
 ## 目录结构
 
 ```
-myhaness/
+harness-stack/
 ├── PRD.md                          # 需求文档
 ├── setup-projects.sh              # 初始化项目脚本
-├── run-all-workspaces.sh          # 批量运行所有 workspace
 ├── install-methodology.sh         # 安装方法论脚本 (Bash)
 ├── install-methodology.ps1        # 安装方法论脚本 (PowerShell)
 ├── lib/                           # 共享脚本库
@@ -52,38 +51,28 @@ myhaness/
 
 ```bash
 cd workspace/Workspace-openspec
-./implement-prd.sh
+./iterate-prd.sh
 
 # 指定模型
-./implement-prd.sh opencode/minimax-m2.5-free
-```
+./iterate-prd.sh --model opencode/minimax-m2.5-free
 
-### 3. 运行所有 Workspaces
-
-```bash
-./run-all-workspaces.sh
-
-# 指定模型
-./run-all-workspaces.sh opencode/minimax-m2.5-free
+# 恢复迭代
+./iterate-prd.sh --resume 2
 ```
 
 ## 脚本特性
 
-### 实现脚本 (implement-prd.sh)
+### 迭代脚本 (iterate-prd.sh)
 
-每个 workspace 的 `implement-prd.sh` 包含以下特性：
+每个 workspace 的 `iterate-prd.sh` 包含以下特性：
 
 - **迭代跟踪** - 输出到 `outputs/iteration-{N}/` 版本化目录
-- **文件验证** - 自动检查生成文件的存在和内容大小
-- **重试机制** - 文件生成失败时自动重试（最多2次）
+- **动态迭代** - 自动检测上次迭代号，无需硬编码
+- **Checkpoint系统** - 每个阶段保存检查点，支持中断恢复
 - **差距分析** - 首先分析 PRD 与当前实现的差距
 - **进度格式** - `[1/5]`, `[2/5]`, etc.
 - **Build验证** - 要求 "Build必须通过"
 - **验证报告** - 包含 P0问题状态, PRD完整度, 遗留问题, 下一步建议
-
-### 批量运行脚本 (run-all-workspaces.sh)
-
-依次运行所有 workspace 实现脚本，自动追踪迭代版本。
 
 ### 安装方法论脚本 (install-methodology.sh)
 
@@ -117,7 +106,7 @@ cd workspace/Workspace-openspec
 **安装内容：**
 - **openspec/speckit**: 运行 CLI init 命令自动设置
 - **其他方法论**: 复制 skills 到 `.opencode/skills/`，commands 到 `.opencode/commands/`
-- **所有方法论**: 复制 `implement-prd.sh`, `implement-prd.ps1`, `iterate-prd.sh`, `iterate-prd.ps1`, `prompts.md`
+- **所有方法论**: 复制 `iterate-prd.sh`, `iterate-prd.ps1`, `prompts.md`
 
 ## Workspace 详细
 
@@ -192,17 +181,17 @@ outputs/iteration-1/
 
 ## 模型参数
 
-所有脚本支持通过位置参数指定模型：
+所有迭代脚本支持通过 `--model` 参数指定模型：
 
 ```bash
 # 默认模型
-./implement-prd.sh
+./iterate-prd.sh
 
 # 指定模型
-./implement-prd.sh opencode/minimax-m2.5-free
+./iterate-prd.sh --model opencode/minimax-m2.5-free
 
-# 或使用环境变量
-MODEL=opencode/minimax-m2.5-free ./implement-prd.sh
+# 其他选项
+./iterate-prd.sh --verbose --resume 2 --prd ./my-prd.md
 ```
 
 默认模型: `opencode/minimax-m2.5-free`
