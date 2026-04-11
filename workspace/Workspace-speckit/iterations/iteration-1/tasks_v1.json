@@ -1,0 +1,1109 @@
+{
+  "tasks": [
+    {
+      "id": "FR-025",
+      "priority": "P0",
+      "title": "Find/Replace UI - SearchPanel Component",
+      "description": "Create SearchPanel component (www/src/components/SearchPanel.jsx) with search input, replace input, Replace/Replace All buttons, case-sensitive toggle, match count display, and close button",
+      "status": "in_progress",
+      "test_criteria": [
+        "SearchPanel renders correctly",
+        "All form inputs are functional",
+        "Case-sensitive toggle works",
+        "Match count displays accurately"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Create standalone SearchPanel component with proper state management for search/replace state",
+      "dependencies": []
+    },
+    {
+      "id": "FR-025-A1.2",
+      "priority": "P0",
+      "title": "Find/Replace UI - Search State Management",
+      "description": "Add search state management to Editor: searchQuery, replaceQuery, caseSensitive, currentMatchIndex, isSearchOpen, isReplaceOpen states",
+      "status": "todo",
+      "test_criteria": [
+        "Editor component has all required search states",
+        "State updates correctly on user interaction"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Add React state hooks for search management in Editor component",
+      "dependencies": [
+        "FR-025"
+      ]
+    },
+    {
+      "id": "FR-025-A1.3",
+      "priority": "P0",
+      "title": "Find/Replace UI - Search Logic Implementation",
+      "description": "Implement regex-based search with case sensitivity option, match list generation, and position tracking for each match",
+      "status": "todo",
+      "test_criteria": [
+        "Search finds correct matches",
+        "Case sensitivity toggle works",
+        "Match positions are accurate"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Use JavaScript RegExp for search, track match positions for highlighting",
+      "dependencies": [
+        "FR-025-A1.2"
+      ]
+    },
+    {
+      "id": "FR-025-A1.4",
+      "priority": "P0",
+      "title": "Find/Replace UI - Keyboard Shortcuts",
+      "description": "Wire keyboard shortcuts: Ctrl+F (open), Ctrl+H (open with replace), Ctrl+G/F3 (find next), Shift+F3/Shift+Ctrl+G (find prev), Enter (find next), Escape (close)",
+      "status": "todo",
+      "test_criteria": [
+        "Ctrl+F opens search panel and focuses search input",
+        "Ctrl+H opens with replace field visible",
+        "F3/Shift+F3 navigate matches",
+        "Escape closes panel"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Use useEffect with keydown listener, handle shortcuts in Editor component",
+      "dependencies": [
+        "FR-025-A1.2"
+      ]
+    },
+    {
+      "id": "FR-025-A1.5",
+      "priority": "P0",
+      "title": "Find/Replace UI - Highlight Matches",
+      "description": "Implement highlight matches in editor with <mark> class for current match, different class for other matches, scroll visibility, and clear on close",
+      "status": "todo",
+      "test_criteria": [
+        "Current match has distinct highlight styling",
+        "Other matches have secondary highlight",
+        "Scroll keeps matches visible",
+        "Highlights clear when search closes"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Use CSS classes .current-match and .match for styling, implement scrollIntoView",
+      "dependencies": [
+        "FR-025-A1.3"
+      ]
+    },
+    {
+      "id": "FR-025-A1.6",
+      "priority": "P0",
+      "title": "Find/Replace UI - Replace Functionality",
+      "description": "Implement replace single at currentMatchIndex, replace all for all matches, update document state after replace, update match list after replace",
+      "status": "todo",
+      "test_criteria": [
+        "Replace single replaces current match only",
+        "Replace all replaces every match",
+        "Document state updates correctly",
+        "Match list refreshes after replace"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Use document.execCommand or custom replacement logic, update isDirty state",
+      "dependencies": [
+        "FR-025-A1.3",
+        "FR-025-A1.5"
+      ]
+    },
+    {
+      "id": "FR-025-A1.7",
+      "priority": "P0",
+      "title": "Find/Replace UI - Search Panel Styling",
+      "description": "Add CSS styling for search panel: fixed top position, theme-aware (light/dark), proper z-index, open/close animation",
+      "status": "todo",
+      "test_criteria": [
+        "Panel appears fixed at top of editor",
+        "Light and dark themes apply correctly",
+        "Animation is smooth on open/close"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Add to www/src/styles/editor.css, use CSS transitions for animation",
+      "dependencies": [
+        "FR-025"
+      ]
+    },
+    {
+      "id": "FR-028",
+      "priority": "P0",
+      "title": "Focus Mode - Settings Integration",
+      "description": "Add focusMode boolean state to Settings context with setter, persist to Tauri settings",
+      "status": "todo",
+      "test_criteria": [
+        "focusMode state exists in Settings context",
+        "setFocusMode function is available",
+        "Setting persists across app restart"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote",
+        "npm run build"
+      ],
+      "impl_notes": "Add to SettingsContext.jsx, wire to Tauri settings store",
+      "dependencies": []
+    },
+    {
+      "id": "FR-028-A2.2",
+      "priority": "P0",
+      "title": "Focus Mode - Body Class Toggle",
+      "description": "Toggle .focus-mode class on body when focus mode is enabled, ensure class removed when disabled",
+      "status": "todo",
+      "test_criteria": [
+        ".focus-mode class added to body when enabled",
+        ".focus-mode class removed from body when disabled"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Use useEffect to toggle class on document.body based on focusMode state",
+      "dependencies": [
+        "FR-028"
+      ]
+    },
+    {
+      "id": "FR-028-A2.3",
+      "priority": "P0",
+      "title": "Focus Mode - Active Paragraph Tracking",
+      "description": "Track active paragraph/block element: on cursor change identify current block, store reference, update on selection change",
+      "status": "todo",
+      "test_criteria": [
+        "Active block is identified on cursor move",
+        "Active block reference updates on selection change"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Use cursor position to find nearest block-level element",
+      "dependencies": [
+        "FR-028-A2.2"
+      ]
+    },
+    {
+      "id": "FR-028-A2.4",
+      "priority": "P0",
+      "title": "Focus Mode - Paragraph De-emphasis CSS",
+      "description": "Apply CSS for non-active blocks: opacity 0.4, active block opacity 1.0, smooth 200ms transition, exclude code blocks and tables",
+      "status": "todo",
+      "test_criteria": [
+        "Non-active blocks appear dimmed at 0.4 opacity",
+        "Active block has full opacity",
+        "Transition is smooth 200ms",
+        "Code blocks and tables are not affected"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Add CSS rules in editor.css for .focus-mode .paragraph:not(.active)",
+      "dependencies": [
+        "FR-028-A2.3"
+      ]
+    },
+    {
+      "id": "FR-028-A2.5",
+      "priority": "P0",
+      "title": "Focus Mode - Keyboard Shortcut",
+      "description": "Add Ctrl+Shift+F keyboard shortcut to toggle focus mode",
+      "status": "todo",
+      "test_criteria": [
+        "Ctrl+Shift+F toggles focus mode on/off"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Add keyboard shortcut handler in Editor component",
+      "dependencies": [
+        "FR-028"
+      ]
+    },
+    {
+      "id": "FR-029",
+      "priority": "P0",
+      "title": "Typewriter Mode - Settings Integration",
+      "description": "Add typewriterMode boolean state to Settings context with setter, persist to Tauri settings",
+      "status": "todo",
+      "test_criteria": [
+        "typewriterMode state exists in Settings context",
+        "setTypewriterMode function is available",
+        "Setting persists across app restart"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote",
+        "npm run build"
+      ],
+      "impl_notes": "Add to SettingsContext.jsx, wire to Tauri settings store",
+      "dependencies": []
+    },
+    {
+      "id": "FR-029-A3.2",
+      "priority": "P0",
+      "title": "Typewriter Mode - Body Class Toggle",
+      "description": "Toggle .typewriter-mode class on body when typewriter mode is enabled",
+      "status": "todo",
+      "test_criteria": [
+        ".typewriter-mode class added to body when enabled",
+        ".typewriter-mode class removed from body when disabled"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Use useEffect to toggle class on document.body based on typewriterMode state",
+      "dependencies": [
+        "FR-029"
+      ]
+    },
+    {
+      "id": "FR-029-A3.3",
+      "priority": "P0",
+      "title": "Typewriter Mode - Scroll Centering",
+      "description": "Implement scroll centering on cursor move: get cursor line element, call scrollIntoView({ block: 'center', behavior: 'smooth' }), debounce 50ms",
+      "status": "todo",
+      "test_criteria": [
+        "Cursor stays vertically centered when typing",
+        "Scrolling is smooth",
+        "Cursor centers on navigation"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Use useEffect with debounce on cursor/selection change events",
+      "dependencies": [
+        "FR-029-A3.2"
+      ]
+    },
+    {
+      "id": "FR-029-A3.4",
+      "priority": "P0",
+      "title": "Typewriter Mode - Keyboard Shortcut",
+      "description": "Add Ctrl+Shift+T keyboard shortcut to toggle typewriter mode",
+      "status": "todo",
+      "test_criteria": [
+        "Ctrl+Shift+T toggles typewriter mode on/off"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Add keyboard shortcut handler in Editor component",
+      "dependencies": [
+        "FR-029"
+      ]
+    },
+    {
+      "id": "FR-005",
+      "priority": "P0",
+      "title": "Auto-Save Timer - Settings Access",
+      "description": "Access auto-save settings: read autoSave (boolean) and autoSaveInterval (number, ms) from Settings context",
+      "status": "todo",
+      "test_criteria": [
+        "autoSave boolean is readable from Settings context",
+        "autoSaveInterval number is readable from Settings context"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote",
+        "npm run build"
+      ],
+      "impl_notes": "Read from SettingsContext, ensure values are properly typed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-005-A4.2",
+      "priority": "P0",
+      "title": "Auto-Save Timer - Timer Hook Implementation",
+      "description": "Implement auto-save timer hook: watch isDirty, watch autoSaveInterval, useEffect with setTimeout pattern, clear on cleanup",
+      "status": "todo",
+      "test_criteria": [
+        "Timer is created when isDirty is true and autoSave is enabled",
+        "Timer is cleared on cleanup",
+        "Timer resets on each edit"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Use useEffect with setTimeout/clearTimeout pattern, include content in dependency array",
+      "dependencies": [
+        "FR-005"
+      ]
+    },
+    {
+      "id": "FR-005-A4.4",
+      "priority": "P0",
+      "title": "Auto-Save Timer - Saving Indicator",
+      "description": "Add isSaving state, show indicator during save operation, clear after save completes",
+      "status": "todo",
+      "test_criteria": [
+        "Saving indicator appears during save",
+        "Indicator disappears after save completes"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Add isSaving state to Editor, show visual indicator in UI",
+      "dependencies": [
+        "FR-005-A4.2"
+      ]
+    },
+    {
+      "id": "FR-005-A4.5",
+      "priority": "P0",
+      "title": "Auto-Save Timer - Dirty Flag Clear",
+      "description": "Clear dirty flag after successful auto-save: setIsDirty(false) on successful save",
+      "status": "todo",
+      "test_criteria": [
+        "isDirty is set to false after auto-save completes",
+        "Auto-save does not retrigger after cleaning dirty flag"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Call setIsDirty(false) after saveDocument() completes successfully",
+      "dependencies": [
+        "FR-005-A4.2"
+      ]
+    },
+    {
+      "id": "FR-018",
+      "priority": "P1",
+      "title": "Rich Text Paste Handler - Paste Event Handler",
+      "description": "Add onPaste event handler to Editor, capture event and prevent default browser paste",
+      "status": "todo",
+      "test_criteria": [
+        "Paste event is captured in Editor",
+        "Default browser paste is prevented"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Add onPaste handler to Editor component",
+      "dependencies": []
+    },
+    {
+      "id": "FR-018-B1.2",
+      "priority": "P1",
+      "title": "Rich Text Paste Handler - Clipboard Type Detection",
+      "description": "Detect clipboard content type: check event.clipboardData.types for 'text/html', fallback to plain text if no HTML",
+      "status": "todo",
+      "test_criteria": [
+        "HTML content type is correctly detected",
+        "Plain text fallback works when no HTML"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Check clipboardData.types array for 'text/html'",
+      "dependencies": [
+        "FR-018"
+      ]
+    },
+    {
+      "id": "FR-018-B1.3",
+      "priority": "P1",
+      "title": "Rich Text Paste Handler - HTML to Markdown Conversion",
+      "description": "Integrate HTML-to-Markdown converter (turndown package), convert HTML content to Markdown, handle edge cases",
+      "status": "todo",
+      "test_criteria": [
+        "HTML content converts to valid Markdown",
+        "Empty paste is handled gracefully",
+        "Malformed HTML is handled"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Install and use turndown library for conversion",
+      "dependencies": [
+        "FR-018-B1.2"
+      ]
+    },
+    {
+      "id": "FR-018-B1.4",
+      "priority": "P1",
+      "title": "Rich Text Paste Handler - Insert at Cursor",
+      "description": "Insert converted Markdown at cursor position using existing insert logic, update document state",
+      "status": "todo",
+      "test_criteria": [
+        "Converted Markdown is inserted at cursor position",
+        "Document state updates correctly"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Use existing insert logic, pass converted content",
+      "dependencies": [
+        "FR-018-B1.3"
+      ]
+    },
+    {
+      "id": "FR-018-B1.5",
+      "priority": "P1",
+      "title": "Rich Text Paste Handler - Plain Text Fallback",
+      "description": "If HTML parsing fails, use plain text fallback, ensure no malformed Markdown is created",
+      "status": "todo",
+      "test_criteria": [
+        "Plain text paste works correctly",
+        "No malformed Markdown created on fallback"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Add try-catch around HTML conversion, fallback to getData('text/plain')",
+      "dependencies": [
+        "FR-018-B1.3"
+      ]
+    },
+    {
+      "id": "FR-API-FR-026",
+      "priority": "P1",
+      "title": "DocumentResult Headings - Rust Heading Struct",
+      "description": "Add Heading struct to Rust model with level (u8 1-6), text (String), and position (usize character offset)",
+      "status": "todo",
+      "test_criteria": [
+        "Heading struct is defined correctly",
+        "All fields (level, text, position) are present"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote"
+      ],
+      "impl_notes": "Add Heading struct in src-tauri/src/model/document.rs",
+      "dependencies": []
+    },
+    {
+      "id": "FR-API-FR-026-B2.2",
+      "priority": "P1",
+      "title": "DocumentResult Headings - Document Struct Field",
+      "description": "Add headings: Vec<Heading> field to Document struct",
+      "status": "todo",
+      "test_criteria": [
+        "Document struct has headings field",
+        "Field is Vec<Heading> type"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote"
+      ],
+      "impl_notes": "Add headings field to Document struct",
+      "dependencies": [
+        "FR-API-FR-026"
+      ]
+    },
+    {
+      "id": "FR-API-FR-026-B2.3",
+      "priority": "P1",
+      "title": "DocumentResult Headings - Populate on Load",
+      "description": "Populate headings on document load: reuse existing semantic layer heading extraction, call during document open/save",
+      "status": "todo",
+      "test_criteria": [
+        "Headings are extracted when document is loaded",
+        "Headings are extracted when document is saved"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Call heading extraction during document load/save operations",
+      "dependencies": [
+        "FR-API-FR-026-B2.2"
+      ]
+    },
+    {
+      "id": "FR-API-FR-026-B2.4",
+      "priority": "P1",
+      "title": "DocumentResult Headings - JSON Serialization",
+      "description": "Update DocumentResult serialization to ensure headings are included in JSON response",
+      "status": "todo",
+      "test_criteria": [
+        "API response includes headings array",
+        "Headings are properly serialized to JSON"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote"
+      ],
+      "impl_notes": "Ensure serde serialization includes headings field",
+      "dependencies": [
+        "FR-API-FR-026-B2.3"
+      ]
+    },
+    {
+      "id": "FR-034",
+      "priority": "P1",
+      "title": "Settings Missing Fields - Rust Settings Struct",
+      "description": "Add missing fields to Rust Settings struct: focus_mode (bool), typewriter_mode (bool), outline_visible (bool)",
+      "status": "todo",
+      "test_criteria": [
+        "Settings struct has focus_mode field",
+        "Settings struct has typewriter_mode field",
+        "Settings struct has outline_visible field"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote"
+      ],
+      "impl_notes": "Add fields to src-tauri/src/model/settings.rs",
+      "dependencies": []
+    },
+    {
+      "id": "FR-034-B3.2",
+      "priority": "P1",
+      "title": "Settings Missing Fields - JSON Serialization",
+      "description": "Update Settings JSON serialization with serde Serialize/Deserialize for new fields",
+      "status": "todo",
+      "test_criteria": [
+        "New fields serialize correctly to JSON",
+        "New fields deserialize correctly from JSON"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote"
+      ],
+      "impl_notes": "Ensure serde derive includes new fields",
+      "dependencies": [
+        "FR-034"
+      ]
+    },
+    {
+      "id": "FR-034-B3.3",
+      "priority": "P1",
+      "title": "Settings Missing Fields - Frontend Context Update",
+      "description": "Update frontend Settings context: add focusMode, typewriterMode, outlineVisible state with setters, add to load/save flow",
+      "status": "todo",
+      "test_criteria": [
+        "Frontend SettingsContext has focusMode state",
+        "Frontend SettingsContext has typewriterMode state",
+        "Frontend SettingsContext has outlineVisible state",
+        "Settings load/save flow includes new fields"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Update www/src/contexts/SettingsContext.jsx",
+      "dependencies": [
+        "FR-034-B3.2",
+        "FR-028",
+        "FR-029"
+      ]
+    },
+    {
+      "id": "FR-023",
+      "priority": "P1",
+      "title": "File Tree CRUD - Tauri Commands",
+      "description": "Add Tauri commands: create_file(path, name) -> Result<FileInfo>, create_folder(path, name) -> Result<FileInfo>, rename_item(path, new_name) -> Result<FileInfo>, delete_item(path) -> Result<()>",
+      "status": "todo",
+      "test_criteria": [
+        "create_file command exists and returns FileInfo",
+        "create_folder command exists and returns FileInfo",
+        "rename_item command exists and returns FileInfo",
+        "delete_item command exists"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote"
+      ],
+      "impl_notes": "Add commands to src-tauri/src/commands/",
+      "dependencies": []
+    },
+    {
+      "id": "FR-023-B4.2",
+      "priority": "P1",
+      "title": "File Tree CRUD - Rust Command Handlers",
+      "description": "Implement Rust command handlers: validate paths (no traversal), create/rename/delete on filesystem, return updated file info",
+      "status": "todo",
+      "test_criteria": [
+        "Path traversal is prevented",
+        "Filesystem operations complete successfully",
+        "FileInfo is returned correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Implement handlers with proper error handling and path validation",
+      "dependencies": [
+        "FR-023"
+      ]
+    },
+    {
+      "id": "FR-023-B4.3",
+      "priority": "P1",
+      "title": "File Tree CRUD - Sidebar Context Menu",
+      "description": "Add context menu to Sidebar component: right-click shows menu with New File, New Folder, Rename, Delete, disable inappropriate actions (can't delete root)",
+      "status": "todo",
+      "test_criteria": [
+        "Right-click shows context menu",
+        "Menu has New File, New Folder, Rename, Delete options",
+        "Root folder delete is disabled"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Implement context menu in www/src/components/Sidebar.jsx",
+      "dependencies": [
+        "FR-023-B4.2"
+      ]
+    },
+    {
+      "id": "FR-023-B4.4",
+      "priority": "P1",
+      "title": "File Tree CRUD - Wire Menu Actions",
+      "description": "Wire menu actions to Tauri commands: show prompt for new name (rename), show confirmation for delete, refresh file tree after operation",
+      "status": "todo",
+      "test_criteria": [
+        "Rename shows prompt dialog",
+        "Delete shows confirmation dialog",
+        "File tree refreshes after operation"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Connect context menu actions to Tauri invoke calls",
+      "dependencies": [
+        "FR-023-B4.3"
+      ]
+    },
+    {
+      "id": "FR-023-B4.5",
+      "priority": "P1",
+      "title": "File Tree CRUD - Error Handling",
+      "description": "Handle errors gracefully: show toast/notification on failure, keep UI consistent",
+      "status": "todo",
+      "test_criteria": [
+        "Errors show toast notification",
+        "UI remains consistent after error"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Add error handling with user-friendly notifications",
+      "dependencies": [
+        "FR-023-B4.4"
+      ]
+    },
+    {
+      "id": "FR-019",
+      "priority": "P1",
+      "title": "Undo/Redo Connection - Verify Rust Engine",
+      "description": "Verify Rust undo/redo engine exists in src-tauri/src/editor/undo.rs, understand command structure",
+      "status": "todo",
+      "test_criteria": [
+        "undo.rs file exists",
+        "Undo/redo engine structure is understood"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote"
+      ],
+      "impl_notes": "Review existing undo/redo implementation",
+      "dependencies": []
+    },
+    {
+      "id": "FR-019-B5.2",
+      "priority": "P1",
+      "title": "Undo/Redo Connection - Tauri Commands",
+      "description": "Add Tauri commands: undo() -> Result<DocumentContent>, redo() -> Result<DocumentContent>",
+      "status": "todo",
+      "test_criteria": [
+        "undo command exists and returns DocumentContent",
+        "redo command exists and returns DocumentContent"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote"
+      ],
+      "impl_notes": "Add commands that call into existing undo engine",
+      "dependencies": [
+        "FR-019"
+      ]
+    },
+    {
+      "id": "FR-019-B5.4",
+      "priority": "P1",
+      "title": "Undo/Redo Connection - Keyboard Shortcuts",
+      "description": "Add keyboard shortcuts to Editor: Ctrl+Z for undo, Ctrl+Y or Ctrl+Shift+Z for redo",
+      "status": "todo",
+      "test_criteria": [
+        "Ctrl+Z calls undo command",
+        "Ctrl+Y calls redo command",
+        "Ctrl+Shift+Z calls redo command"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Add keydown handlers for undo/redo shortcuts",
+      "dependencies": [
+        "FR-019-B5.2"
+      ]
+    },
+    {
+      "id": "FR-019-B5.5",
+      "priority": "P1",
+      "title": "Undo/Redo Connection - State Update",
+      "description": "Update editor state after undo/redo: replace current content with returned content, update dirty state appropriately",
+      "status": "todo",
+      "test_criteria": [
+        "Content updates after undo",
+        "Content updates after redo",
+        "Dirty state is managed correctly"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Call Tauri command and update content state on response",
+      "dependencies": [
+        "FR-019-B5.4"
+      ]
+    },
+    {
+      "id": "FR-002",
+      "priority": "P1",
+      "title": "Drag-and-Drop File Open - DropZone Component",
+      "description": "Create DropZone overlay component: full-window overlay, visual indicator (dashed border, Drop file here), appears on dragenter, disappears on dragleave/drop",
+      "status": "todo",
+      "test_criteria": [
+        "DropZone renders full-window overlay",
+        "Visual indicator shows correct styling",
+        "Overlay appears on dragenter",
+        "Overlay disappears on dragleave/drop"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Create www/src/components/DropZone.jsx",
+      "dependencies": []
+    },
+    {
+      "id": "FR-002-B6.2",
+      "priority": "P1",
+      "title": "Drag-and-Drop File Open - Drag Events",
+      "description": "Handle drag events: dragenter shows overlay and prevents default, dragover shows overlay and prevents default, dragleave hides overlay if leaving window, drop hides overlay and processes file",
+      "status": "todo",
+      "test_criteria": [
+        "Dragenter shows overlay",
+        "Dragover shows overlay",
+        "Dragleave hides overlay",
+        "Drop hides overlay"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Add drag event handlers to window",
+      "dependencies": [
+        "FR-002"
+      ]
+    },
+    {
+      "id": "FR-002-B6.3",
+      "priority": "P1",
+      "title": "Drag-and-Drop File Open - File Extraction",
+      "description": "Extract file from drop event: get event.dataTransfer.files, validate .md extension, get file path",
+      "status": "todo",
+      "test_criteria": [
+        "File is extracted from drop event",
+        ".md files are accepted",
+        "Non-.md files are rejected"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Validate file extension before processing",
+      "dependencies": [
+        "FR-002-B6.2"
+      ]
+    },
+    {
+      "id": "FR-002-B6.4",
+      "priority": "P1",
+      "title": "Drag-and-Drop File Open - Call Open Logic",
+      "description": "Call existing openFile handler with dropped file, handle multiple files (open first or open all)",
+      "status": "todo",
+      "test_criteria": [
+        "Dropped .md file opens in editor",
+        "Multiple files handled appropriately"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Use existing openFile handler with file path",
+      "dependencies": [
+        "FR-002-B6.3"
+      ]
+    },
+    {
+      "id": "FR-002-B6.5",
+      "priority": "P1",
+      "title": "Drag-and-Drop File Open - Visual Feedback",
+      "description": "Add visual feedback: highlight drop zone on dragover, reject non-Markdown files visually",
+      "status": "todo",
+      "test_criteria": [
+        "Drop zone highlights on dragover",
+        "Non-.md files show rejection indicator"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "Add CSS styling for dragover state and rejection",
+      "dependencies": [
+        "FR-002-B6.2"
+      ]
+    },
+    {
+      "id": "FR-024",
+      "priority": "P2",
+      "title": "Recent Files UI - Access Storage",
+      "description": "Access recent files storage: read from existing storage mechanism, parse list of recent file paths",
+      "status": "todo",
+      "test_criteria": [
+        "Recent files can be read from storage",
+        "File paths are correctly parsed"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote",
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Read from existing storage",
+      "dependencies": []
+    },
+    {
+      "id": "FR-024-C1.2",
+      "priority": "P2",
+      "title": "Recent Files UI - RecentFiles Component",
+      "description": "Create RecentFiles component: list view of recent files, show file name and path, click to open",
+      "status": "todo",
+      "test_criteria": [
+        "RecentFiles component renders list",
+        "File name and path are displayed",
+        "Click opens the file"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Create www/src/components/RecentFiles.jsx",
+      "dependencies": [
+        "FR-024"
+      ]
+    },
+    {
+      "id": "FR-024-C1.3",
+      "priority": "P2",
+      "title": "Recent Files UI - Sidebar Integration",
+      "description": "Add recent files to sidebar or menu: integrate in sidebar or as dropdown menu, show last 10 recent files",
+      "status": "todo",
+      "test_criteria": [
+        "Recent files appear in sidebar or menu",
+        "Maximum 10 recent files shown"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Integrate RecentFiles component",
+      "dependencies": [
+        "FR-024-C1.2"
+      ]
+    },
+    {
+      "id": "FR-024-C1.4",
+      "priority": "P2",
+      "title": "Recent Files UI - Clear History",
+      "description": "Add button to clear recent files history",
+      "status": "todo",
+      "test_criteria": [
+        "Clear button removes all recent files",
+        "UI updates after clearing"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Add clear function to storage",
+      "dependencies": [
+        "FR-024-C1.3"
+      ]
+    },
+    {
+      "id": "FR-017",
+      "priority": "P2",
+      "title": "Image Paste - Detect Image Data",
+      "description": "Detect image data in paste: check clipboard for image types (image/png, image/jpeg)",
+      "status": "todo",
+      "test_criteria": [
+        "Image paste is detected",
+        "PNG and JPEG formats recognized"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Check clipboardData.types for image/*",
+      "dependencies": []
+    },
+    {
+      "id": "FR-017-C2.2",
+      "priority": "P2",
+      "title": "Image Paste - Save and Insert Reference",
+      "description": "Handle image paste: save image to workspace assets folder, generate unique filename, insert markdown image reference ![](path/to/image.png)",
+      "status": "todo",
+      "test_criteria": [
+        "Image is saved to assets folder",
+        "Unique filename is generated",
+        "Markdown image reference is inserted"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Implement image save and reference insertion",
+      "dependencies": [
+        "FR-017"
+      ]
+    },
+    {
+      "id": "FR-017-C2.3",
+      "priority": "P2",
+      "title": "Image Paste - Drag-and-Drop Support",
+      "description": "Handle image drag-and-drop: similar to paste but from drop event, save to assets, insert reference",
+      "status": "todo",
+      "test_criteria": [
+        "Image drop works",
+        "Image is saved and reference inserted"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Extend drop handler for images",
+      "dependencies": [
+        "FR-017-C2.2",
+        "FR-002"
+      ]
+    },
+    {
+      "id": "FR-017-C2.4",
+      "priority": "P2",
+      "title": "Image Paste - Error Handling",
+      "description": "Show error toast notification if image save fails",
+      "status": "todo",
+      "test_criteria": [
+        "Error notification appears on save failure"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Add error notification",
+      "dependencies": [
+        "FR-017-C2.2"
+      ]
+    },
+    {
+      "id": "FR-030",
+      "priority": "P2",
+      "title": "Content Width Control - Read Setting",
+      "description": "Read contentWidth from settings",
+      "status": "todo",
+      "test_criteria": [
+        "contentWidth can be read from settings"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote",
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Read from Settings context",
+      "dependencies": []
+    },
+    {
+      "id": "FR-030-C3.2",
+      "priority": "P2",
+      "title": "Content Width Control - Apply Max-Width",
+      "description": "Apply max-width to editor container: max-width: ${contentWidth}px, center editor horizontally",
+      "status": "todo",
+      "test_criteria": [
+        "Editor has max-width applied",
+        "Editor is centered horizontally"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Add CSS to editor container",
+      "dependencies": [
+        "FR-030"
+      ]
+    },
+    {
+      "id": "FR-030-C4.1",
+      "priority": "P2",
+      "title": "Line Height Setting - Read Setting",
+      "description": "Read lineHeight from settings",
+      "status": "todo",
+      "test_criteria": [
+        "lineHeight can be read from settings"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote",
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Read from Settings context",
+      "dependencies": []
+    },
+    {
+      "id": "FR-030-C4.2",
+      "priority": "P2",
+      "title": "Line Height Setting - Apply CSS",
+      "description": "Apply line-height to editor content: line-height: ${lineHeight}",
+      "status": "todo",
+      "test_criteria": [
+        "Editor content has line-height applied"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Add line-height CSS property",
+      "dependencies": [
+        "FR-030-C4.1"
+      ]
+    },
+    {
+      "id": "FR-013",
+      "priority": "P2",
+      "title": "Task Checkbox Toggle - Click Handler",
+      "description": "Add click handler to task list checkboxes",
+      "status": "todo",
+      "test_criteria": [
+        "Click on checkbox triggers handler"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Add onClick to checkbox elements",
+      "dependencies": []
+    },
+    {
+      "id": "FR-013-C5.2",
+      "priority": "P2",
+      "title": "Task Checkbox Toggle - Markdown State Toggle",
+      "description": "Toggle markdown state: - [ ] to - [x] on click, - [x] to - [ ] on click",
+      "status": "todo",
+      "test_criteria": [
+        "Unchecked box becomes checked on click",
+        "Checked box becomes unchecked on click"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Replace old task syntax with new",
+      "dependencies": [
+        "FR-013"
+      ]
+    },
+    {
+      "id": "FR-013-C5.3",
+      "priority": "P2",
+      "title": "Task Checkbox Toggle - Document State Update",
+      "description": "Update document state after toggle, replace old task syntax with new",
+      "status": "todo",
+      "test_criteria": [
+        "Document state updates after toggle",
+        "File is marked dirty after toggle"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "POST-MVP - Call setIsDirty and update content",
+      "dependencies": [
+        "FR-013-C5.2"
+      ]
+    }
+  ]
+}
