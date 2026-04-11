@@ -3,7 +3,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_SOURCE_DIR="$SCRIPT_DIR/skill-source"
-WORKSPACE_DIR="$SCRIPT_DIR/workspace"
+WORKSPACE_DIR="${WORKSPACE_DIR:-}"
 
 METHODOLOGIES=("openspec" "gstack" "planning-with-files" "speckit" "superpowers" "everything-claude-code")
 CLI_INIT_METHODOLOGIES=("openspec" "speckit")
