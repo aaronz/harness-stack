@@ -7,6 +7,7 @@ source "$SCRIPT_DIR/../../lib/common.sh"
 parse_args "$@"
 
 WORKSPACE_DIR="$SCRIPT_DIR"
+export WORKSPACE_DIR
 SESSION_LOG_DIR="$WORKSPACE_DIR/sessions"
 mkdir -p "$SESSION_LOG_DIR"
 
