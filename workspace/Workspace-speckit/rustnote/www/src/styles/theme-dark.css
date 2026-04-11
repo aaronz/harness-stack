@@ -1,0 +1,39 @@
+:root {
+    --theme-light: true;
+}
+
+[data-theme="dark"] {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #252526;
+    --bg-hover: #3c3c3c;
+    --bg-active: #4c4c4c;
+    --text-primary: #d4d4d4;
+    --text-secondary: #858585;
+    --text-heading: #ffffff;
+    --border-color: #3c3c3c;
+    --accent-color: #4fc3f7;
+    --link-color: #4fc3f7;
+    --code-bg: #2d2d2d;
+}
+
+[data-theme="dark"] #content code {
+    background: #2d2d2d;
+}
+
+[data-theme="dark"] #content pre {
+    background: #2d2d2d;
+}
+
+[data-theme="dark"] #content blockquote {
+    border-color: #3c3c3c;
+    color: #858585;
+}
+
+[data-theme="dark"] #sidebar {
+    background: #252526;
+}
+
+[data-theme="dark"] #toolbar {
+    background: #2d2d2d;
+    border-color: #3c3c3c;
+}

@@ -1,0 +1,48 @@
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub enum Theme {
+    #[default]
+    Light,
+    Dark,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EditorSettings {
+    pub font_family: String,
+    pub font_size: u32,
+    pub line_height: f32,
+    pub tab_size: u32,
+}
+
+impl Default for EditorSettings {
+    fn default() -> Self {
+        Self {
+            font_family: "System".to_string(),
+            font_size: 16,
+            line_height: 1.6,
+            tab_size: 4,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Settings {
+    pub theme: Theme,
+    pub auto_save: bool,
+    pub auto_save_interval: u32,
+    pub editor: EditorSettings,
+    pub recent_files: Vec<String>,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            theme: Theme::Light,
+            auto_save: true,
+            auto_save_interval: 30,
+            editor: EditorSettings::default(),
+            recent_files: vec![],
+        }
+    }
+}
