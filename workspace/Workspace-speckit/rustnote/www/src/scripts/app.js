@@ -110,6 +110,15 @@ function applyTheme() {
 function setupEventListeners() {
     document.addEventListener('keydown', handleKeyboard);
     
+    document.getElementById('btn-new')?.addEventListener('click', createNewDocument);
+    document.getElementById('btn-open')?.addEventListener('click', openDocument);
+    document.getElementById('btn-save')?.addEventListener('click', saveDocument);
+    document.getElementById('btn-theme')?.addEventListener('click', toggleTheme);
+    document.getElementById('btn-focus')?.addEventListener('click', toggleFocusMode);
+    document.getElementById('btn-typewriter')?.addEventListener('click', toggleTypewriterMode);
+    document.getElementById('btn-outline')?.addEventListener('click', toggleOutline);
+    document.getElementById('btn-image')?.addEventListener('click', () => editor.insertImage());
+    
     if (settings.autoSave) {
         setInterval(autoSave, settings.autoSaveInterval);
     }
@@ -442,43 +451,28 @@ async function exportPdf() {
         });
         
         if (result) {
-            const printHtml = await window.__TAURI__.core.invoke('get_print_html', {
-                markdown: editor.getContent()
-            });
+            const options = {
+                page_size: { type: 'A4' },
+                margins: {
+                    top_mm: 20,
+                    right_mm: 20,
+                    bottom_mm: 20,
+                    left_mm: 20
+                },
+                embed_images: true
+            };
             
-            const printWindow = window.open('', '_blank', 'width=800,height=600');
-            if (printWindow) {
-                printWindow.document.write(printHtml);
-                printWindow.document.close();
-                
-                printWindow.onload = async () => {
-                    try {
-                        await printWindow.print();
-                        printWindow.close();
-                        showNotification('PDF export completed');
-                    } catch (printErr) {
-                        console.error('Print error:', printErr);
-                        printWindow.print();
-                        showNotification('PDF export via print dialog');
-                    }
-                };
-            } else {
-                showNotification('Please allow popups for PDF export');
-            }
+            await window.__TAURI__.core.invoke('export_to_pdf_native', {
+                markdown: editor.getContent(),
+                outputPath: result,
+                options: options
+            });
+            showNotification('PDF exported successfully');
         }
     } catch (e) {
         console.error('Export error:', e);
         showNotification('PDF export failed');
     }
 }
-
-document.getElementById('btn-new')?.addEventListener('click', createNewDocument);
-document.getElementById('btn-open')?.addEventListener('click', openDocument);
-document.getElementById('btn-save')?.addEventListener('click', saveDocument);
-document.getElementById('btn-theme')?.addEventListener('click', toggleTheme);
-document.getElementById('btn-focus')?.addEventListener('click', toggleFocusMode);
-document.getElementById('btn-typewriter')?.addEventListener('click', toggleTypewriterMode);
-document.getElementById('btn-outline')?.addEventListener('click', toggleOutline);
-document.getElementById('btn-image')?.addEventListener('click', () => editor.insertImage());
 
 document.addEventListener('DOMContentLoaded', init);

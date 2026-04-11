@@ -20,6 +20,7 @@ const wysiwygEditor = {
     
     isRendering: false,
     renderDebounce: null,
+    highlightCode: true,
     
     decorations: [],
     cursorMapping: [],
@@ -69,6 +70,7 @@ const wysiwygEditor = {
         
         this.container.addEventListener('click', (e) => {
             this.updateCursorOffset();
+            this.handleLinkClick(e);
         });
         
         this.container.addEventListener('select', () => {
@@ -90,6 +92,10 @@ const wysiwygEditor = {
     handleKeydown(e) {
         const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
         const modifier = isMac ? e.metaKey : e.ctrlKey;
+        
+        if (this.handleTableNavKey(e)) {
+            return;
+        }
         
         if (modifier) {
             switch(e.key.toLowerCase()) {
@@ -166,7 +172,7 @@ const wysiwygEditor = {
         const content = this.content;
         
         try {
-            const result = await window.__TAURI__.core.invoke('apply_transform', {
+            const result = await window.__TAURI__.core.invoke('editor_apply_transform', {
                 transform: { Enter: null },
                 content: content,
                 cursorOffset: start
@@ -194,7 +200,7 @@ const wysiwygEditor = {
         }
         
         try {
-            const result = await window.__TAURI__.core.invoke('apply_transform', {
+            const result = await window.__TAURI__.core.invoke('editor_apply_transform', {
                 transform: { Backspace: null },
                 content: content,
                 cursorOffset: start
@@ -216,7 +222,7 @@ const wysiwygEditor = {
         const content = this.content;
         
         try {
-            const result = await window.__TAURI__.core.invoke('apply_transform', {
+            const result = await window.__TAURI__.core.invoke('editor_apply_transform', {
                 transform: shiftKey ? { ShiftTab: null } : { Tab: null },
                 content: content,
                 cursorOffset: start
@@ -233,6 +239,135 @@ const wysiwygEditor = {
         }
         
         this.insertText('    ');
+    },
+    
+    async handleLinkClick(e) {
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const modifier = isMac ? e.metaKey : e.ctrlKey;
+        
+        if (!modifier) return;
+        
+        const link = e.target.closest('a');
+        if (!link) return;
+        
+        e.preventDefault();
+        const href = link.getAttribute('href');
+        
+        if (!href) return;
+        
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+            try {
+                await window.__TAURI__.core.invoke('open_external_url', { url: href });
+            } catch (err) {
+                console.error('Failed to open URL:', err);
+            }
+        } else if (href.startsWith('/') || href.startsWith('./') || href.startsWith('../')) {
+            try {
+                await window.__TAURI__.core.invoke('open_external_url', { url: href });
+            } catch (err) {
+                console.error('Failed to open relative URL:', err);
+            }
+        }
+    },
+    
+    isInTableCell() {
+        return this.container && this.container.contains(window.getSelection()?.anchorNode);
+    },
+    
+    getTableCellAtCursor() {
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount) return null;
+        
+        const range = selection.getRangeAt(0);
+        const node = range.startContainer;
+        
+        let cell = node;
+        if (cell.nodeType === Node.TEXT_NODE) {
+            cell = cell.parentNode;
+        }
+        
+        while (cell && cell.tagName !== 'TD' && cell.tagName !== 'TH') {
+            cell = cell.parentNode;
+            if (!cell || cell === this.container) return null;
+        }
+        
+        return cell;
+    },
+    
+    getNextTableCell(currentCell, shiftKey) {
+        if (!currentCell) return null;
+        
+        const table = currentCell.closest('table');
+        if (!table) return null;
+        
+        const cells = Array.from(table.querySelectorAll('td, th'));
+        const currentIndex = cells.indexOf(currentCell);
+        
+        if (currentIndex === -1) return null;
+        
+        if (shiftKey) {
+            return currentIndex > 0 ? cells[currentIndex - 1] : null;
+        } else {
+            return currentIndex < cells.length - 1 ? cells[currentIndex + 1] : null;
+        }
+    },
+    
+    navigateToTableCell(cell) {
+        if (!cell) return;
+        
+        cell.focus();
+        
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        range.collapse(false);
+        
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        this.updateCursorOffset();
+    },
+    
+    handleTableNavKey(e) {
+        if (!this.isInTableCell()) return false;
+        
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const currentCell = this.getTableCellAtCursor();
+            const nextCell = this.getNextTableCell(currentCell, e.shiftKey);
+            this.navigateToTableCell(nextCell);
+            return true;
+        }
+        
+        if (e.key === 'Enter' && !e.shiftKey) {
+            const currentCell = this.getTableCellAtCursor();
+            if (currentCell) {
+                e.preventDefault();
+                
+                const selection = window.getSelection();
+                if (!selection.rangeCount) return true;
+                
+                const range = selection.getRangeAt(0);
+                
+                if (range.startContainer.nodeType === Node.TEXT_NODE && 
+                    range.startOffset < range.startContainer.length) {
+                    range.splitText(range.startOffset);
+                }
+                
+                const textNode = document.createTextNode('\n');
+                range.insertNode(textNode);
+                
+                range.setStartAfter(textNode);
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                
+                this.content = this.getPlainText();
+                return true;
+            }
+        }
+        
+        return false;
     },
     
     async syncToBackend() {
@@ -272,9 +407,10 @@ const wysiwygEditor = {
         this.isRendering = true;
         
         try {
-            const result = await window.__TAURI__.core.invoke('render_for_editor', {
+            const result = await window.__TAURI__.core.invoke('render_for_editor_with_highlighting', {
                 markdown: this.content,
-                cursorOffset: this.cursorOffset
+                cursorOffset: this.cursorOffset,
+                includeHighlighting: this.highlightCode
             });
             
             if (result) {

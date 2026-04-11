@@ -16,6 +16,11 @@ pub fn highlight_code_block(code: String, language: String) -> String {
 }
 
 #[tauri::command]
+pub fn get_highlighted_code_html(code: String, language: String) -> String {
+    SYNTAX_HIGHLIGHTER.highlight_html(&code, &language)
+}
+
+#[tauri::command]
 pub fn parse_markdown_ast(markdown: String) -> String {
     let doc = SemanticDocument::parse(&markdown);
     doc.html().to_string()
@@ -61,6 +66,62 @@ pub fn render_for_editor(markdown: String, cursor_offset: usize) -> EditorRender
         active_paragraph,
         headings,
     }
+}
+
+#[tauri::command]
+pub fn render_for_editor_with_highlighting(
+    markdown: String,
+    cursor_offset: usize,
+    include_highlighting: bool,
+) -> EditorRenderResult {
+    let doc = SemanticDocument::parse(&markdown);
+    let html = if include_highlighting {
+        highlight_code_fences(&markdown)
+    } else {
+        doc.html()
+    };
+    let cursor_mapping = build_cursor_mapping(&markdown);
+    let active_paragraph = doc.get_paragraph_at(cursor_offset);
+    let headings = doc.get_headings_with_positions();
+
+    EditorRenderResult {
+        html,
+        cursor_mapping,
+        active_paragraph,
+        headings,
+    }
+}
+
+fn highlight_code_fences(markdown: &str) -> String {
+    let mut result = String::new();
+    let mut in_code_block = false;
+    let mut code_lang = String::new();
+    let mut code_content = String::new();
+
+    for line in markdown.lines() {
+        if line.starts_with("```") {
+            if !in_code_block {
+                in_code_block = true;
+                code_lang = line.trim_start_matches("```").trim().to_string();
+                code_content.clear();
+            } else {
+                in_code_block = false;
+                let highlighted = SYNTAX_HIGHLIGHTER.highlight_html(&code_content, &code_lang);
+                result.push_str(&highlighted);
+                result.push('\n');
+            }
+        } else if in_code_block {
+            if !code_content.is_empty() {
+                code_content.push('\n');
+            }
+            code_content.push_str(line);
+        } else {
+            result.push_str(line);
+            result.push('\n');
+        }
+    }
+
+    comrak::markdown_to_html(&result, &comrak::Options::default())
 }
 
 fn build_cursor_mapping(source: &str) -> Vec<CursorMapping> {

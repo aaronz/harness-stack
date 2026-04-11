@@ -2,21 +2,92 @@ use comrak::{markdown_to_html, Options};
 
 pub struct SemanticDocument {
     source: String,
+    frontmatter: Option<String>,
 }
 
 impl SemanticDocument {
     pub fn parse(source: &str) -> Self {
+        let (frontmatter, markdown) = Self::parse_frontmatter(source);
         SemanticDocument {
-            source: source.to_string(),
+            source: markdown.to_string(),
+            frontmatter,
         }
+    }
+
+    pub fn parse_frontmatter(source: &str) -> (Option<String>, &str) {
+        let source_trimmed = source.trim_start();
+
+        if !source_trimmed.starts_with("---") {
+            return (None, source);
+        }
+
+        let after_first_dash = &source_trimmed[3..];
+
+        if !after_first_dash.starts_with('\n') {
+            return (None, source);
+        }
+
+        let after_newline = &after_first_dash[1..];
+
+        if after_newline.starts_with("---") {
+            return (None, source);
+        }
+
+        let Some(end_pos) = after_newline.find("\n---") else {
+            return (None, source);
+        };
+
+        let between_dashes = &after_newline[..end_pos];
+
+        let newline_count = between_dashes.chars().filter(|&c| c == '\n').count();
+        if newline_count > 2 {
+            return (None, source);
+        }
+
+        if !between_dashes.contains(':') && !between_dashes.contains('-') {
+            return (None, source);
+        }
+
+        let remaining = &after_newline[end_pos + 4..];
+        if !remaining.starts_with('\n') {
+            return (None, source);
+        }
+
+        let frontmatter_content = &after_newline[..end_pos];
+
+        (
+            Some(frontmatter_content.to_string()),
+            remaining.trim_start(),
+        )
     }
 
     pub fn source(&self) -> &str {
         &self.source
     }
 
+    pub fn has_frontmatter(&self) -> bool {
+        self.frontmatter.is_some()
+    }
+
+    pub fn get_frontmatter(&self) -> Option<&str> {
+        self.frontmatter.as_deref()
+    }
+
     pub fn serialize_to_commonmark(&self) -> String {
         self.source.clone()
+    }
+
+    pub fn serialize_with_frontmatter(&self) -> String {
+        let mut result = String::new();
+
+        if let Some(ref fm) = self.frontmatter {
+            result.push_str("---\n");
+            result.push_str(fm);
+            result.push_str("\n---\n\n");
+        }
+
+        result.push_str(&self.source);
+        result
     }
 
     pub fn offset_to_position(&self, offset: usize) -> Position {
@@ -66,9 +137,24 @@ impl SemanticDocument {
         markdown_to_html(&self.source, &Options::default())
     }
 
+    pub fn html_with_frontmatter(&self) -> String {
+        let mut result = String::new();
+
+        if let Some(ref fm) = self.frontmatter {
+            result.push_str("<pre class=\"frontmatter\" style=\"display:none\">");
+            result.push_str("---\n");
+            result.push_str(fm);
+            result.push_str("\n---\n</pre>\n");
+        }
+
+        result.push_str(&self.html());
+        result
+    }
+
     pub fn get_headings(&self) -> Vec<HeadingInfo> {
         let mut headings = Vec::new();
         let mut offset = 0;
+
         for line in self.source.lines() {
             let trimmed = line.trim_start();
             if trimmed.starts_with('#') {
@@ -352,5 +438,40 @@ mod tests {
         let doc = SemanticDocument::parse(source);
         let output = doc.serialize_to_commonmark();
         assert_eq!(output, source);
+    }
+
+    #[test]
+    fn test_frontmatter_parsing() {
+        let source = "---\ntitle: Test\nauthor: Someone\n---\n\n# Hello";
+        let doc = SemanticDocument::parse(source);
+        assert!(doc.has_frontmatter());
+        assert_eq!(doc.get_frontmatter(), Some("title: Test\nauthor: Someone"));
+        assert!(doc.html().contains("<h1>"));
+    }
+
+    #[test]
+    fn test_frontmatter_serialize() {
+        let source = "---\ntitle: Test\n---\n\n# Hello";
+        let doc = SemanticDocument::parse(source);
+        let output = doc.serialize_with_frontmatter();
+        assert!(output.starts_with("---\n"));
+        assert!(output.contains("# Hello"));
+    }
+
+    #[test]
+    fn test_no_frontmatter() {
+        let source = "# Hello\n\nSome text";
+        let doc = SemanticDocument::parse(source);
+        assert!(!doc.has_frontmatter());
+        assert_eq!(doc.get_frontmatter(), None);
+    }
+
+    #[test]
+    fn test_frontmatter_not_in_headings() {
+        let source = "---\ntitle: Test\n---\n\n# Heading";
+        let doc = SemanticDocument::parse(source);
+        let headings = doc.get_headings();
+        assert_eq!(headings.len(), 1);
+        assert_eq!(headings[0].text, "Heading");
     }
 }

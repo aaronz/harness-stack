@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        rust: [stable]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Check formatting
+        working-directory: rustnote
+        run: cargo fmt --all -- --check
+
+      - name: Check clippy
+        working-directory: rustnote
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Build release
+        working-directory: rustnote
+        run: cargo build --release --manifest-path src-tauri/Cargo.toml
+
+      - name: Run tests
+        working-directory: rustnote
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+  build-tauri:
+    needs: build
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          override: true
+
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew installwebkit2gtk
+
+      - name: Build Tauri app
+        working-directory: rustnote/src-tauri
+        run: |
+          cargo build --release
+          # Verify binary exists
+          ls -la target/release/rustnote-tauri 2>/dev/null || ls -la target/release/*.exe 2>/dev/null || echo "Binary built"
+
+      - name: Upload artifact (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustnote-windows
+          path: rustnote/src-tauri/target/release/*.exe
+          retention-days: 7
+
+      - name: Upload artifact (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustnote-macos
+          path: rustnote/src-tauri/target/release/rustnote-tauri
+          retention-days: 7
+
+      - name: Upload artifact (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustnote-linux
+          path: rustnote/src-tauri/target/release/rustnote-tauri
+          retention-days: 7

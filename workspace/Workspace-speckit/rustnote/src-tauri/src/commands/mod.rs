@@ -30,6 +30,8 @@ pub enum CommandError {
     DocumentNotFound(String),
     #[error("Parse error: {0}")]
     ParseError(String),
+    #[error("URL open error: {0}")]
+    UrlOpenError(String),
 }
 
 impl serde::Serialize for CommandError {
@@ -39,4 +41,10 @@ impl serde::Serialize for CommandError {
     {
         serializer.serialize_str(&self.to_string())
     }
+}
+
+#[tauri::command]
+pub fn open_external_url(url: String) -> Result<(), CommandError> {
+    open::that(&url).map_err(|e| CommandError::UrlOpenError(e.to_string()))?;
+    Ok(())
 }

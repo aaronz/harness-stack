@@ -1,47 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RustNote</title>
-    <link rel="stylesheet" href="src/styles/main.css">
-    <link rel="stylesheet" href="src/styles/theme-light.css">
-    <link rel="stylesheet" href="src/styles/theme-dark.css">
-    <link rel="stylesheet" href="src/styles/editor.css">
-</head>
-<body>
-    <div id="app">
-        <div id="sidebar">
-            <div id="sidebar-header">Files</div>
-            <div id="file-tree"></div>
-        </div>
-        <div id="editor">
-            <div id="toolbar">
-                <button id="btn-new" title="New (Ctrl+N)">New</button>
-                <button id="btn-open" title="Open (Ctrl+O)">Open</button>
-                <button id="btn-save" title="Save (Ctrl+S)">Save</button>
-                <div style="flex:1"></div>
-                <button id="btn-image" title="Insert Image">Image</button>
-                <button id="btn-outline" title="Toggle Outline (Ctrl+Shift+O)">Outline</button>
-                <button id="btn-focus" title="Focus Mode (Ctrl+Shift+F)">Focus</button>
-                <button id="btn-typewriter" title="Typewriter Mode (Ctrl+Shift+T)">Typewriter</button>
-                <button id="btn-theme" title="Toggle Theme">Theme</button>
-            </div>
-            <div id="content-wrapper">
-                <div id="editor-content" contenteditable="true" spellcheck="false"></div>
-            </div>
-        </div>
-        <div id="outline-panel" class="hidden">
-            <div id="outline-header">Outline</div>
-            <div id="outline-list"></div>
-        </div>
-    </div>
-    <script src="src/scripts/search.js"></script>
-    <script src="src/scripts/renderer.js"></script>
-    <script src="src/scripts/settings.js"></script>
-    <script src="src/scripts/outline.js"></script>
-    <script src="src/scripts/recovery.js"></script>
-    <script src="src/scripts/app.js"></script>
-    <script src="src/scripts/editor.js"></script>
-</body>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
