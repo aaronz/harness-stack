@@ -21,8 +21,6 @@ $Methodologies = @("openspec", "gstack", "planning-with-files", "speckit", "supe
 $CliInitMethods = @("openspec", "speckit")
 
 $ScriptFiles = @(
-    "implement-prd.sh"
-    "implement-prd.ps1"
     "iterate-prd.sh"
     "iterate-prd.ps1"
     "prompts.md"
