@@ -446,7 +446,7 @@
       "priority": "P1",
       "title": "Rich Text Paste Handler - Plain Text Fallback",
       "description": "If HTML parsing fails, use plain text fallback, ensure no malformed Markdown is created",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Plain text paste works correctly",
         "No malformed Markdown created on fallback"
