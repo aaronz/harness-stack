@@ -251,6 +251,14 @@ export default function Editor() {
     }
   }
 
+  function handlePaste(e) {
+    e.preventDefault();
+    const text = e.clipboardData?.getData('text/plain') || '';
+    if (text) {
+      insertText(text);
+    }
+  }
+
   useEffect(() => {
     setInsertTextCallback(insertText);
   }, [setInsertTextCallback, insertText]);
@@ -518,6 +526,7 @@ export default function Editor() {
         suppressContentEditableWarning
         onInput={handleInput}
         onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         className={`
           flex-1 p-5 font-sans text-base leading-relaxed overflow-y-auto whitespace-pre-wrap break-word outline-none
           ${settings.typewriterMode ? 'typewriter-mode' : ''}

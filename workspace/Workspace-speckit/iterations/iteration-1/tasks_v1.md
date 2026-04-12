@@ -189,7 +189,7 @@
 **FR Reference:** FR-018  
 **Estimated Effort:** 1-2 days
 
-- [ ] **B.1.1** Add paste event handler to Editor
+- [x] **B.1.1** Add paste event handler to Editor
   - Capture `onPaste` event
   - Prevent default browser paste
 

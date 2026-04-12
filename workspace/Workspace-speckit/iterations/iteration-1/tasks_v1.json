@@ -357,7 +357,7 @@
       "priority": "P0",
       "title": "Auto-Save Timer - Dirty Flag Clear",
       "description": "Clear dirty flag after successful auto-save: setIsDirty(false) on successful save",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "isDirty is set to false after auto-save completes",
         "Auto-save does not retrigger after cleaning dirty flag"
@@ -375,7 +375,7 @@
       "priority": "P1",
       "title": "Rich Text Paste Handler - Paste Event Handler",
       "description": "Add onPaste event handler to Editor, capture event and prevent default browser paste",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Paste event is captured in Editor",
         "Default browser paste is prevented"
