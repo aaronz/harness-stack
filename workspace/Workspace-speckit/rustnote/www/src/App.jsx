@@ -2,11 +2,13 @@ import { useEffect } from 'react';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { DocumentProvider, useDocument } from './contexts/DocumentContext';
 import { SearchProvider, useSearch } from './contexts/SearchContext';
+import { ToastProvider } from './contexts/ToastContext';
 import Toolbar from './components/Toolbar';
 import Sidebar from './components/Sidebar';
 import TipTapEditor from './components/TipTapEditor';
 import OutlinePanel from './components/OutlinePanel';
 import SearchPanel from './components/SearchPanel';
+import Toast from './components/Toast';
 
 function AppContent() {
   const { settings } = useSettings();
@@ -93,7 +95,10 @@ export default function App() {
     <SettingsProvider>
       <DocumentProvider>
         <SearchProvider>
-          <AppContent />
+          <ToastProvider>
+            <AppContent />
+            <Toast />
+          </ToastProvider>
         </SearchProvider>
       </DocumentProvider>
     </SettingsProvider>

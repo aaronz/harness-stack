@@ -1,6 +1,7 @@
 pub mod document;
 pub mod editor;
 pub mod export;
+pub mod file_tree;
 pub mod file_watcher;
 pub mod image;
 pub mod recovery;
@@ -11,6 +12,7 @@ pub mod workspace;
 pub use document::*;
 pub use editor::*;
 pub use export::*;
+pub use file_tree::*;
 pub use file_watcher::*;
 pub use image::*;
 pub use recovery::*;

@@ -1,0 +1,324 @@
+{
+  "tasks": [
+    {
+      "id": "FR-025",
+      "priority": "P0",
+      "title": "Find/Replace UI",
+      "description": "Create SearchPanel component with search state management, regex-based search logic, keyboard shortcuts (Ctrl+F, Ctrl+H, F3, Shift+F3, Escape), match highlighting, and replace functionality (single and all).",
+      "status": "done",
+      "test_criteria": [
+        "Ctrl+F opens search panel",
+        "Typing query highlights matches in editor",
+        "F3/Shift+F3 navigates between matches",
+        "Ctrl+H shows replace field",
+        "Replace replaces current match",
+        "Replace All replaces all matches",
+        "Escape closes panel"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "A.1.1: Create SearchPanel component (www/src/components/SearchPanel.jsx). A.1.2: Add search state management to Editor. A.1.3: Implement search logic (regex-based). A.1.4: Wire keyboard shortcuts. A.1.5: Highlight matches in editor. A.1.6: Implement replace functionality. A.1.7: Add search panel CSS/styling.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-028",
+      "priority": "P0",
+      "title": "Focus Mode",
+      "description": "Implement focus mode that dims non-active paragraphs while keeping the active paragraph at full opacity. Includes settings toggle, body class, and keyboard shortcut.",
+      "status": "done",
+      "test_criteria": [
+        "Toggle in settings enables focus mode",
+        "Non-active paragraphs appear dimmed",
+        "Active paragraph remains full opacity",
+        "Transition is smooth"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "A.2.1: Add focusMode to Settings context. A.2.2: Add focus mode class to document body. A.2.3: Track active paragraph/block element. A.2.4: Implement paragraph de-emphasis CSS. A.2.5: Keyboard shortcut (Ctrl+Shift+F) - optional.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-029",
+      "priority": "P0",
+      "title": "Typewriter Mode",
+      "description": "Implement typewriter mode that keeps the cursor vertically centered in the viewport when typing or navigating. Includes scroll centering on cursor move.",
+      "status": "done",
+      "test_criteria": [
+        "Toggle in settings enables typewriter mode",
+        "Cursor stays vertically centered when typing",
+        "Scrolling is smooth",
+        "Cursor centers on navigation"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "A.3.1: Add typewriterMode to Settings context. A.3.2: Add typewriter mode class to document body. A.3.3: Implement scroll centering on cursor move. A.3.4: Keyboard shortcut (Ctrl+Shift+T) - optional.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-005",
+      "priority": "P0",
+      "title": "Auto-Save Timer",
+      "description": "Implement auto-save timer that automatically saves the document after a configurable interval (autoSaveInterval). Timer resets on each edit with debouncing. Shows 'Saving...' indicator.",
+      "status": "done",
+      "test_criteria": [
+        "Auto-save triggers after autoSaveInterval milliseconds",
+        "'Saving...' indicator shows during save",
+        "Dirty flag clears after auto-save",
+        "Disabling auto-save in settings prevents auto-save"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "A.4.1: Access auto-save settings. A.4.2: Implement auto-save timer hook (useAutoSaveTimer.js). A.4.3: Reset timer on each edit (debounce). A.4.4: Show 'Saving...' indicator. A.4.5: Clear dirty flag after auto-save.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-018",
+      "priority": "P1",
+      "title": "Rich Text Paste Handler",
+      "description": "Handle rich text paste events by detecting clipboard content type and converting HTML to Markdown using TurndownService. Insert converted Markdown at cursor position with plain text fallback.",
+      "status": "done",
+      "test_criteria": [
+        "Copy rich text from browser",
+        "Paste in editor produces Markdown output",
+        "Plain text paste works as fallback"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "B.1.1: Add paste event handler to Editor. B.1.2: Detect clipboard content type. B.1.3: Integrate HTML-to-Markdown converter (TurndownService). B.1.4: Insert converted Markdown at cursor. B.1.5: Add fallback for plain text paste.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-API-FR-026",
+      "priority": "P1",
+      "title": "DocumentResult Headings Field",
+      "description": "Add Heading struct to Rust model and populate headings array on document load. Update DocumentResult serialization to include headings field in API response.",
+      "status": "done",
+      "test_criteria": [
+        "Open document",
+        "Check API response includes headings array",
+        "Headings contain level, text, and position"
+      ],
+      "test_commands": [
+        "cargo build --package rust-note"
+      ],
+      "impl_notes": "B.2.1: Add Heading struct to Rust model. B.2.2: Add headings field to Document struct. B.2.3: Populate headings on document load. B.2.4: Update DocumentResult serialization.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-034",
+      "priority": "P1",
+      "title": "Settings Missing Fields",
+      "description": "Add focusMode, typewriterMode, and outlineVisible fields to Rust Settings struct. Update Settings JSON serialization and frontend Settings context. Add UI toggles for new settings.",
+      "status": "done",
+      "test_criteria": [
+        "Change settings in UI",
+        "Reload app",
+        "Verify settings persist (focusMode, typewriterMode, outlineVisible)"
+      ],
+      "test_commands": [
+        "cargo build --package rust-note",
+        "npm run build"
+      ],
+      "impl_notes": "B.3.1: Add fields to Rust Settings struct. B.3.2: Update Settings JSON serialization. B.3.3: Update frontend Settings context. B.3.4: Add UI toggles for new settings.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-023",
+      "priority": "P1",
+      "title": "File Tree CRUD",
+      "description": "Implement file tree create, rename, and delete operations via Tauri commands. Add context menu to Sidebar component with right-click options: New File, New Folder, Rename, Delete.",
+      "status": "done",
+      "test_criteria": [
+        "Right-click on file shows context menu",
+        "Right-click on folder shows context menu",
+        "'New File' creates file at correct path",
+        "'New Folder' creates folder at correct path",
+        "'Rename' prompts for new name and renames item",
+        "'Delete' shows confirmation and deletes item",
+        "File tree refreshes after operation",
+        "Error toast appears on operation failure"
+      ],
+      "test_commands": [
+        "cargo build --package rust-note",
+        "npm run build"
+      ],
+      "impl_notes": "B.4.1: Add Tauri commands (create_file, create_folder, rename_item, delete_item). B.4.2: Implement Rust command handlers with path validation. B.4.3: Add context menu to Sidebar component. B.4.4: Wire menu actions to Tauri commands. B.4.5: Handle errors gracefully with toast notifications.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-019",
+      "priority": "P1",
+      "title": "Undo/Redo Connection",
+      "description": "Wire TipTap's built-in undo/redo engine to keyboard shortcuts. Ctrl+Z triggers undo, Ctrl+Y or Ctrl+Shift+Z triggers redo.",
+      "status": "in_progress",
+      "test_criteria": [
+        "Make edits to document",
+        "Press Ctrl+Z, verify undo works",
+        "Press Ctrl+Y, verify redo works",
+        "Press Ctrl+Shift+Z, verify redo works"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "B.5.1: Verified Rust undo/redo engine exists. B.5.2: TipTap has built-in undo/redo. B.5.3: Add keyboard shortcuts to TipTap Editor (Ctrl+Z: undo, Ctrl+Y or Ctrl+Shift+Z: redo).",
+      "dependencies": [
+        "FR-023"
+      ]
+    },
+    {
+      "id": "FR-002",
+      "priority": "P1",
+      "title": "Drag-and-Drop File Open",
+      "description": "Create DropZone overlay component that appears on dragenter and handles .md file drops. Validates file extension, extracts file path, and calls existing open file logic.",
+      "status": "todo",
+      "test_criteria": [
+        "Drag .md file onto app",
+        "DropZone overlay appears",
+        "Visual indicator shows 'Drop file here'",
+        "Dropping file opens it in editor",
+        "Non-.md files are rejected visually"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "B.6.1: Create DropZone overlay component (full-window, dashed border). B.6.2: Handle drag events (dragenter, dragover, dragleave, drop). B.6.3: Extract and validate .md file from drop event. B.6.4: Call existing openFile handler. B.6.5: Add visual feedback (highlight drop zone, reject non-Markdown).",
+      "dependencies": []
+    },
+    {
+      "id": "FR-030",
+      "priority": "P2",
+      "title": "Settings Applied to TipTap Editor",
+      "description": "Apply user settings (contentWidth, lineHeight, fontSize, fontFamily) from Settings context to TipTap editor container and content.",
+      "status": "todo",
+      "test_criteria": [
+        "Change contentWidth in settings, verify editor max-width updates",
+        "Change lineHeight in settings, verify content line-height updates",
+        "Change fontSize in settings, verify content font-size updates",
+        "Change fontFamily in settings, verify content font-family updates"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "C.1.1-1.2: Read and apply contentWidth as max-width to TipTap editor container. C.1.3-1.4: Read and apply lineHeight to TipTap content. C.1.5-1.6: Read and apply fontSize to TipTap content. C.1.7-1.8: Read and apply fontFamily to TipTap content.",
+      "dependencies": [
+        "FR-034"
+      ]
+    },
+    {
+      "id": "FR-024",
+      "priority": "P2",
+      "title": "Recent Files UI",
+      "description": "Create RecentFiles component to display list of recently opened files. Integrate in sidebar or menu, show last 10 files with name and path. Add clear history option.",
+      "status": "todo",
+      "test_criteria": [
+        "Recent files appear in sidebar/menu",
+        "Click on recent file opens it",
+        "List shows file name and path",
+        "'Clear recent files' button clears history"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "C.2.1: Access recent files storage and parse list. C.2.2: Create RecentFiles component (list view). C.2.3: Add to sidebar or menu. C.2.4: Add clear recent files option.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-017",
+      "priority": "P2",
+      "title": "Image Paste",
+      "description": "Handle image paste (clipboard) and drag-and-drop by detecting image data, saving to workspace assets folder, and inserting Markdown image reference.",
+      "status": "todo",
+      "test_criteria": [
+        "Paste image from clipboard inserts markdown reference",
+        "Drag image onto editor inserts markdown reference",
+        "Image saves to workspace assets folder",
+        "Error toast appears if save fails"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "C.3.1: Detect image data in paste (image/png, image/jpeg). C.3.2: Handle image paste (save to assets, insert ![](path)). C.3.3: Handle image drag-and-drop. C.3.4: Show error for unsupported images.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-026-OUTLINE",
+      "priority": "P2",
+      "title": "Outline Click Navigation",
+      "description": "Implement click navigation in OutlinePanel - clicking a heading item should scroll TipTap editor to that heading's position and optionally set cursor.",
+      "status": "todo",
+      "test_criteria": [
+        "Click on outline item scrolls editor to heading",
+        "Cursor moves to heading start position"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "C.4.1: Add click handler to outline items. C.4.2: Get heading position (character offset) from headings array. C.4.3: Scroll TipTap editor to heading position. C.4.4: Optionally set cursor to heading start.",
+      "dependencies": [
+        "FR-API-FR-026"
+      ]
+    },
+    {
+      "id": "FR-031-FR-032",
+      "priority": "P2",
+      "title": "Export UI",
+      "description": "Create ExportModal component with format selection (HTML standalone, HTML linked-assets, PDF with page size options). Wire to backend export commands with progress indicator.",
+      "status": "todo",
+      "test_criteria": [
+        "Export button in Toolbar opens ExportModal",
+        "HTML format exports successfully",
+        "PDF format exports with selected page size",
+        "Progress indicator shows during export",
+        "Success/error notification appears after export"
+      ],
+      "test_commands": [
+        "cargo build --package rust-note",
+        "npm run build"
+      ],
+      "impl_notes": "C.5.1: Create ExportModal component with format selection. C.5.2: Wire export format selection. C.5.3: Call backend export commands. C.5.4: Show progress indicator. C.5.5: Show success/error notification. C.5.6: Add export button to Toolbar.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-007",
+      "priority": "P2",
+      "title": "File Watcher UI Integration",
+      "description": "Connect file watcher events to frontend notification system. Show notification when external change detected with options: Reload, Keep Current, Compare Later.",
+      "status": "todo",
+      "test_criteria": [
+        "Modify file externally while app is open",
+        "Notification appears with user options",
+        "'Reload' option reloads file",
+        "'Keep Current' option dismisses notification",
+        "'Compare Later' defers decision"
+      ],
+      "test_commands": [
+        "cargo build --package rust-note",
+        "npm run build"
+      ],
+      "impl_notes": "C.6.1: Connect file watcher events to frontend. C.6.2: Show notification when external change detected. C.6.3: Provide user options (Reload, Keep Current, Compare Later). C.6.4: Handle file watcher errors gracefully.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-013",
+      "priority": "P2",
+      "title": "Task Checkbox Toggle",
+      "description": "Add click handler to task list checkboxes in TipTap to toggle markdown state between `- [ ]` and `- [x]`. Update document state with new syntax.",
+      "status": "todo",
+      "test_criteria": [
+        "Click unchecked task checkbox changes to checked (- [ ] \u2192 - [x])",
+        "Click checked task checkbox changes to unchecked (- [x] \u2192 - [ ])",
+        "Document state updates correctly"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "impl_notes": "C.7.1: Add click handler to task list checkboxes in TipTap. C.7.2: Toggle markdown state. C.7.3: Update document state with new syntax.",
+      "dependencies": []
+    }
+  ]
+}

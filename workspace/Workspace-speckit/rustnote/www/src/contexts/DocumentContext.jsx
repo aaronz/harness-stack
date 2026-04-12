@@ -134,6 +134,60 @@ export function DocumentProvider({ children }) {
     }
   }
 
+  async function refreshWorkspace() {
+    if (!workspace?.root_path) return;
+    try {
+      const ws = await invoke('list_workspace', { path: workspace.root_path });
+      setWorkspace(ws);
+    } catch (e) {
+      console.error('Refresh workspace error:', e);
+    }
+  }
+
+  async function createFile(parentPath, name) {
+    try {
+      await invoke('create_file', { parentPath, name });
+      await refreshWorkspace();
+      return true;
+    } catch (e) {
+      console.error('Create file error:', e);
+      throw e;
+    }
+  }
+
+  async function createFolder(parentPath, name) {
+    try {
+      await invoke('create_folder', { parentPath, name });
+      await refreshWorkspace();
+      return true;
+    } catch (e) {
+      console.error('Create folder error:', e);
+      throw e;
+    }
+  }
+
+  async function renameItem(oldPath, newName) {
+    try {
+      await invoke('rename_item', { oldPath, newName });
+      await refreshWorkspace();
+      return true;
+    } catch (e) {
+      console.error('Rename item error:', e);
+      throw e;
+    }
+  }
+
+  async function deleteItem(path) {
+    try {
+      await invoke('delete_item', { path });
+      await refreshWorkspace();
+      return true;
+    } catch (e) {
+      console.error('Delete item error:', e);
+      throw e;
+    }
+  }
+
   async function insertImage() {
     try {
       const result = await open({
@@ -172,6 +226,11 @@ export function DocumentProvider({ children }) {
       updateContent,
       workspace,
       openWorkspace,
+      refreshWorkspace,
+      createFile,
+      createFolder,
+      renameItem,
+      deleteItem,
       insertImage,
       setInsertTextCallback,
       isSaving,
