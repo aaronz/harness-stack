@@ -4,6 +4,7 @@ import TurndownService from 'turndown';
 import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSearch } from '../contexts/SearchContext';
+import { useToast } from '../contexts/ToastContext';
 import { useAutoSaveTimer } from '../hooks/useAutoSaveTimer';
 
 const turndownService = new TurndownService({
@@ -19,6 +20,7 @@ export default function Editor() {
   const { currentDocument, updateContent, setInsertTextCallback, saveDocument } = useDocument();
   const { settings, toggleFocusMode, toggleTypewriterMode } = useSettings();
   const { isSearchVisible, searchQuery, currentMatch, matchCount } = useSearch();
+  const { error: showError } = useToast();
   const editorRef = useRef(null);
   const [cursorOffset, setCursorOffset] = useState(0);
   const renderTimeoutRef = useRef(null);
@@ -267,9 +269,62 @@ export default function Editor() {
     }
   }
 
+  async function handleImagePaste(clipboardData) {
+    const types = clipboardData?.types || [];
+    const imageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/svg+xml'];
+    
+    for (const type of imageTypes) {
+      if (types.includes(type)) {
+        const imageBlob = clipboardData?.getData(type);
+        if (imageBlob) {
+          try {
+            const base64 = await blobToBase64(imageBlob);
+            const workspacePath = currentDocument?.filePath
+              ? currentDocument.filePath.substring(0, currentDocument.filePath.lastIndexOf('/'))
+              : null;
+            
+            if (!workspacePath) {
+              showError('Please save the document first before pasting images');
+              return true;
+            }
+            
+            const imageInfo = await invoke('save_image_from_base64_cmd', {
+              base64Data: base64,
+              workspacePath: workspacePath,
+            });
+            
+            if (imageInfo) {
+              const markdown = `![${imageInfo.file_name}](${imageInfo.relative_path})`;
+              insertText(markdown);
+              return true;
+            }
+          } catch (err) {
+            console.error('Image paste error:', err);
+            showError(`Failed to paste image: ${err}`);
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
   function handlePaste(e) {
     e.preventDefault();
     const clipboardData = e.clipboardData;
+    
+    if (handleImagePaste(clipboardData)) {
+      return;
+    }
     
     const types = clipboardData?.types || [];
     const hasHtml = types.includes('text/html');
@@ -277,22 +332,18 @@ export default function Editor() {
     if (hasHtml) {
       const htmlContent = clipboardData?.getData('text/html') || '';
       
-      // FR-018-B1.3: HTML to Markdown conversion
       if (htmlContent && htmlContent.trim()) {
         try {
-          // Sanitize: remove script tags and event handlers before conversion
           const sanitizedHtml = htmlContent
             .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
             .replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '')
             .replace(/\s*on\w+\s*=\s*[^\s>]+/gi, '');
           
-          // Convert HTML to Markdown
           const markdown = turndownService.turndown(sanitizedHtml);
           
           if (markdown && markdown.trim()) {
             insertText(markdown);
           } else {
-            // Fallback to plain text if conversion yields empty
             const textContent = clipboardData?.getData('text/plain') || '';
             if (textContent) {
               insertText(textContent);
@@ -300,21 +351,18 @@ export default function Editor() {
           }
         } catch (err) {
           console.error('HTML to Markdown conversion error:', err);
-          // Fallback to plain text on malformed HTML
           const textContent = clipboardData?.getData('text/plain') || '';
           if (textContent) {
             insertText(textContent);
           }
         }
       } else {
-        // Empty HTML content - fallback to plain text
         const textContent = clipboardData?.getData('text/plain') || '';
         if (textContent) {
           insertText(textContent);
         }
       }
     } else {
-      // Plain text fallback - no HTML available
       const text = clipboardData?.getData('text/plain') || '';
       if (text) {
         insertText(text);
@@ -580,6 +628,46 @@ export default function Editor() {
     saveDocument
   );
 
+  function handleDragOver(e) {
+    if (e.dataTransfer?.types?.includes('Files')) {
+      e.preventDefault();
+    }
+  }
+
+  async function handleDrop(e) {
+    e.preventDefault();
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    if (!file.type.startsWith('image/')) return;
+
+    try {
+      const workspacePath = currentDocument?.filePath
+        ? currentDocument.filePath.substring(0, currentDocument.filePath.lastIndexOf('/'))
+        : null;
+      
+      if (!workspacePath) {
+        showError('Please save the document first before dropping images');
+        return;
+      }
+
+      const base64 = await blobToBase64(file);
+      const imageInfo = await invoke('save_image_from_base64_cmd', {
+        base64Data: base64,
+        workspacePath: workspacePath,
+      });
+
+      if (imageInfo) {
+        const markdown = `![${imageInfo.file_name}](${imageInfo.relative_path})`;
+        insertText(markdown);
+      }
+    } catch (err) {
+      console.error('Image drop error:', err);
+      showError(`Failed to insert image: ${err}`);
+    }
+  }
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div
@@ -590,6 +678,8 @@ export default function Editor() {
         onInput={handleInput}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
         className={`
           flex-1 p-5 font-sans text-base leading-relaxed overflow-y-auto whitespace-pre-wrap break-word outline-none
           ${settings.typewriterMode ? 'typewriter-mode' : ''}

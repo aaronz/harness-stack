@@ -1,4 +1,4 @@
-use crate::model::{copy_image_to_workspace, get_image_info, ImageInfo};
+use crate::model::{copy_image_to_workspace, get_image_info, save_image_from_base64, ImageInfo};
 use std::path::Path;
 use tauri::command;
 
@@ -21,6 +21,15 @@ pub async fn insert_image(
     };
     
     Ok(info)
+}
+
+#[command]
+pub async fn save_image_from_base64_cmd(
+    base64_data: String,
+    workspace_path: String,
+) -> Result<ImageInfo, String> {
+    let ws_path = Path::new(&workspace_path);
+    save_image_from_base64(&base64_data, ws_path).map_err(|e| e.to_string())
 }
 
 #[command]

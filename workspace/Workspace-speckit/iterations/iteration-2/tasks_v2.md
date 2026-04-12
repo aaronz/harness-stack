@@ -285,21 +285,21 @@
 
 **FR Reference:** FR-017  
 **Estimated Effort:** 1-2 days  
-**Actual Status:** ⚠️ NOT IMPLEMENTED
+**Actual Status:** ✅ IMPLEMENTED
 
-- [ ] **C.3.1** Detect image data in paste
+- [x] **C.3.1** Detect image data in paste
   - Check clipboard for image types (image/png, image/jpeg)
 
-- [ ] **C.3.2** Handle image paste
+- [x] **C.3.2** Handle image paste
   - Save image to workspace assets folder
   - Generate unique filename
   - Insert markdown image reference `![](path/to/image.png)`
 
-- [ ] **C.3.3** Handle image drag-and-drop
+- [x] **C.3.3** Handle image drag-and-drop
   - Similar to paste but from drop event
   - Save to assets, insert reference
 
-- [ ] **C.3.4** Show error for unsupported images
+- [x] **C.3.4** Show error for unsupported images
   - Toast notification if save fails
 
 **Status:** POST-MVP

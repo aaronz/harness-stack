@@ -232,7 +232,7 @@
       "priority": "P2",
       "title": "Image Paste",
       "description": "Handle image paste (clipboard) and drag-and-drop by detecting image data, saving to workspace assets folder, and inserting Markdown image reference.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Paste image from clipboard inserts markdown reference",
         "Drag image onto editor inserts markdown reference",
