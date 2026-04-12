@@ -44,7 +44,7 @@ impl Default for Settings {
         Self {
             theme: Theme::Light,
             auto_save: true,
-            auto_save_interval: 30,
+            auto_save_interval: 30000,
             focus_mode: false,
             typewriter_mode: false,
             outline_visible: false,

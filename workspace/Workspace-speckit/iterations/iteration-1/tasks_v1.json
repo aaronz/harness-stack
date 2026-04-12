@@ -303,7 +303,7 @@
       "priority": "P0",
       "title": "Auto-Save Timer - Settings Access",
       "description": "Access auto-save settings: read autoSave (boolean) and autoSaveInterval (number, ms) from Settings context",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "autoSave boolean is readable from Settings context",
         "autoSaveInterval number is readable from Settings context"
