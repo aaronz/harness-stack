@@ -6,16 +6,32 @@
   "scripts": {
     "dev": "cd www && npm run dev",
     "build": "cd www && npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:unit": "vitest run www/__tests__",
+    "test:e2e": "playwright test",
+    "test:visual": "playwright test e2e/visual",
+    "test:security": "playwright test e2e/security",
+    "test:a11y": "playwright test e2e/a11y",
+    "test:performance": "npx ts-node scripts/benchmark.ts",
+    "typecheck": "cd www && npx tsc --noEmit",
+    "lint": "cd www && npx eslint src --ext .ts,.tsx",
+    "format:check": "cd www && npx prettier --check .",
+    "tauri": "cd src-tauri && cargo tauri"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
     "@playwright/test": "^1.59.1",
     "@srsholmes/tauri-playwright": "^0.2.2",
     "@tauri-apps/api": "^2.10.1",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "vitest": "^2.1.9",
     "playwright": "^1.59.1"
   }
 }

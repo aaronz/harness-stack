@@ -44,6 +44,9 @@ printpdf = "0.7"
 open = "5"
 regex = "1"
 
+[dev-dependencies]
+criterion = "0.5"
+
 [profile.release]
 strip = true
 lto = true
