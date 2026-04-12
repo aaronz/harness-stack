@@ -222,9 +222,9 @@ Wire Ctrl+Shift+O keyboard shortcut to open workspace folder.
 Integrate backend syntax highlighting into TipTap code blocks. Backend has highlight_code_block but TipTap doesn't use it.
 
 **Acceptance Criteria:**
-- [ ] Code blocks render with syntax highlighting
-- [ ] Multiple languages supported
-- [ ] Highlighting matches VS Code-like theme
+- [x] Code blocks render with syntax highlighting
+- [x] Multiple languages supported
+- [x] Highlighting matches VS Code-like theme
 
 **Implementation Steps:**
 1. Create CodeBlock extension for TipTap
@@ -374,8 +374,8 @@ Many keyboard shortcuts not wired. Need centralized shortcut handler.
 | T-004 | Dirty State Indicator | P2 | Low | Done |
 | T-005 | Ctrl+N (New) Shortcut | P2 | Low | Done |
 | T-006 | Ctrl+O (Open) Shortcut | P2 | Low | Done |
-| T-007 | Ctrl+Shift+O (Folder) Shortcut | P2 | Low | Pending |
-| T-008 | Code Syntax Highlighting | P2 | Medium | Pending |
+| T-007 | Ctrl+Shift+O (Folder) Shortcut | P2 | Low | Done |
+| T-008 | Code Syntax Highlighting | P2 | Medium | Done |
 | T-009 | Link Editing Behavior | P2 | Low | Pending |
 | T-010 | Frontmatter Rendering | P3 | Medium | Deferred |
 | T-011 | Table Cell Editing Safety | P3 | Medium | Deferred |
@@ -416,8 +416,8 @@ T-009 (Link Behavior) ─────► TipTapEditor.jsx
 - [x] T-004 Dirty Indicator - Complete
 - [x] T-005 Ctrl+N - Complete
 - [x] T-006 Ctrl+O - Complete
-- [ ] T-007 Ctrl+Shift+O - Complete
-- [ ] T-008 Syntax Highlighting - Complete
+- [x] T-007 Ctrl+Shift+O - Complete
+- [x] T-008 Syntax Highlighting - Complete
 - [ ] T-009 Link Behavior - Complete
 
 ### Post-Implementation
