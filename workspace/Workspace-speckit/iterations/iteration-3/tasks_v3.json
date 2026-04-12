@@ -112,7 +112,7 @@
       "priority": "P2",
       "title": "Keyboard Shortcut - Open Folder (Ctrl+Shift+O)",
       "description": "Wire Ctrl+Shift+O keyboard shortcut to open workspace folder. Call backend open_folder command and populate sidebar.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Ctrl+Shift+O opens folder selection dialog",
         "Selected folder becomes workspace",
