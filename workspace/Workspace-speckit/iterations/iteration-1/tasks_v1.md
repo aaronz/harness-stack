@@ -90,11 +90,11 @@
   - Add `setFocusMode` setter
   - Persist to Tauri settings
 
-- [ ] **A.2.2** Add focus mode class to document body
+- [x] **A.2.2** Add focus mode class to document body
   - Toggle `.focus-mode` class on body when enabled
   - Ensure class removed when disabled
 
-- [ ] **A.2.3** Track active paragraph/block element
+- [x] **A.2.3** Track active paragraph/block element
   - On cursor position change, identify current block
   - Store reference to active block element
   - Update on selection change

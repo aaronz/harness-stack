@@ -176,7 +176,7 @@
       "priority": "P0",
       "title": "Focus Mode - Active Paragraph Tracking",
       "description": "Track active paragraph/block element: on cursor change identify current block, store reference, update on selection change",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Active block is identified on cursor move",
         "Active block reference updates on selection change"
