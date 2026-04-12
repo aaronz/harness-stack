@@ -249,7 +249,7 @@
       "priority": "P0",
       "title": "Typewriter Mode - Body Class Toggle",
       "description": "Toggle .typewriter-mode class on body when typewriter mode is enabled",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         ".typewriter-mode class added to body when enabled",
         ".typewriter-mode class removed from body when disabled"

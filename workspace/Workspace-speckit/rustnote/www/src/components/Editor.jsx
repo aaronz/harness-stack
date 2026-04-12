@@ -417,6 +417,18 @@ export default function Editor() {
   }, [settings.focusMode]);
 
   useEffect(() => {
+    if (settings.typewriterMode) {
+      document.body.classList.add('typewriter-mode');
+    } else {
+      document.body.classList.remove('typewriter-mode');
+    }
+
+    return () => {
+      document.body.classList.remove('typewriter-mode');
+    };
+  }, [settings.typewriterMode]);
+
+  useEffect(() => {
     if (!settings.focusMode) return;
 
     document.addEventListener('selectionchange', updateActiveBlock);
