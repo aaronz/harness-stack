@@ -267,7 +267,7 @@
       "priority": "P0",
       "title": "Typewriter Mode - Scroll Centering",
       "description": "Implement scroll centering on cursor move: get cursor line element, call scrollIntoView({ block: 'center', behavior: 'smooth' }), debounce 50ms",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Cursor stays vertically centered when typing",
         "Scrolling is smooth",
@@ -286,7 +286,7 @@
       "priority": "P0",
       "title": "Typewriter Mode - Keyboard Shortcut",
       "description": "Add Ctrl+Shift+T keyboard shortcut to toggle typewriter mode",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Ctrl+Shift+T toggles typewriter mode on/off"
       ],
