@@ -3,9 +3,10 @@ import { invoke } from '@tauri-apps/api/core';
 import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSearch } from '../contexts/SearchContext';
+import { useAutoSaveTimer } from '../hooks/useAutoSaveTimer';
 
 export default function Editor() {
-  const { currentDocument, updateContent, setInsertTextCallback } = useDocument();
+  const { currentDocument, updateContent, setInsertTextCallback, saveDocument } = useDocument();
   const { settings, toggleFocusMode, toggleTypewriterMode } = useSettings();
   const { isSearchVisible, searchQuery, currentMatch, matchCount } = useSearch();
   const editorRef = useRef(null);
@@ -499,6 +500,14 @@ export default function Editor() {
       }
     };
   }, [settings.typewriterMode]);
+
+  useAutoSaveTimer(
+    currentDocument?.isDirty,
+    settings.autoSave,
+    settings.autoSaveInterval,
+    currentDocument?.content,
+    saveDocument
+  );
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">

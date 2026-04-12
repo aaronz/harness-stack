@@ -320,7 +320,7 @@
       "priority": "P0",
       "title": "Auto-Save Timer - Timer Hook Implementation",
       "description": "Implement auto-save timer hook: watch isDirty, watch autoSaveInterval, useEffect with setTimeout pattern, clear on cleanup",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Timer is created when isDirty is true and autoSave is enabled",
         "Timer is cleared on cleanup",
