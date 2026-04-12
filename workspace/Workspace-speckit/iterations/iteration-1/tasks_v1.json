@@ -80,7 +80,7 @@
       "priority": "P0",
       "title": "Find/Replace UI - Highlight Matches",
       "description": "Implement highlight matches in editor with <mark> class for current match, different class for other matches, scroll visibility, and clear on close",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Current match has distinct highlight styling",
         "Other matches have secondary highlight",
@@ -100,7 +100,7 @@
       "priority": "P0",
       "title": "Find/Replace UI - Replace Functionality",
       "description": "Implement replace single at currentMatchIndex, replace all for all matches, update document state after replace, update match list after replace",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Replace single replaces current match only",
         "Replace all replaces every match",
