@@ -68,7 +68,7 @@ export function DocumentProvider({ children }) {
     }
   }
 
-  async function saveDocument() {
+  const saveDocument = useCallback(async function() {
     if (!currentDocument) return;
 
     setIsSaving(true);
@@ -90,7 +90,7 @@ export function DocumentProvider({ children }) {
     } finally {
       setIsSaving(false);
     }
-  }
+  }, [currentDocument]);
 
   async function saveDocumentAs() {
     if (!currentDocument) return;

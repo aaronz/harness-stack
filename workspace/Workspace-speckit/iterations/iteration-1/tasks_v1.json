@@ -357,7 +357,7 @@
       "priority": "P0",
       "title": "Auto-Save Timer - Dirty Flag Clear",
       "description": "Clear dirty flag after successful auto-save: setIsDirty(false) on successful save",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "isDirty is set to false after auto-save completes",
         "Auto-save does not retrigger after cleaning dirty flag"
