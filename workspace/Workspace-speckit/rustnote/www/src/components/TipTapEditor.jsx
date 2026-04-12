@@ -11,6 +11,7 @@ import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSearch } from '../contexts/SearchContext';
 import { useAutoSaveTimer } from '../hooks/useAutoSaveTimer';
+import CodeBlockHighlight from './CodeBlockHighlight';
 
 marked.setOptions({
   breaks: true,
@@ -89,11 +90,7 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
             class: 'px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-sm font-mono',
           },
         },
-        codeBlock: {
-          HTMLAttributes: {
-            class: 'p-4 bg-gray-100 dark:bg-gray-800 rounded-lg font-mono text-sm overflow-x-auto',
-          },
-        },
+        codeBlock: false,
         blockquote: {
           HTMLAttributes: {
             class: 'border-l-4 border-gray-400 dark:border-gray-600 pl-4 italic my-2',
@@ -126,6 +123,7 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
           nested: true,
         },
       }),
+      CodeBlockHighlight,
       TaskList,
       TaskItem.configure({
         HTMLAttributes: {

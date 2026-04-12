@@ -21,6 +21,39 @@ pub fn get_highlighted_code_html(code: String, language: String) -> String {
 }
 
 #[tauri::command]
+pub fn prehighlight_markdown(markdown: String) -> String {
+    let mut result = String::new();
+    let mut in_code_block = false;
+    let mut code_lang = String::new();
+    let mut code_content = String::new();
+
+    for line in markdown.lines() {
+        if line.starts_with("```") {
+            if !in_code_block {
+                in_code_block = true;
+                code_lang = line.trim_start_matches("```").trim().to_string();
+                code_content.clear();
+            } else {
+                in_code_block = false;
+                let highlighted = SYNTAX_HIGHLIGHTER.highlight_html(&code_content, &code_lang);
+                result.push_str(&highlighted);
+                result.push('\n');
+            }
+        } else if in_code_block {
+            if !code_content.is_empty() {
+                code_content.push('\n');
+            }
+            code_content.push_str(line);
+        } else {
+            result.push_str(line);
+            result.push('\n');
+        }
+    }
+
+    result
+}
+
+#[tauri::command]
 pub fn parse_markdown_ast(markdown: String) -> String {
     let doc = SemanticDocument::parse(&markdown);
     doc.html().to_string()
