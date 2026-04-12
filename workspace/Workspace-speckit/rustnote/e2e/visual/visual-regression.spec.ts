@@ -36,6 +36,9 @@ test.describe('Visual Regression Tests', () => {
 
     test('bold text renders correctly', async ({ page }) => {
       await page.goto('/');
+      await page.waitForLoadState('domcontentloaded');
+      
+      const editor = page.locator('#editor-content');
       await editor.click();
       await page.keyboard.type('**bold text**');
       
