@@ -1,7 +1,7 @@
 import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
 
-export default function Toolbar() {
+export default function Toolbar({ onExportClick }) {
   const { createNewDocument, openDocument, saveDocument, insertImage, isSaving } = useDocument();
   const { settings, toggleTheme, toggleFocusMode, toggleTypewriterMode, toggleOutline } = useSettings();
 
@@ -59,6 +59,20 @@ export default function Toolbar() {
       </button>
 
       <div className="flex-1" />
+
+      <button
+        id="btn-export"
+        onClick={onExportClick}
+        className="px-3 py-1.5 text-sm border rounded cursor-pointer transition-colors"
+        style={{
+          backgroundColor: 'var(--bg-primary)',
+          borderColor: 'var(--border-color)',
+          color: 'var(--text-primary)',
+        }}
+        title="Export Document"
+      >
+        Export
+      </button>
 
       <button
         id="btn-image"

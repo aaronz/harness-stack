@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { DocumentProvider, useDocument } from './contexts/DocumentContext';
 import { SearchProvider, useSearch } from './contexts/SearchContext';
@@ -8,6 +8,7 @@ import Sidebar from './components/Sidebar';
 import TipTapEditor from './components/TipTapEditor';
 import OutlinePanel from './components/OutlinePanel';
 import SearchPanel from './components/SearchPanel';
+import ExportModal from './components/ExportModal';
 import Toast from './components/Toast';
 import DropZone from './components/DropZone';
 
@@ -15,10 +16,19 @@ function AppContent() {
   const { settings } = useSettings();
   const { createNewDocument, currentDocument, setCurrentDocument } = useDocument();
   const { isSearchVisible, showSearch, hideSearch, findNext, findPrev } = useSearch();
+  const [isExportVisible, setIsExportVisible] = useState(false);
   const editorRef = useRef(null);
 
   const handleHeadingClick = (heading) => {
     editorRef.current?.scrollToHeading(heading);
+  };
+
+  const handleExportClick = () => {
+    setIsExportVisible(true);
+  };
+
+  const handleExportClose = () => {
+    setIsExportVisible(false);
   };
 
   useEffect(() => {
@@ -106,8 +116,9 @@ function AppContent() {
       <div id="app" className="flex h-screen w-screen">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Toolbar />
+          <Toolbar onExportClick={handleExportClick} />
           <SearchPanel isVisible={isSearchVisible} onClose={hideSearch} />
+          <ExportModal isVisible={isExportVisible} onClose={handleExportClose} />
           <TipTapEditor ref={editorRef} />
         </div>
         <OutlinePanel onHeadingClick={handleHeadingClick} />
