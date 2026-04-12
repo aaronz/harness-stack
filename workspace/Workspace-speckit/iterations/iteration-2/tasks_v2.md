@@ -325,18 +325,18 @@
 
 **FR Reference:** FR-031, FR-032  
 **Estimated Effort:** 1-2 days  
-**Actual Status:** ⚠️ BACKEND EXISTS, UI NOT IMPLEMENTED
+**Actual Status:** ✅ COMPLETE
 
-- [ ] **C.5.1** Create ExportModal component
+- [x] **C.5.1** Create ExportModal component
   - Modal dialog with format selection
   - HTML (standalone or linked-assets mode)
   - PDF with page size options
 
-- [ ] **C.5.2** Wire export format selection
-- [ ] **C.5.3** Call backend export commands
-- [ ] **C.5.4** Show progress indicator during export
-- [ ] **C.5.5** Show success/error notification
-- [ ] **C.5.6** Add export button to Toolbar
+- [x] **C.5.2** Wire export format selection
+- [x] **C.5.3** Call backend export commands
+- [x] **C.5.4** Show progress indicator during export
+- [x] **C.5.5** Show success/error notification
+- [x] **C.5.6** Add export button to Toolbar
 
 **Status:** POST-MVP
 

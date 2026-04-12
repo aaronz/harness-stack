@@ -268,7 +268,7 @@
       "priority": "P2",
       "title": "Export UI",
       "description": "Create ExportModal component with format selection (HTML standalone, HTML linked-assets, PDF with page size options). Wire to backend export commands with progress indicator.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Export button in Toolbar opens ExportModal",
         "HTML format exports successfully",
