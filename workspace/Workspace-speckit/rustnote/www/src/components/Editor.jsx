@@ -13,6 +13,7 @@ export default function Editor() {
   const renderTimeoutRef = useRef(null);
   const lastHighlightedQueryRef = useRef('');
   const activeBlockRef = useRef(null);
+  const typewriterScrollRef = useRef(null);
 
   useEffect(() => {
     if (editorRef.current && currentDocument?.content !== undefined) {
@@ -452,6 +453,46 @@ export default function Editor() {
       editor.removeEventListener('mouseup', updateActiveBlock);
     };
   }, [settings.focusMode]);
+
+  // Typewriter Mode: Scroll centering on cursor move
+  useEffect(() => {
+    if (!settings.typewriterMode) return;
+
+    function scrollToCursor() {
+      const selection = window.getSelection();
+      if (!selection.rangeCount || !editorRef.current) return;
+
+      const range = selection.getRangeAt(0);
+      const cursorNode = range.startContainer;
+
+      // Find the block element containing the cursor
+      let element = cursorNode.parentElement;
+      const blockTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'PRE', 'LI', 'DIV', 'SPAN'];
+      while (element && element !== editorRef.current) {
+        if (blockTags.includes(element.tagName)) {
+          element.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          break;
+        }
+        element = element.parentElement;
+      }
+    }
+
+    function debouncedScroll() {
+      if (typewriterScrollRef.current) {
+        clearTimeout(typewriterScrollRef.current);
+      }
+      typewriterScrollRef.current = setTimeout(scrollToCursor, 50);
+    }
+
+    document.addEventListener('selectionchange', debouncedScroll);
+
+    return () => {
+      document.removeEventListener('selectionchange', debouncedScroll);
+      if (typewriterScrollRef.current) {
+        clearTimeout(typewriterScrollRef.current);
+      }
+    };
+  }, [settings.typewriterMode]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
