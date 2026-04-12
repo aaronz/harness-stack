@@ -79,7 +79,7 @@
       "priority": "P2",
       "title": "Keyboard Shortcut - New Document (Ctrl+N)",
       "description": "Wire Ctrl+N keyboard shortcut to create new document. Check for dirty state and prompt for save first if needed.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Ctrl+N creates new untitled document",
         "If current document is dirty, prompt for save first"

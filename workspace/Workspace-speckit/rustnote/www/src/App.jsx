@@ -18,7 +18,7 @@ import { useFileWatcher } from './hooks/useFileWatcher';
 
 function AppContent() {
   const { settings } = useSettings();
-  const { createNewDocument, currentDocument, setCurrentDocument } = useDocument();
+  const { createNewDocument, currentDocument, setCurrentDocument, saveDocument } = useDocument();
   const { isSearchVisible, showSearch, hideSearch, findNext, findPrev } = useSearch();
   const [isExportVisible, setIsExportVisible] = useState(false);
   const [recoverySnapshots, setRecoverySnapshots] = useState([]);
@@ -147,6 +147,21 @@ function AppContent() {
     const handleKeyDown = (e) => {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+      if (modifier && e.key === 'n') {
+        e.preventDefault();
+        if (currentDocument?.isDirty) {
+          const shouldSave = window.confirm('Do you want to save changes before creating a new document?');
+          if (shouldSave) {
+            saveDocument();
+          }
+          if (!shouldSave) {
+            return;
+          }
+        }
+        createNewDocument();
+        return;
+      }
 
       if (modifier && e.key === 'f') {
         e.preventDefault();

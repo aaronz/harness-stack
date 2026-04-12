@@ -144,8 +144,8 @@ Add visual indicator when document has unsaved changes. isDirty state already ex
 Wire Ctrl+N keyboard shortcut to create new document.
 
 **Acceptance Criteria:**
-- [ ] Ctrl+N creates new untitled document
-- [ ] If current document is dirty, prompt for save first
+- [x] Ctrl+N creates new untitled document
+- [x] If current document is dirty, prompt for save first
 
 **Implementation Steps:**
 1. Add keyboard event handler in App component
@@ -372,7 +372,7 @@ Many keyboard shortcuts not wired. Need centralized shortcut handler.
 | T-002 | Undo/Redo Shortcuts | P1 | Low | Pending |
 | T-003 | Recovery UI on Startup | P1 | Medium | Pending |
 | T-004 | Dirty State Indicator | P2 | Low | Done |
-| T-005 | Ctrl+N (New) Shortcut | P2 | Low | Pending |
+| T-005 | Ctrl+N (New) Shortcut | P2 | Low | Done |
 | T-006 | Ctrl+O (Open) Shortcut | P2 | Low | Pending |
 | T-007 | Ctrl+Shift+O (Folder) Shortcut | P2 | Low | Pending |
 | T-008 | Code Syntax Highlighting | P2 | Medium | Pending |
@@ -414,7 +414,7 @@ T-009 (Link Behavior) ─────► TipTapEditor.jsx
 
 ### P2 Completion (Target: 0.5 day)
 - [x] T-004 Dirty Indicator - Complete
-- [ ] T-005 Ctrl+N - Complete
+- [x] T-005 Ctrl+N - Complete
 - [ ] T-006 Ctrl+O - Complete
 - [ ] T-007 Ctrl+Shift+O - Complete
 - [ ] T-008 Syntax Highlighting - Complete
