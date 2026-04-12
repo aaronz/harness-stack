@@ -487,7 +487,32 @@ bash -n script.sh
 | `./install-methodology.sh speckit /tmp/test` | Skills in /tmp/test/.opencode/ |
 | `./iterate-prd.sh --help` | Help text displayed |
 
-### 11.3 Manual Verification Checklist
+### 11.3 Convention Tests
+
+All implementations must pass convention tests before verification:
+
+| Test | Tool | Requirement |
+|------|------|-------------|
+| **No AI Slop** | `ai-slop-remover` | Remove AI-generated code smells from all changed files |
+| **Linting** | ESLint/Prettier | Code follows project style guide |
+| **Type Checking** | TypeScript | No type errors (`tsc --noEmit`) |
+| **Formatting** | Prettier | Files are formatted (`prettier --check`) |
+| **Secrets** | git-secrets/Whispers | No credentials committed |
+
+**Convention Test Execution**:
+```bash
+# Run before any verification
+ai-slop-remover --check ./src
+prettier --check ./src/**/*.ts
+tsc --noEmit
+```
+
+**Convention Test Enforcement**:
+- Convention tests run BEFORE build verification
+- If conventions fail, implementation is rejected
+- Reports generated in `outputs/iteration-{N}/convention-report.md`
+
+### 11.4 Manual Verification Checklist
 
 - [ ] Each iterate-prd.sh has unique output directory
 - [ ] Checkpoints save after each phase
@@ -549,3 +574,4 @@ bash -n script.sh
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-04-11 | Initial PRD document |
+| 1.1 | 2026-04-12 | Add convention tests (section 11.3) |
