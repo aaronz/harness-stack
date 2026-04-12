@@ -1,9 +1,29 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import TurndownService from 'turndown';
 import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSearch } from '../contexts/SearchContext';
 import { useAutoSaveTimer } from '../hooks/useAutoSaveTimer';
+
+// Initialize Turndown service for HTML to Markdown conversion
+const turndownService = new TurndownService({
+  headingStyle: 'atx',
+  codeBlockStyle: 'fenced',
+  bulletListMarker: '-',
+  emDelimiter: '*',
+  strongDelimiter: '**',
+  linkStyle: 'inlined',
+});
+
+// Custom filter to handle common HTML paste content
+turndownService.addFilter((content, node) => {
+  // Skip empty content
+  if (!content || content.trim() === '') {
+    return '';
+  }
+  return content;
+});
 
 export default function Editor() {
   const { currentDocument, updateContent, setInsertTextCallback, saveDocument } = useDocument();
@@ -255,20 +275,47 @@ export default function Editor() {
     e.preventDefault();
     const clipboardData = e.clipboardData;
     
-    // FR-018-B1.2: Clipboard type detection
-    // Check if HTML content is available in clipboard
     const types = clipboardData?.types || [];
     const hasHtml = types.includes('text/html');
     
     if (hasHtml) {
-      // HTML content detected - get HTML for later conversion (FR-018-B1.3)
       const htmlContent = clipboardData?.getData('text/html') || '';
-      console.log('HTML paste detected, HTML length:', htmlContent.length);
-      // For now, extract plain text from HTML as fallback until conversion is implemented
-      // TODO: FR-018-B1.3 - Convert HTML to Markdown
-      const textContent = clipboardData?.getData('text/plain') || '';
-      if (textContent) {
-        insertText(textContent);
+      
+      // FR-018-B1.3: HTML to Markdown conversion
+      if (htmlContent && htmlContent.trim()) {
+        try {
+          // Sanitize: remove script tags and event handlers before conversion
+          const sanitizedHtml = htmlContent
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+            .replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '')
+            .replace(/\s*on\w+\s*=\s*[^\s>]+/gi, '');
+          
+          // Convert HTML to Markdown
+          const markdown = turndownService.turndown(sanitizedHtml);
+          
+          if (markdown && markdown.trim()) {
+            insertText(markdown);
+          } else {
+            // Fallback to plain text if conversion yields empty
+            const textContent = clipboardData?.getData('text/plain') || '';
+            if (textContent) {
+              insertText(textContent);
+            }
+          }
+        } catch (err) {
+          console.error('HTML to Markdown conversion error:', err);
+          // Fallback to plain text on malformed HTML
+          const textContent = clipboardData?.getData('text/plain') || '';
+          if (textContent) {
+            insertText(textContent);
+          }
+        }
+      } else {
+        // Empty HTML content - fallback to plain text
+        const textContent = clipboardData?.getData('text/plain') || '';
+        if (textContent) {
+          insertText(textContent);
+        }
       }
     } else {
       // Plain text fallback - no HTML available

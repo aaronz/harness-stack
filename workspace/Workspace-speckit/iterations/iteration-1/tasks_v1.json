@@ -409,7 +409,7 @@
       "priority": "P1",
       "title": "Rich Text Paste Handler - HTML to Markdown Conversion",
       "description": "Integrate HTML-to-Markdown converter (turndown package), convert HTML content to Markdown, handle edge cases",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "HTML content converts to valid Markdown",
         "Empty paste is handled gracefully",
