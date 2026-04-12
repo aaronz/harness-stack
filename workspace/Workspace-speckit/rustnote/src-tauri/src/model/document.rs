@@ -61,6 +61,18 @@ impl Document {
     }
 }
 
+/// Heading extracted from a Markdown document.
+/// Used for outline/TOC generation.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Heading {
+    /// Heading level (1-6)
+    pub level: u8,
+    /// Heading text content
+    pub text: String,
+    /// Character offset position in the document
+    pub position: usize,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

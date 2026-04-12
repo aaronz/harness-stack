@@ -464,7 +464,7 @@
       "priority": "P1",
       "title": "DocumentResult Headings - Rust Heading Struct",
       "description": "Add Heading struct to Rust model with level (u8 1-6), text (String), and position (usize character offset)",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Heading struct is defined correctly",
         "All fields (level, text, position) are present"
