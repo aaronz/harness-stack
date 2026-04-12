@@ -18,7 +18,7 @@ import { useFileWatcher } from './hooks/useFileWatcher';
 
 function AppContent() {
   const { settings } = useSettings();
-  const { createNewDocument, currentDocument, setCurrentDocument, saveDocument } = useDocument();
+  const { createNewDocument, currentDocument, setCurrentDocument, saveDocument, openDocument } = useDocument();
   const { isSearchVisible, showSearch, hideSearch, findNext, findPrev } = useSearch();
   const [isExportVisible, setIsExportVisible] = useState(false);
   const [recoverySnapshots, setRecoverySnapshots] = useState([]);
@@ -163,6 +163,21 @@ function AppContent() {
         return;
       }
 
+      if (modifier && e.key === 'o') {
+        e.preventDefault();
+        if (currentDocument?.isDirty) {
+          const shouldSave = window.confirm('Do you want to save changes before opening a new file?');
+          if (shouldSave) {
+            saveDocument();
+          }
+          if (!shouldSave) {
+            return;
+          }
+        }
+        openDocument();
+        return;
+      }
+
       if (modifier && e.key === 'f') {
         e.preventDefault();
         showSearch();
@@ -208,7 +223,7 @@ function AppContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSearch, hideSearch, findNext, findPrev, isSearchVisible]);
+  }, [showSearch, hideSearch, findNext, findPrev, isSearchVisible, openDocument, currentDocument, saveDocument]);
 
   return (
     <DropZone>

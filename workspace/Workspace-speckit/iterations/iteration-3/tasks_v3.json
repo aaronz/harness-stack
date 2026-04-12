@@ -79,7 +79,7 @@
       "priority": "P2",
       "title": "Keyboard Shortcut - New Document (Ctrl+N)",
       "description": "Wire Ctrl+N keyboard shortcut to create new document. Check for dirty state and prompt for save first if needed.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Ctrl+N creates new untitled document",
         "If current document is dirty, prompt for save first"
@@ -95,7 +95,7 @@
       "priority": "P2",
       "title": "Keyboard Shortcut - Open File (Ctrl+O)",
       "description": "Wire Ctrl+O keyboard shortcut to open file dialog. Check for dirty state and prompt for save first if needed.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Ctrl+O opens native file dialog",
         "Selected file loads in editor",
