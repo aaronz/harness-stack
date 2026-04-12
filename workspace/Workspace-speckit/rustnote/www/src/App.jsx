@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { DocumentProvider, useDocument } from './contexts/DocumentContext';
 import { SearchProvider, useSearch } from './contexts/SearchContext';
@@ -15,6 +15,11 @@ function AppContent() {
   const { settings } = useSettings();
   const { createNewDocument, currentDocument, setCurrentDocument } = useDocument();
   const { isSearchVisible, showSearch, hideSearch, findNext, findPrev } = useSearch();
+  const editorRef = useRef(null);
+
+  const handleHeadingClick = (heading) => {
+    editorRef.current?.scrollToHeading(heading);
+  };
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', settings.theme);
@@ -103,9 +108,9 @@ function AppContent() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <Toolbar />
           <SearchPanel isVisible={isSearchVisible} onClose={hideSearch} />
-          <TipTapEditor />
+          <TipTapEditor ref={editorRef} />
         </div>
-        <OutlinePanel />
+        <OutlinePanel onHeadingClick={handleHeadingClick} />
       </div>
     </DropZone>
   );

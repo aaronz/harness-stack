@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useSettings } from '../contexts/SettingsContext';
 
-export default function OutlinePanel() {
+export default function OutlinePanel({ onHeadingClick }) {
   const { settings } = useSettings();
   const [headings, setHeadings] = useState([]);
 
@@ -60,6 +60,7 @@ export default function OutlinePanel() {
           headings.map((heading, index) => (
             <div
               key={index}
+              onClick={() => onHeadingClick?.(heading)}
               className={`px-4 py-1.5 text-sm cursor-pointer ${
                 heading.level >= 1 && heading.level <= 6 ? `pl-${Math.min(heading.level * 4, 16)}` : ''
               }`}

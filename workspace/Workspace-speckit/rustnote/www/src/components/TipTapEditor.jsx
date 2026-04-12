@@ -3,7 +3,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
 import { marked } from 'marked';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSearch } from '../contexts/SearchContext';
@@ -14,7 +14,7 @@ marked.setOptions({
   gfm: true,
 });
 
-export default function TipTapEditor() {
+const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
   const { currentDocument, updateContent, saveDocument } = useDocument();
   const { settings } = useSettings();
   const { searchQuery, currentMatch, matchCount } = useSearch();
@@ -237,6 +237,88 @@ export default function TipTapEditor() {
     width: '100%',
   };
 
+  // Scroll to heading function - uses TreeWalker to find heading and set cursor
+  const scrollToHeading = useCallback((heading) => {
+    if (!editor || !heading) return;
+
+    const editorDom = editor.view.dom;
+    if (!editorDom) return;
+
+    // Find the heading element by text content and level
+    const headingTag = `H${heading.level}`;
+    const headingElements = editorDom.querySelectorAll(`${headingTag}, h1, h2, h3, h4, h5, h6`);
+
+    let targetElement = null;
+    for (const el of headingElements) {
+      if (el.textContent.trim() === heading.text.trim()) {
+        targetElement = el;
+        break;
+      }
+    }
+
+    if (!targetElement) {
+      // Fallback: try partial match
+      for (const el of headingElements) {
+        if (el.textContent.includes(heading.text) || heading.text.includes(el.textContent)) {
+          targetElement = el;
+          break;
+        }
+      }
+    }
+
+    if (!targetElement) return;
+
+    // Use TreeWalker to find character offset in the DOM
+    const walker = document.createTreeWalker(editorDom, NodeFilter.SHOW_TEXT, null, false);
+
+    let charCount = 0;
+    let startNode = null;
+    let startOffset = 0;
+    let node;
+
+    while ((node = walker.nextNode())) {
+      const nodeLength = node.textContent.length;
+      if (node === targetElement.firstChild) {
+        startNode = node;
+        startOffset = 0;
+        break;
+      }
+      if (node.parentElement === targetElement) {
+        startNode = node;
+        startOffset = node.textContent.length;
+        // Continue to find the actual start of the heading
+      }
+      charCount += nodeLength;
+    }
+
+    // Set selection at the beginning of the heading
+    try {
+      const selection = window.getSelection();
+      const range = document.createRange();
+
+      if (targetElement.firstChild) {
+        range.setStart(targetElement.firstChild, 0);
+        range.setEnd(targetElement.firstChild, 0);
+      } else {
+        range.setStart(targetElement, 0);
+        range.setEnd(targetElement, 0);
+      }
+
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      // Scroll the heading into view
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) {
+      console.error('Error scrolling to heading:', e);
+    }
+  }, [editor]);
+
+  // Expose scrollToHeading via ref
+  useImperativeHandle(ref, () => ({
+    scrollToHeading,
+  }), [scrollToHeading]);
+
   return (
     <div 
       className="flex-1 flex flex-col overflow-hidden"
@@ -245,4 +327,6 @@ export default function TipTapEditor() {
       <EditorContent editor={editor} />
     </div>
   );
-}
+});
+
+export default TipTapEditor;

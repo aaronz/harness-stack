@@ -250,7 +250,7 @@
       "priority": "P2",
       "title": "Outline Click Navigation",
       "description": "Implement click navigation in OutlinePanel - clicking a heading item should scroll TipTap editor to that heading's position and optionally set cursor.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Click on outline item scrolls editor to heading",
         "Cursor moves to heading start position"

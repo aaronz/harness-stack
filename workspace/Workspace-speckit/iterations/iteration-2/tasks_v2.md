@@ -310,12 +310,12 @@
 
 **FR Reference:** FR-026  
 **Estimated Effort:** 0.5 day  
-**Actual Status:** ⚠️ DISPLAY ONLY, CLICK NOT WORKING
+**Actual Status:** ✅ DONE
 
-- [ ] **C.4.1** Add click handler to outline items in OutlinePanel
-- [ ] **C.4.2** Get heading position (character offset) from headings array
-- [ ] **C.4.3** Scroll TipTap editor to heading position
-- [ ] **C.4.4** Optionally set cursor to heading start
+- [x] **C.4.1** Add click handler to outline items in OutlinePanel
+- [x] **C.4.2** Get heading position (character offset) from headings array
+- [x] **C.4.3** Scroll TipTap editor to heading position
+- [x] **C.4.4** Optionally set cursor to heading start
 
 **Status:** POST-MVP
 
