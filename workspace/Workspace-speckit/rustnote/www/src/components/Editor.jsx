@@ -253,9 +253,29 @@ export default function Editor() {
 
   function handlePaste(e) {
     e.preventDefault();
-    const text = e.clipboardData?.getData('text/plain') || '';
-    if (text) {
-      insertText(text);
+    const clipboardData = e.clipboardData;
+    
+    // FR-018-B1.2: Clipboard type detection
+    // Check if HTML content is available in clipboard
+    const types = clipboardData?.types || [];
+    const hasHtml = types.includes('text/html');
+    
+    if (hasHtml) {
+      // HTML content detected - get HTML for later conversion (FR-018-B1.3)
+      const htmlContent = clipboardData?.getData('text/html') || '';
+      console.log('HTML paste detected, HTML length:', htmlContent.length);
+      // For now, extract plain text from HTML as fallback until conversion is implemented
+      // TODO: FR-018-B1.3 - Convert HTML to Markdown
+      const textContent = clipboardData?.getData('text/plain') || '';
+      if (textContent) {
+        insertText(textContent);
+      }
+    } else {
+      // Plain text fallback - no HTML available
+      const text = clipboardData?.getData('text/plain') || '';
+      if (text) {
+        insertText(text);
+      }
     }
   }
 

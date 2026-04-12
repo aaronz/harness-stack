@@ -391,7 +391,7 @@
       "priority": "P1",
       "title": "Rich Text Paste Handler - Clipboard Type Detection",
       "description": "Detect clipboard content type: check event.clipboardData.types for 'text/html', fallback to plain text if no HTML",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "HTML content type is correctly detected",
         "Plain text fallback works when no HTML"
