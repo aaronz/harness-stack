@@ -348,6 +348,18 @@ export default function Editor() {
     }
   }, [isSearchVisible, searchQuery, currentMatch, matchCount]);
 
+  useEffect(() => {
+    if (settings.focusMode) {
+      document.body.classList.add('focus-mode');
+    } else {
+      document.body.classList.remove('focus-mode');
+    }
+
+    return () => {
+      document.body.classList.remove('focus-mode');
+    };
+  }, [settings.focusMode]);
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div
@@ -359,7 +371,6 @@ export default function Editor() {
         onKeyDown={handleKeyDown}
         className={`
           flex-1 p-5 font-sans text-base leading-relaxed overflow-y-auto whitespace-pre-wrap break-word outline-none
-          ${settings.focusMode ? 'focus-mode' : ''}
           ${settings.typewriterMode ? 'typewriter-mode' : ''}
         `}
         style={{

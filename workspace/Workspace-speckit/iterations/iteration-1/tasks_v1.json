@@ -158,7 +158,7 @@
       "priority": "P0",
       "title": "Focus Mode - Body Class Toggle",
       "description": "Toggle .focus-mode class on body when focus mode is enabled, ensure class removed when disabled",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         ".focus-mode class added to body when enabled",
         ".focus-mode class removed from body when disabled"

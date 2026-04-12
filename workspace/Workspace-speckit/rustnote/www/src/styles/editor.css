@@ -228,18 +228,18 @@
 }
 
 /* Focus Mode */
-#editor-content.focus-mode .paragraph:not(.active),
-#editor-content.focus-mode p:not(.active) {
+body.focus-mode #editor-content .paragraph:not(.active),
+body.focus-mode #editor-content p:not(.active) {
     opacity: 0.3;
     transition: opacity 0.2s ease;
 }
 
-#editor-content.focus-mode .md-heading:not(.active) {
+body.focus-mode #editor-content .md-heading:not(.active) {
     opacity: 0.3;
     transition: opacity 0.2s ease;
 }
 
-#editor-content.focus-mode .active {
+body.focus-mode #editor-content .active {
     opacity: 1;
 }
 
