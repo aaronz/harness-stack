@@ -12,6 +12,7 @@ export default function Editor() {
   const [cursorOffset, setCursorOffset] = useState(0);
   const renderTimeoutRef = useRef(null);
   const lastHighlightedQueryRef = useRef('');
+  const activeBlockRef = useRef(null);
 
   useEffect(() => {
     if (editorRef.current && currentDocument?.content !== undefined) {
@@ -340,6 +341,55 @@ export default function Editor() {
     lastHighlightedQueryRef.current = '';
   }
 
+  function findNearestBlockElement(offset) {
+    if (!editorRef.current) return null;
+    const editor = editorRef.current;
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null, false);
+    let currentOffset = 0;
+    let node;
+    let targetNode = null;
+
+    while (node = walker.nextNode()) {
+      const nodeLength = node.textContent?.length || 0;
+      if (currentOffset + nodeLength >= offset) {
+        targetNode = node;
+        break;
+      }
+      currentOffset += nodeLength;
+    }
+
+    if (!targetNode) {
+      return editor.querySelector('p, h1, h2, h3, h4, h5, h6, blockquote, pre, li');
+    }
+
+    let element = targetNode.parentElement;
+    const blockTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'PRE', 'LI', 'DIV'];
+    while (element && element !== editor) {
+      if (blockTags.includes(element.tagName)) {
+        return element;
+      }
+      element = element.parentElement;
+    }
+
+    return editor.querySelector('p, h1, h2, h3, h4, h5, h6, blockquote, pre, li');
+  }
+
+  function updateActiveBlock() {
+    if (!settings.focusMode || !editorRef.current) return;
+
+    const currentOffset = getCursorOffset();
+    const newActiveBlock = findNearestBlockElement(currentOffset);
+
+    if (activeBlockRef.current && activeBlockRef.current !== newActiveBlock) {
+      activeBlockRef.current.classList.remove('active');
+    }
+
+    if (newActiveBlock) {
+      newActiveBlock.classList.add('active');
+      activeBlockRef.current = newActiveBlock;
+    }
+  }
+
   useEffect(() => {
     if (isSearchVisible && searchQuery && matchCount > 0) {
       applyHighlights();
@@ -357,6 +407,31 @@ export default function Editor() {
 
     return () => {
       document.body.classList.remove('focus-mode');
+    };
+  }, [settings.focusMode]);
+
+  useEffect(() => {
+    if (!settings.focusMode) return;
+
+    document.addEventListener('selectionchange', updateActiveBlock);
+
+    return () => {
+      document.removeEventListener('selectionchange', updateActiveBlock);
+    };
+  }, [settings.focusMode]);
+
+  useEffect(() => {
+    if (!settings.focusMode) return;
+
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    editor.addEventListener('keyup', updateActiveBlock);
+    editor.addEventListener('mouseup', updateActiveBlock);
+
+    return () => {
+      editor.removeEventListener('keyup', updateActiveBlock);
+      editor.removeEventListener('mouseup', updateActiveBlock);
     };
   }, [settings.focusMode]);
 
