@@ -12,6 +12,7 @@ pub struct Document {
     pub last_saved: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub headings: Vec<Heading>,
 }
 
 impl Document {
@@ -26,6 +27,7 @@ impl Document {
             last_saved: None,
             created_at: now,
             updated_at: now,
+            headings: Vec::new(),
         }
     }
 
@@ -46,6 +48,7 @@ impl Document {
             last_saved: Some(now),
             created_at: now,
             updated_at: now,
+            headings: Vec::new(),
         })
     }
 

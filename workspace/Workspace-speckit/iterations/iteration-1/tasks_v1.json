@@ -464,7 +464,7 @@
       "priority": "P1",
       "title": "DocumentResult Headings - Rust Heading Struct",
       "description": "Add Heading struct to Rust model with level (u8 1-6), text (String), and position (usize character offset)",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Heading struct is defined correctly",
         "All fields (level, text, position) are present"
@@ -480,7 +480,7 @@
       "priority": "P1",
       "title": "DocumentResult Headings - Document Struct Field",
       "description": "Add headings: Vec<Heading> field to Document struct",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Document struct has headings field",
         "Field is Vec<Heading> type"
