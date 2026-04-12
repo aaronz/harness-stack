@@ -9,10 +9,11 @@ import TipTapEditor from './components/TipTapEditor';
 import OutlinePanel from './components/OutlinePanel';
 import SearchPanel from './components/SearchPanel';
 import Toast from './components/Toast';
+import DropZone from './components/DropZone';
 
 function AppContent() {
   const { settings } = useSettings();
-  const { createNewDocument, currentDocument } = useDocument();
+  const { createNewDocument, currentDocument, setCurrentDocument } = useDocument();
   const { isSearchVisible, showSearch, hideSearch, findNext, findPrev } = useSearch();
 
   useEffect(() => {
@@ -24,6 +25,24 @@ function AppContent() {
       createNewDocument();
     }
   }, []);
+
+  useEffect(() => {
+    const handleFileDropped = (e) => {
+      const { doc, filePath } = e.detail;
+      if (doc) {
+        setCurrentDocument({
+          id: doc.id,
+          title: doc.title,
+          content: doc.content,
+          filePath: doc.file_path || filePath || null,
+          isDirty: doc.is_dirty,
+        });
+      }
+    };
+
+    window.addEventListener('file-dropped', handleFileDropped);
+    return () => window.removeEventListener('file-dropped', handleFileDropped);
+  }, [setCurrentDocument]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -78,15 +97,17 @@ function AppContent() {
   }, [showSearch, hideSearch, findNext, findPrev, isSearchVisible]);
 
   return (
-    <div id="app" className="flex h-screen w-screen">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Toolbar />
-        <SearchPanel isVisible={isSearchVisible} onClose={hideSearch} />
-        <TipTapEditor />
+    <DropZone>
+      <div id="app" className="flex h-screen w-screen">
+        <Sidebar />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Toolbar />
+          <SearchPanel isVisible={isSearchVisible} onClose={hideSearch} />
+          <TipTapEditor />
+        </div>
+        <OutlinePanel />
       </div>
-      <OutlinePanel />
-    </div>
+    </DropZone>
   );
 }
 

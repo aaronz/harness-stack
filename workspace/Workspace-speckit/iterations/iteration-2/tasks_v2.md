@@ -194,29 +194,29 @@
 
 **FR Reference:** FR-002  
 **Estimated Effort:** 0.5 day  
-**Actual Status:** ⚠️ NOT STARTED
+**Actual Status:** ✅ DONE
 
-- [ ] **B.6.1** Create DropZone overlay component
+- [x] **B.6.1** Create DropZone overlay component
   - Full-window overlay
   - Visual indicator (dashed border, "Drop file here")
   - Appears on dragenter, disappears on dragleave/drop
 
-- [ ] **B.6.2** Handle drag events on window
+- [x] **B.6.2** Handle drag events on window
   - `dragenter`: Show overlay, prevent default
   - `dragover`: Show overlay, prevent default
   - `dragleave`: Hide overlay (if leaving window)
   - `drop`: Hide overlay, process file
 
-- [ ] **B.6.3** Extract file from drop event
+- [x] **B.6.3** Extract file from drop event
   - Get `event.dataTransfer.files`
   - Validate file is `.md` extension
   - Get file path
 
-- [ ] **B.6.4** Call existing open file logic
+- [x] **B.6.4** Call existing open file logic
   - Use existing `openFile` handler
   - Handle multiple files (open first)
 
-- [ ] **B.6.5** Add visual feedback
+- [x] **B.6.5** Add visual feedback
   - Highlight drop zone on dragover
   - Reject non-Markdown files visually
 

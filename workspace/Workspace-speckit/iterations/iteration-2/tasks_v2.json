@@ -175,7 +175,7 @@
       "priority": "P1",
       "title": "Drag-and-Drop File Open",
       "description": "Create DropZone overlay component that appears on dragenter and handles .md file drops. Validates file extension, extracts file path, and calls existing open file logic.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Drag .md file onto app",
         "DropZone overlay appears",
