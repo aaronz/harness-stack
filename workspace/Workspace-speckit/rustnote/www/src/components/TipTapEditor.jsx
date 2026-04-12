@@ -219,13 +219,28 @@ export default function TipTapEditor() {
     saveDocument
   );
 
+  useEffect(() => {
+    if (!editor) return;
+    const element = editor.view.dom;
+    if (element) {
+      element.style.fontFamily = settings.fontFamily === 'System' ? '-apple-system, BlinkMacSystemFont, sans-serif' : settings.fontFamily;
+      element.style.fontSize = `${settings.fontSize}px`;
+      element.style.lineHeight = settings.lineHeight;
+    }
+  }, [settings.fontFamily, settings.fontSize, settings.lineHeight, editor]);
+
+  const containerStyle = {
+    backgroundColor: 'var(--bg-primary)',
+    color: 'var(--text-primary)',
+    maxWidth: settings.contentWidth ? `${settings.contentWidth}px` : 'none',
+    margin: '0 auto',
+    width: '100%',
+  };
+
   return (
     <div 
       className="flex-1 flex flex-col overflow-hidden"
-      style={{
-        backgroundColor: 'var(--bg-primary)',
-        color: 'var(--text-primary)',
-      }}
+      style={containerStyle}
     >
       <EditorContent editor={editor} />
     </div>

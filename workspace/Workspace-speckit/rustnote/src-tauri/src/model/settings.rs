@@ -8,11 +8,13 @@ pub enum Theme {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EditorSettings {
     pub font_family: String,
     pub font_size: u32,
     pub line_height: f32,
     pub tab_size: u32,
+    pub content_width: u32,
 }
 
 impl Default for EditorSettings {
@@ -22,6 +24,7 @@ impl Default for EditorSettings {
             font_size: 16,
             line_height: 1.6,
             tab_size: 4,
+            content_width: 720,
         }
     }
 }
@@ -35,6 +38,7 @@ pub struct Settings {
     pub focus_mode: bool,
     pub typewriter_mode: bool,
     pub outline_visible: bool,
+    #[serde(flatten)]
     pub editor: EditorSettings,
     pub recent_files: Vec<String>,
 }

@@ -175,7 +175,7 @@
       "priority": "P1",
       "title": "Drag-and-Drop File Open",
       "description": "Create DropZone overlay component that appears on dragenter and handles .md file drops. Validates file extension, extracts file path, and calls existing open file logic.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Drag .md file onto app",
         "DropZone overlay appears",
@@ -194,7 +194,7 @@
       "priority": "P2",
       "title": "Settings Applied to TipTap Editor",
       "description": "Apply user settings (contentWidth, lineHeight, fontSize, fontFamily) from Settings context to TipTap editor container and content.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Change contentWidth in settings, verify editor max-width updates",
         "Change lineHeight in settings, verify content line-height updates",

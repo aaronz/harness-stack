@@ -11,6 +11,10 @@ export function SettingsProvider({ children }) {
     focusMode: false,
     typewriterMode: false,
     outlineVisible: false,
+    fontSize: 16,
+    fontFamily: 'System',
+    lineHeight: 1.6,
+    contentWidth: 720,
   });
 
   useEffect(() => {
@@ -24,7 +28,20 @@ export function SettingsProvider({ children }) {
   async function loadSettings() {
     try {
       const result = await invoke('read_settings');
-      setSettings(prev => ({ ...prev, ...result }));
+      // Map nested editor settings from Rust to flat frontend structure
+      setSettings(prev => ({
+        ...prev,
+        theme: result.theme,
+        autoSave: result.autoSave,
+        autoSaveInterval: result.autoSaveInterval,
+        focusMode: result.focusMode,
+        typewriterMode: result.typewriterMode,
+        outlineVisible: result.outlineVisible,
+        fontSize: result.fontSize ?? result.editor?.font_size ?? prev.fontSize,
+        fontFamily: result.fontFamily ?? result.editor?.fontFamily ?? prev.fontFamily,
+        lineHeight: result.lineHeight ?? result.editor?.line_height ?? prev.lineHeight,
+        contentWidth: result.contentWidth ?? result.editor?.content_width ?? prev.contentWidth,
+      }));
     } catch (e) {
       console.log('Using default settings');
     }
@@ -32,7 +49,22 @@ export function SettingsProvider({ children }) {
 
   async function saveSettings() {
     try {
-      await invoke('write_settings', { settings });
+      const settingsToSave = {
+        theme: settings.theme,
+        autoSave: settings.autoSave,
+        autoSaveInterval: settings.autoSaveInterval,
+        focusMode: settings.focusMode,
+        typewriterMode: settings.typewriterMode,
+        outlineVisible: settings.outlineVisible,
+        editor: {
+          fontFamily: settings.fontFamily,
+          fontSize: settings.fontSize,
+          lineHeight: settings.lineHeight,
+          tabSize: 4,
+          contentWidth: settings.contentWidth,
+        },
+      };
+      await invoke('write_settings', { settings: settingsToSave });
     } catch (e) {
       console.error('Failed to save settings:', e);
     }

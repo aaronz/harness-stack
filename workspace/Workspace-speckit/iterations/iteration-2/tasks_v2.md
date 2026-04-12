@@ -233,25 +233,25 @@
 
 **FR Reference:** FR-030  
 **Estimated Effort:** 1 day  
-**Actual Status:** ⚠️ NOT APPLIED
+**Actual Status:** ✅ DONE
 
-- [ ] **C.1.1** Read contentWidth from settings
-- [ ] **C.1.2** Apply max-width to TipTap editor container
+- [x] **C.1.1** Read contentWidth from settings
+- [x] **C.1.2** Apply max-width to TipTap editor container
   - `max-width: ${contentWidth}px`
   - Center editor horizontally
 
-- [ ] **C.1.3** Read lineHeight from settings
-- [ ] **C.1.4** Apply line-height to TipTap content
+- [x] **C.1.3** Read lineHeight from settings
+- [x] **C.1.4** Apply line-height to TipTap content
   - `line-height: ${lineHeight}`
 
-- [ ] **C.1.5** Read fontSize from settings
-- [ ] **C.1.6** Apply font-size to TipTap content
+- [x] **C.1.5** Read fontSize from settings
+- [x] **C.1.6** Apply font-size to TipTap content
   - `font-size: ${fontSize}px`
 
-- [ ] **C.1.7** Read fontFamily from settings
-- [ ] **C.1.8** Apply font-family to TipTap content
+- [x] **C.1.7** Read fontFamily from settings
+- [x] **C.1.8** Apply font-family to TipTap content
 
-**Status:** POST-MVP
+**Status:** COMPLETED
 
 ---
 

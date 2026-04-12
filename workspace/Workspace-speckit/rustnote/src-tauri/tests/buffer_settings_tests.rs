@@ -108,6 +108,7 @@ fn test_editor_settings_custom() {
         font_size: 14,
         line_height: 1.8,
         tab_size: 2,
+        content_width: 800,
     };
     assert_eq!(editor.font_family, "Menlo");
     assert_eq!(editor.font_size, 14);
@@ -300,7 +301,7 @@ fn test_settings_serialize() {
 
 #[test]
 fn test_settings_deserialize() {
-    let json = r#"{"theme":"Dark","autoSave":false,"autoSaveInterval":60000,"focusMode":true,"typewriterMode":false,"outlineVisible":true,"editor":{"font_family":"Menlo","font_size":14,"line_height":1.5,"tab_size":2},"recentFiles":["a.md","b.md"]}"#;
+    let json = r#"{"theme":"Dark","autoSave":false,"autoSaveInterval":60000,"focusMode":true,"typewriterMode":false,"outlineVisible":true,"fontFamily":"Menlo","fontSize":14,"lineHeight":1.5,"tabSize":2,"contentWidth":800,"recentFiles":["a.md","b.md"]}"#;
     let settings: Settings = serde_json::from_str(json).unwrap();
     assert_eq!(settings.theme, Theme::Dark);
     assert!(!settings.auto_save);
@@ -308,4 +309,5 @@ fn test_settings_deserialize() {
     assert!(settings.focus_mode);
     assert_eq!(settings.editor.font_family, "Menlo");
     assert_eq!(settings.editor.font_size, 14);
+    assert_eq!(settings.editor.content_width, 800);
 }
