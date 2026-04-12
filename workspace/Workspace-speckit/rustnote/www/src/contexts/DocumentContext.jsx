@@ -7,6 +7,7 @@ const DocumentContext = createContext();
 export function DocumentProvider({ children }) {
   const [currentDocument, setCurrentDocument] = useState(null);
   const [workspace, setWorkspace] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const insertTextRef = useRef(null);
 
   const setInsertTextCallback = useCallback((callback) => {
@@ -70,6 +71,7 @@ export function DocumentProvider({ children }) {
   async function saveDocument() {
     if (!currentDocument) return;
 
+    setIsSaving(true);
     try {
       if (currentDocument.filePath) {
         await invoke('save_document', {
@@ -85,6 +87,8 @@ export function DocumentProvider({ children }) {
       }
     } catch (e) {
       console.error('Save error:', e);
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -170,6 +174,7 @@ export function DocumentProvider({ children }) {
       openWorkspace,
       insertImage,
       setInsertTextCallback,
+      isSaving,
     }}>
       {children}
     </DocumentContext.Provider>

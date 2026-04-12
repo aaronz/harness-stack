@@ -339,7 +339,7 @@
       "priority": "P0",
       "title": "Auto-Save Timer - Saving Indicator",
       "description": "Add isSaving state, show indicator during save operation, clear after save completes",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Saving indicator appears during save",
         "Indicator disappears after save completes"

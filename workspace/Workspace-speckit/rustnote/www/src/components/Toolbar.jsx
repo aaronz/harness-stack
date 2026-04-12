@@ -2,7 +2,7 @@ import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
 
 export default function Toolbar() {
-  const { createNewDocument, openDocument, saveDocument, insertImage } = useDocument();
+  const { createNewDocument, openDocument, saveDocument, insertImage, isSaving } = useDocument();
   const { settings, toggleTheme, toggleFocusMode, toggleTypewriterMode, toggleOutline } = useSettings();
 
   return (
@@ -45,15 +45,17 @@ export default function Toolbar() {
       <button
         id="btn-save"
         onClick={saveDocument}
+        disabled={isSaving}
         className="px-3 py-1.5 text-sm border rounded cursor-pointer transition-colors"
         style={{
           backgroundColor: 'var(--bg-primary)',
           borderColor: 'var(--border-color)',
           color: 'var(--text-primary)',
+          opacity: isSaving ? 0.6 : 1,
         }}
         title="Save (Ctrl+S)"
       >
-        Save
+        {isSaving ? 'Saving...' : 'Save'}
       </button>
 
       <div className="flex-1" />
