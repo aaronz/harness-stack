@@ -121,7 +121,7 @@
       "priority": "P0",
       "title": "Find/Replace UI - Search Panel Styling",
       "description": "Add CSS styling for search panel: fixed top position, theme-aware (light/dark), proper z-index, open/close animation",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Panel appears fixed at top of editor",
         "Light and dark themes apply correctly",

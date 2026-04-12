@@ -14,6 +14,14 @@
     --accent-color: #4fc3f7;
     --link-color: #4fc3f7;
     --code-bg: #2d2d2d;
+    --search-bg: #2d2d2d;
+    --search-border: #404040;
+    --search-input-bg: #1e1e1e;
+    --search-input-text: #d4d4d4;
+    --search-input-border: #404040;
+    --search-input-focus: #4fc3f7;
+    --search-btn-bg: #3c3c3c;
+    --search-btn-hover: #4c4c4c;
 }
 
 [data-theme="dark"] #content code {
