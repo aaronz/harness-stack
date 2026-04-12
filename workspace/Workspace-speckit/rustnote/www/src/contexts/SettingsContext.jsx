@@ -15,6 +15,7 @@ export function SettingsProvider({ children }) {
     fontFamily: 'System',
     lineHeight: 1.6,
     contentWidth: 720,
+    recentFiles: [],
   });
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function SettingsProvider({ children }) {
         fontFamily: result.fontFamily ?? result.editor?.fontFamily ?? prev.fontFamily,
         lineHeight: result.lineHeight ?? result.editor?.line_height ?? prev.lineHeight,
         contentWidth: result.contentWidth ?? result.editor?.content_width ?? prev.contentWidth,
+        recentFiles: result.recentFiles ?? result.recent_files ?? prev.recentFiles,
       }));
     } catch (e) {
       console.log('Using default settings');
@@ -63,6 +65,7 @@ export function SettingsProvider({ children }) {
           tabSize: 4,
           contentWidth: settings.contentWidth,
         },
+        recentFiles: settings.recentFiles,
       };
       await invoke('write_settings', { settings: settingsToSave });
     } catch (e) {
@@ -110,6 +113,24 @@ export function SettingsProvider({ children }) {
     saveSettings();
   }
 
+  function addToRecentFiles(filePath) {
+    if (!filePath) return;
+    setSettings(prev => {
+      const newRecentFiles = [filePath, ...prev.recentFiles.filter(p => p !== filePath)].slice(0, 10);
+      const newSettings = { ...prev, recentFiles: newRecentFiles };
+      return newSettings;
+    });
+    saveSettings();
+  }
+
+  function clearRecentFiles() {
+    setSettings(prev => {
+      const newSettings = { ...prev, recentFiles: [] };
+      return newSettings;
+    });
+    saveSettings();
+  }
+
   return (
     <SettingsContext.Provider value={{
       settings,
@@ -119,6 +140,8 @@ export function SettingsProvider({ children }) {
       setTypewriterMode,
       toggleOutline,
       setSettings,
+      addToRecentFiles,
+      clearRecentFiles,
     }}>
       {children}
     </SettingsContext.Provider>

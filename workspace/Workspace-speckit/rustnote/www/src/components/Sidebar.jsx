@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
 import { useDocument } from '../contexts/DocumentContext';
 import { useToast } from '../contexts/ToastContext';
+import { useSettings } from '../contexts/SettingsContext';
+import { invoke } from '@tauri-apps/api/core';
 
 function FileItem({ file, level = 0 }) {
   const { currentDocument, openDocument, createFile, createFolder, renameItem, deleteItem } = useDocument();
@@ -360,7 +362,9 @@ function WorkspaceContextMenu({ x, y, rootPath, onClose }) {
 }
 
 export default function Sidebar() {
-  const { workspace, openWorkspace, currentDocument } = useDocument();
+  const { workspace, openWorkspace, currentDocument, setCurrentDocument } = useDocument();
+  const { settings, clearRecentFiles } = useSettings();
+  const { success, error } = useToast();
   const [rootContextMenu, setRootContextMenu] = useState(null);
 
   const handleRootContextMenu = useCallback((e) => {
@@ -375,6 +379,41 @@ export default function Sidebar() {
     setRootContextMenu(null);
   }, []);
 
+  const handleOpenRecentFile = useCallback(async (filePath) => {
+    try {
+      const doc = await invoke('open_document', { path: filePath });
+      setCurrentDocument({
+        id: doc.id,
+        title: doc.title,
+        content: doc.content,
+        filePath: doc.file_path || null,
+        isDirty: doc.is_dirty,
+      });
+      success('Opened recent file');
+    } catch (e) {
+      error(`Failed to open file: ${e}`);
+    }
+  }, [setCurrentDocument, success, error]);
+
+  const handleClearRecentFiles = useCallback(() => {
+    clearRecentFiles();
+    success('Cleared recent files');
+  }, [clearRecentFiles, success]);
+
+  const getFileName = (filePath) => {
+    if (!filePath) return 'Unknown';
+    const parts = filePath.split('/');
+    return parts[parts.length - 1];
+  };
+
+  const getFileDir = (filePath) => {
+    if (!filePath) return '';
+    const parts = filePath.split('/');
+    parts.pop();
+    if (parts.length <= 2) return parts.join('/');
+    return '.../' + parts.slice(-2).join('/');
+  };
+
   return (
     <div
       id="sidebar"
@@ -384,6 +423,41 @@ export default function Sidebar() {
         borderColor: 'var(--border-color)',
       }}
     >
+      {/* Recent Files Section */}
+      {settings.recentFiles && settings.recentFiles.length > 0 && (
+        <div className="border-b" style={{ borderColor: 'var(--border-color)' }}>
+          <div
+            className="px-4 py-3 font-semibold flex items-center justify-between"
+          >
+            <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>Recent</span>
+            <button
+              onClick={handleClearRecentFiles}
+              className="text-xs px-2 py-0.5 rounded hover:bg-[var(--bg-hover)]"
+              style={{ color: 'var(--text-secondary)' }}
+              title="Clear recent files"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="max-h-48 overflow-y-auto">
+            {settings.recentFiles.map((filePath, index) => (
+              <div
+                key={`recent-${filePath}-${index}`}
+                onClick={() => handleOpenRecentFile(filePath)}
+                className="px-4 py-2 cursor-pointer text-sm hover:bg-[var(--bg-hover)] truncate"
+                style={{ color: 'var(--text-primary)' }}
+                title={filePath}
+              >
+                <div className="truncate font-medium">{getFileName(filePath)}</div>
+                <div className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
+                  {getFileDir(filePath)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div
         className="px-4 py-4 font-semibold border-b flex items-center justify-between"
         style={{ borderColor: 'var(--border-color)' }}

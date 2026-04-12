@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
+import { useSettings } from './SettingsContext';
 
 const DocumentContext = createContext();
 
@@ -9,6 +10,7 @@ export function DocumentProvider({ children }) {
   const [workspace, setWorkspace] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const insertTextRef = useRef(null);
+  const { addToRecentFiles } = useSettings();
 
   const setInsertTextCallback = useCallback((callback) => {
     insertTextRef.current = callback;
@@ -62,6 +64,7 @@ export function DocumentProvider({ children }) {
         });
 
         await invoke('watch_file', { path: result });
+        addToRecentFiles(result);
       }
     } catch (e) {
       console.error('Open error:', e);

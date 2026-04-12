@@ -214,7 +214,7 @@
       "priority": "P2",
       "title": "Recent Files UI",
       "description": "Create RecentFiles component to display list of recently opened files. Integrate in sidebar or menu, show last 10 files with name and path. Add clear history option.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Recent files appear in sidebar/menu",
         "Click on recent file opens it",
