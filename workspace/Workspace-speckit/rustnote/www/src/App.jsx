@@ -4,7 +4,7 @@ import { DocumentProvider, useDocument } from './contexts/DocumentContext';
 import { SearchProvider, useSearch } from './contexts/SearchContext';
 import Toolbar from './components/Toolbar';
 import Sidebar from './components/Sidebar';
-import Editor from './components/Editor';
+import TipTapEditor from './components/TipTapEditor';
 import OutlinePanel from './components/OutlinePanel';
 import SearchPanel from './components/SearchPanel';
 
@@ -81,7 +81,7 @@ function AppContent() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Toolbar />
         <SearchPanel isVisible={isSearchVisible} onClose={hideSearch} />
-        <Editor />
+        <TipTapEditor />
       </div>
       <OutlinePanel />
     </div>

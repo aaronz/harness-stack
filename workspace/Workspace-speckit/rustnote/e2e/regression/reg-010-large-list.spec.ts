@@ -10,10 +10,10 @@ test.describe('REG-010: 1000-Item List Renders Correctly', () => {
   });
 
   test('renders 1000-item list without crash', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
-    await page.click(editor);
+    await editor.click();
     await page.keyboard.type('# Large List Test\n\n');
     
     for (let i = 1; i <= 1000; i++) {
@@ -28,10 +28,10 @@ test.describe('REG-010: 1000-Item List Renders Correctly', () => {
   });
 
   test('scrolls through 1000-item list', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
-    await page.click(editor);
+    await editor.click();
     await page.keyboard.type('# Scrolling List\n\n');
     
     for (let i = 1; i <= 500; i++) {
@@ -48,10 +48,10 @@ test.describe('REG-010: 1000-Item List Renders Correctly', () => {
   });
 
   test('1000-item list checkboxes work', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
-    await page.click(editor);
+    await editor.click();
     await page.keyboard.type('# Task List\n\n');
     
     for (let i = 1; i <= 50; i++) {

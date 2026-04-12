@@ -7,10 +7,10 @@ test.describe('E2E-C05: Export Workflow', () => {
   });
 
   test('exports document to HTML', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
-    await page.click(editor);
+    await editor.click();
     await page.keyboard.type('# Export Test\n\nThis is a **test** document.');
     
     await page.waitForTimeout(500);
@@ -28,15 +28,15 @@ test.describe('E2E-C05: Export Workflow', () => {
     }
     
     const content = await editor.textContent();
-    expect(content).toContain('# Export Test');
-    expect(content).toContain('**test**');
+    expect(content).toContain('Export Test');
+    expect(content).toContain('test');
   });
 
   test('exports document to PDF', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
-    await page.click(editor);
+    await editor.click();
     await page.keyboard.type('# PDF Test\n\nContent for PDF export.');
     
     await page.waitForTimeout(500);
@@ -54,6 +54,6 @@ test.describe('E2E-C05: Export Workflow', () => {
     }
     
     const content = await editor.textContent();
-    expect(content).toContain('# PDF Test');
+    expect(content).toContain('PDF Test');
   });
 });

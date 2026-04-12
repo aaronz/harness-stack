@@ -35,7 +35,7 @@ pub fn run() {
     
     log::info!("Starting RustNote application");
     
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
@@ -43,7 +43,14 @@ pub fn run() {
             tauri_plugin_log::Builder::default()
                 .level(log::LevelFilter::Info)
                 .build(),
-        )
+        );
+    
+    #[cfg(feature = "e2e-testing")]
+    {
+        builder = builder.plugin(tauri_plugin_playwright::init());
+    }
+    
+    builder
         .invoke_handler(tauri::generate_handler![
             create_document,
             open_document,

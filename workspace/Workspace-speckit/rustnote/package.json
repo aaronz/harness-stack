@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "cd www && npm run dev",
+    "build": "cd www && npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,6 +13,9 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "@playwright/test": "^1.59.1"
+    "@playwright/test": "^1.59.1",
+    "@srsholmes/tauri-playwright": "^0.2.2",
+    "@tauri-apps/api": "^2.10.1",
+    "playwright": "^1.59.1"
   }
 }

@@ -25,7 +25,7 @@ test.describe('REG-006: All Markdown Fixtures Parse Correctly', () => {
   });
 
   test('each fixture parses without error', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
     for (const fixture of fixtures) {
@@ -36,7 +36,7 @@ test.describe('REG-006: All Markdown Fixtures Parse Correctly', () => {
         continue;
       }
 
-      await page.click(editor);
+      await editor.click();
       await page.keyboard.press(`${modifier}+o`);
       await page.waitForTimeout(300);
       await page.keyboard.type(fixturePath);

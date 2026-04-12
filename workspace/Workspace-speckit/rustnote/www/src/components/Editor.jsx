@@ -6,7 +6,6 @@ import { useSettings } from '../contexts/SettingsContext';
 import { useSearch } from '../contexts/SearchContext';
 import { useAutoSaveTimer } from '../hooks/useAutoSaveTimer';
 
-// Initialize Turndown service for HTML to Markdown conversion
 const turndownService = new TurndownService({
   headingStyle: 'atx',
   codeBlockStyle: 'fenced',
@@ -14,15 +13,6 @@ const turndownService = new TurndownService({
   emDelimiter: '*',
   strongDelimiter: '**',
   linkStyle: 'inlined',
-});
-
-// Custom filter to handle common HTML paste content
-turndownService.addFilter((content, node) => {
-  // Skip empty content
-  if (!content || content.trim() === '') {
-    return '';
-  }
-  return content;
 });
 
 export default function Editor() {
@@ -64,6 +54,12 @@ export default function Editor() {
   async function render() {
     if (!editorRef.current) return;
     const content = editorRef.current.textContent || '';
+
+    const needsHighlighting = /[*_`#>\-\[\]]/.test(content);
+    
+    if (!needsHighlighting) {
+      return;
+    }
 
     try {
       const result = await invoke('render_for_editor_with_highlighting', {

@@ -7,10 +7,10 @@ test.describe('E2E-C08: Typewriter Mode', () => {
   });
 
   test('enables typewriter mode and keeps cursor centered', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
-    await page.click(editor);
+    await editor.click();
     
     for (let i = 1; i <= 20; i++) {
       await page.keyboard.type(`Paragraph ${i}.`);
@@ -36,8 +36,8 @@ test.describe('E2E-C08: Typewriter Mode', () => {
   });
 
   test('typing maintains cursor vertical position', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
-    await page.click(editor);
+    const editor = page.locator('#editor-content');
+    await editor.click();
     
     for (let i = 1; i <= 15; i++) {
       await page.keyboard.type(`Paragraph ${i}.`);
@@ -62,8 +62,8 @@ test.describe('E2E-C08: Typewriter Mode', () => {
   });
 
   test('disabling typewriter mode removes centering', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
-    await page.click(editor);
+    const editor = page.locator('#editor-content');
+    await editor.click();
     
     for (let i = 1; i <= 10; i++) {
       await page.keyboard.type(`Paragraph ${i}.`);
@@ -79,7 +79,7 @@ test.describe('E2E-C08: Typewriter Mode', () => {
       await page.waitForTimeout(300);
       
       const scrollWorks = await page.evaluate(() => {
-        const editor = document.querySelector('[data-testid="editor"]');
+        const editor = document.querySelector('#editor-content');
         return editor ? editor.scrollTop >= 0 : true;
       });
       expect(scrollWorks).toBeTruthy();

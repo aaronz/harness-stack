@@ -25,7 +25,7 @@ test.describe('REG-001: Open/Save 50 Different .md Files Without Corruption', ()
   });
 
   test('opens and saves each fixture file correctly', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
     for (const file of testFiles) {
@@ -35,7 +35,7 @@ test.describe('REG-001: Open/Save 50 Different .md Files Without Corruption', ()
         continue;
       }
 
-      await page.click(editor);
+      await editor.click();
       await page.keyboard.press(`${modifier}+o`);
       await page.waitForTimeout(300);
       await page.keyboard.type(filePath);

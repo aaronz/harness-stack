@@ -11,12 +11,12 @@ test.describe('REG-009: 5MB Document Scrolls at 60 FPS', () => {
   });
 
   test('opens large document without crash', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
     const largeFilePath = path.join(__dirname, '../fixtures/markdown/long.md');
     
-    await page.click(editor);
+    await editor.click();
     await page.keyboard.press(`${modifier}+o`);
     await page.waitForTimeout(300);
     await page.keyboard.type(largeFilePath);
@@ -29,10 +29,10 @@ test.describe('REG-009: 5MB Document Scrolls at 60 FPS', () => {
   });
 
   test('scrolls through large document', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
-    await page.click(editor);
+    await editor.click();
     await page.keyboard.type('# Large Document\n\n');
     
     for (let i = 0; i < 100; i++) {
@@ -53,10 +53,10 @@ test.describe('REG-009: 5MB Document Scrolls at 60 FPS', () => {
   });
 
   test('no crash during rapid scrolling', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
-    await page.click(editor);
+    await editor.click();
     
     for (let i = 0; i < 50; i++) {
       await page.keyboard.type(`Section ${i} content here.\n`);

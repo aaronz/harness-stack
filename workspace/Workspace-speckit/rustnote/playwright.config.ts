@@ -1,8 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
 
-/**
- * Playwright configuration for RustNote E2E tests
- */
 export default defineConfig({
   testDir: './e2e',
   timeout: 30000,
@@ -21,9 +18,17 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'browser-only',
+      use: { ...devices['Desktop Chrome'], mode: 'browser' },
+    },
+    {
+      name: 'tauri',
+      use: { mode: 'tauri' },
+    },
   ],
   webServer: {
-    command: 'npm run dev',
+    command: 'cd www && npm run dev',
     url: 'http://localhost:1420',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,

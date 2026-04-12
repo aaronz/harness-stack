@@ -10,10 +10,10 @@ test.describe('REG-008: Find/Replace Works with Regex', () => {
   });
 
   test('opens find panel with Ctrl+F', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
-    await page.click(editor);
+    await editor.click();
     await page.keyboard.type('# Find Test\n\nHello world. Hello again.');
     
     await page.keyboard.press(`${modifier}+f`);
@@ -28,10 +28,10 @@ test.describe('REG-008: Find/Replace Works with Regex', () => {
   });
 
   test('find highlights matches', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
-    await page.click(editor);
+    await editor.click();
     await page.keyboard.type('Testing find functionality. Testing again.');
     
     await page.keyboard.press(`${modifier}+f`);
@@ -49,10 +49,10 @@ test.describe('REG-008: Find/Replace Works with Regex', () => {
   });
 
   test('find next/previous navigation works', async ({ page }) => {
-    const editor = page.locator('[data-testid="editor"]');
+    const editor = page.locator('#editor-content');
     await expect(editor).toBeVisible({ timeout: 10000 });
 
-    await page.click(editor);
+    await editor.click();
     await page.keyboard.type('Line one. Line two. Line three.');
     
     await page.keyboard.press(`${modifier}+f`);
