@@ -1,22 +1,26 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDocument } from '../contexts/DocumentContext';
+import { useSearch } from '../contexts/SearchContext';
 
 export default function SearchPanel({ isVisible, onClose }) {
   const { currentDocument, updateContent } = useDocument();
+  const { registerSearchFunctions } = useSearch();
   const [searchQuery, setSearchQuery] = useState('');
   const [replaceQuery, setReplaceQuery] = useState('');
   const [caseSensitive, setCaseSensitive] = useState(false);
   const [matchCount, setMatchCount] = useState(0);
   const [currentMatch, setCurrentMatch] = useState(0);
   const searchInputRef = useRef(null);
+  const findNextRef = useRef(null);
+  const findPrevRef = useRef(null);
+
+  const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   useEffect(() => {
     if (isVisible && searchInputRef.current) {
       searchInputRef.current.focus();
     }
   }, [isVisible]);
-
-  const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   const performSearch = useCallback((query, docContent, caseSens) => {
     if (!query || !docContent) {
@@ -153,6 +157,94 @@ export default function SearchPanel({ isVisible, onClose }) {
       console.error('Find next error:', e);
     }
   }, [searchQuery, currentDocument, caseSensitive, matchCount, currentMatch]);
+
+  const findPrev = useCallback(() => {
+    if (!searchQuery || !currentDocument?.content || matchCount === 0) return;
+
+    const content = currentDocument.content;
+    try {
+      const flags = caseSensitive ? 'g' : 'gi';
+      const regex = new RegExp(escapeRegex(searchQuery), flags);
+
+      const editor = document.getElementById('editor-content');
+      if (!editor) return;
+
+      const selection = window.getSelection();
+      if (!selection.rangeCount) return;
+
+      const range = selection.getRangeAt(0);
+      const preCaretRange = range.cloneRange();
+      preCaretRange.selectNodeContents(editor);
+      preCaretRange.setEnd(range.startContainer, range.startOffset);
+      const cursorPos = preCaretRange.toString().length;
+
+      const allMatches = [];
+      let match;
+      while ((match = regex.exec(content)) !== null) {
+        allMatches.push(match.index);
+      }
+
+      let prevMatchIndex = -1;
+      for (let i = allMatches.length - 1; i >= 0; i--) {
+        if (allMatches[i] < cursorPos) {
+          prevMatchIndex = allMatches[i];
+          break;
+        }
+      }
+
+      if (prevMatchIndex === -1 && allMatches.length > 0) {
+        prevMatchIndex = allMatches[allMatches.length - 1];
+      }
+
+      if (prevMatchIndex !== -1) {
+        const newRange = document.createRange();
+        const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null, false);
+
+        let charCount = 0;
+        let node;
+        let startNode = null;
+        let startOffset = 0;
+        let endNode = null;
+        let endOffset = 0;
+
+        while (node = walker.nextNode()) {
+          const nodeLength = node.textContent.length;
+          if (charCount + nodeLength > prevMatchIndex) {
+            if (!startNode) {
+              startNode = node;
+              startOffset = prevMatchIndex - charCount;
+            }
+          }
+          if (charCount + nodeLength >= prevMatchIndex + searchQuery.length) {
+            endNode = node;
+            endOffset = prevMatchIndex + searchQuery.length - charCount;
+            break;
+          }
+          charCount += nodeLength;
+        }
+
+        if (startNode && endNode) {
+          newRange.setStart(startNode, startOffset);
+          newRange.setEnd(endNode, endOffset);
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+
+          const prevMatch = currentMatch <= 1 ? matchCount : currentMatch - 1;
+          setCurrentMatch(prevMatch);
+        }
+      }
+    } catch (e) {
+      console.error('Find prev error:', e);
+    }
+  }, [searchQuery, currentDocument, caseSensitive, matchCount, currentMatch]);
+
+  useEffect(() => {
+    if (isVisible) {
+      findNextRef.current = findNext;
+      findPrevRef.current = findPrev;
+      registerSearchFunctions(() => findNextRef.current(), () => findPrevRef.current());
+    }
+  }, [isVisible, findNext, findPrev, registerSearchFunctions]);
 
   const replaceMatch = useCallback(() => {
     if (!searchQuery || !currentDocument?.content) return;

@@ -11,7 +11,7 @@ import SearchPanel from './components/SearchPanel';
 function AppContent() {
   const { settings } = useSettings();
   const { createNewDocument, currentDocument } = useDocument();
-  const { isSearchVisible, showSearch, hideSearch } = useSearch();
+  const { isSearchVisible, showSearch, hideSearch, findNext, findPrev } = useSearch();
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', settings.theme);
@@ -39,11 +39,41 @@ function AppContent() {
         showSearch();
         return;
       }
+
+      if (e.key === 'F3' && !modifier) {
+        e.preventDefault();
+        if (isSearchVisible) {
+          findNext();
+        }
+        return;
+      }
+
+      if (e.key === 'F3' && e.shiftKey) {
+        e.preventDefault();
+        if (isSearchVisible) {
+          findPrev();
+        }
+        return;
+      }
+
+      if (modifier && e.key === 'g') {
+        e.preventDefault();
+        if (isSearchVisible) {
+          findNext();
+        }
+        return;
+      }
+
+      if (e.key === 'Escape' && isSearchVisible) {
+        e.preventDefault();
+        hideSearch();
+        return;
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSearch]);
+  }, [showSearch, hideSearch, findNext, findPrev, isSearchVisible]);
 
   return (
     <div id="app" className="flex h-screen w-screen">

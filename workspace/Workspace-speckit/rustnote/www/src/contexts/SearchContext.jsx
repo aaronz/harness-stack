@@ -1,9 +1,11 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useRef } from 'react';
 
 const SearchContext = createContext();
 
 export function SearchProvider({ children }) {
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const findNextRef = useRef(null);
+  const findPrevRef = useRef(null);
 
   const showSearch = useCallback(() => {
     setIsSearchVisible(true);
@@ -17,12 +19,32 @@ export function SearchProvider({ children }) {
     setIsSearchVisible(prev => !prev);
   }, []);
 
+  const registerSearchFunctions = useCallback((findNext, findPrev) => {
+    findNextRef.current = findNext;
+    findPrevRef.current = findPrev;
+  }, []);
+
+  const findNext = useCallback(() => {
+    if (findNextRef.current) {
+      findNextRef.current();
+    }
+  }, []);
+
+  const findPrev = useCallback(() => {
+    if (findPrevRef.current) {
+      findPrevRef.current();
+    }
+  }, []);
+
   return (
     <SearchContext.Provider value={{
       isSearchVisible,
       showSearch,
       hideSearch,
       toggleSearch,
+      registerSearchFunctions,
+      findNext,
+      findPrev,
     }}>
       {children}
     </SearchContext.Provider>

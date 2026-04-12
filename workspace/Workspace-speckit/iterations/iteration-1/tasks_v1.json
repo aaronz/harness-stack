@@ -41,7 +41,7 @@
       "priority": "P0",
       "title": "Find/Replace UI - Search Logic Implementation",
       "description": "Implement regex-based search with case sensitivity option, match list generation, and position tracking for each match",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Search finds correct matches",
         "Case sensitivity toggle works",
@@ -60,7 +60,7 @@
       "priority": "P0",
       "title": "Find/Replace UI - Keyboard Shortcuts",
       "description": "Wire keyboard shortcuts: Ctrl+F (open), Ctrl+H (open with replace), Ctrl+G/F3 (find next), Shift+F3/Shift+Ctrl+G (find prev), Enter (find next), Escape (close)",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Ctrl+F opens search panel and focuses search input",
         "Ctrl+H opens with replace field visible",
