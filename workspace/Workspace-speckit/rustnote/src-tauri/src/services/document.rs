@@ -59,6 +59,7 @@ impl DocumentService {
                 std::fs::write(&temp_path, &content)?;
                 std::fs::rename(&temp_path, file_path)?;
                 state.document.mark_saved();
+                state.document.refresh_headings();
             }
         }
         Ok(())

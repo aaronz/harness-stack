@@ -2,6 +2,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::semantic::ast::SemanticDocument;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Document {
     pub id: Uuid,
@@ -39,6 +41,7 @@ impl Document {
             .to_string();
 
         let now = Utc::now();
+        let headings = Self::extract_headings_from_content(&content);
         Ok(Self {
             id: Uuid::new_v4(),
             title,
@@ -48,7 +51,7 @@ impl Document {
             last_saved: Some(now),
             created_at: now,
             updated_at: now,
-            headings: Vec::new(),
+            headings,
         })
     }
 
@@ -56,11 +59,30 @@ impl Document {
         self.content = content;
         self.is_dirty = true;
         self.updated_at = Utc::now();
+        self.refresh_headings();
+    }
+
+    pub fn refresh_headings(&mut self) {
+        self.headings = Self::extract_headings_from_content(&self.content);
     }
 
     pub fn mark_saved(&mut self) {
         self.is_dirty = false;
         self.last_saved = Some(Utc::now());
+    }
+
+    /// Extract headings from Markdown content using the semantic layer.
+    pub fn extract_headings_from_content(content: &str) -> Vec<Heading> {
+        let sem_doc = SemanticDocument::parse(content);
+        sem_doc
+            .get_headings()
+            .into_iter()
+            .map(|hi| Heading {
+                level: hi.level,
+                text: hi.text,
+                position: hi.offset,
+            })
+            .collect()
     }
 }
 
