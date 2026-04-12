@@ -140,7 +140,7 @@
       "priority": "P0",
       "title": "Focus Mode - Settings Integration",
       "description": "Add focusMode boolean state to Settings context with setter, persist to Tauri settings",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "focusMode state exists in Settings context",
         "setFocusMode function is available",

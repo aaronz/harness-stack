@@ -27,10 +27,14 @@ impl Default for EditorSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub theme: Theme,
     pub auto_save: bool,
     pub auto_save_interval: u32,
+    pub focus_mode: bool,
+    pub typewriter_mode: bool,
+    pub outline_visible: bool,
     pub editor: EditorSettings,
     pub recent_files: Vec<String>,
 }
@@ -41,6 +45,9 @@ impl Default for Settings {
             theme: Theme::Light,
             auto_save: true,
             auto_save_interval: 30,
+            focus_mode: false,
+            typewriter_mode: false,
+            outline_visible: false,
             editor: EditorSettings::default(),
             recent_files: vec![],
         }

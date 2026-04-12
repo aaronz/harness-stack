@@ -85,7 +85,7 @@
 **FR Reference:** FR-028  
 **Estimated Effort:** 1 day
 
-- [ ] **A.2.1** Add focusMode to Settings context
+- [x] **A.2.1** Add focusMode to Settings context
   - Add `focusMode` boolean state
   - Add `setFocusMode` setter
   - Persist to Tauri settings
