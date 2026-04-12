@@ -230,17 +230,29 @@
 /* Focus Mode */
 body.focus-mode #editor-content .paragraph:not(.active),
 body.focus-mode #editor-content p:not(.active) {
-    opacity: 0.3;
+    opacity: 0.4;
     transition: opacity 0.2s ease;
 }
 
 body.focus-mode #editor-content .md-heading:not(.active) {
-    opacity: 0.3;
+    opacity: 0.4;
     transition: opacity 0.2s ease;
 }
 
 body.focus-mode #editor-content .active {
     opacity: 1;
+}
+
+/* Focus Mode - Exclude code blocks and tables from de-emphasis */
+body.focus-mode #editor-content pre,
+body.focus-mode #editor-content pre code,
+body.focus-mode #editor-content table,
+body.focus-mode #editor-content th,
+body.focus-mode #editor-content td,
+body.focus-mode #editor-content .code-block,
+body.focus-mode #editor-content .table-wrapper {
+    opacity: 1 !important;
+    transition: none;
 }
 
 /* Typewriter Mode */

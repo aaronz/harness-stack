@@ -194,7 +194,7 @@
       "priority": "P0",
       "title": "Focus Mode - Paragraph De-emphasis CSS",
       "description": "Apply CSS for non-active blocks: opacity 0.4, active block opacity 1.0, smooth 200ms transition, exclude code blocks and tables",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Non-active blocks appear dimmed at 0.4 opacity",
         "Active block has full opacity",
