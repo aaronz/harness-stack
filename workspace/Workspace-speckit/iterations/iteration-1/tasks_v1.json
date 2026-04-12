@@ -80,7 +80,7 @@
       "priority": "P0",
       "title": "Find/Replace UI - Highlight Matches",
       "description": "Implement highlight matches in editor with <mark> class for current match, different class for other matches, scroll visibility, and clear on close",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Current match has distinct highlight styling",
         "Other matches have secondary highlight",

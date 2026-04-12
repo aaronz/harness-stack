@@ -4,6 +4,9 @@ const SearchContext = createContext();
 
 export function SearchProvider({ children }) {
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentMatch, setCurrentMatch] = useState(0);
+  const [matchCount, setMatchCount] = useState(0);
   const findNextRef = useRef(null);
   const findPrevRef = useRef(null);
 
@@ -45,6 +48,12 @@ export function SearchProvider({ children }) {
       registerSearchFunctions,
       findNext,
       findPrev,
+      searchQuery,
+      setSearchQuery,
+      currentMatch,
+      setCurrentMatch,
+      matchCount,
+      setMatchCount,
     }}>
       {children}
     </SearchContext.Provider>

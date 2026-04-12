@@ -2,21 +2,16 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { useSearch } from '../contexts/SearchContext';
 
 export default function Editor() {
   const { currentDocument, updateContent, setInsertTextCallback } = useDocument();
   const { settings } = useSettings();
+  const { isSearchVisible, searchQuery, currentMatch, matchCount } = useSearch();
   const editorRef = useRef(null);
   const [cursorOffset, setCursorOffset] = useState(0);
   const renderTimeoutRef = useRef(null);
-
-  // Search state management
-  const [searchQuery, setSearchQuery] = useState('');
-  const [replaceQuery, setReplaceQuery] = useState('');
-  const [caseSensitive, setCaseSensitive] = useState(false);
-  const [currentMatchIndex, setCurrentMatchIndex] = useState(-1);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isReplaceOpen, setIsReplaceOpen] = useState(false);
+  const lastHighlightedQueryRef = useRef('');
 
   useEffect(() => {
     if (editorRef.current && currentDocument?.content !== undefined) {
@@ -101,20 +96,6 @@ export default function Editor() {
     if (modifier && e.key === 'i') {
       e.preventDefault();
       wrapSelection('*', '*');
-      return;
-    }
-
-    if (modifier && e.key === 'f') {
-      e.preventDefault();
-      setIsSearchOpen(true);
-      setIsReplaceOpen(false);
-      return;
-    }
-
-    if (modifier && e.key === 'h') {
-      e.preventDefault();
-      setIsSearchOpen(true);
-      setIsReplaceOpen(true);
       return;
     }
 
@@ -266,6 +247,106 @@ export default function Editor() {
       }
     };
   }, []);
+
+  const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  function applyHighlights() {
+    if (!editorRef.current) return;
+    const editor = editorRef.current;
+
+    if (!searchQuery || matchCount === 0) {
+      clearHighlights();
+      return;
+    }
+
+    if (searchQuery === lastHighlightedQueryRef.current) {
+      updateCurrentMatchHighlight();
+      return;
+    }
+
+    lastHighlightedQueryRef.current = searchQuery;
+
+    const content = currentDocument?.content || '';
+    try {
+      const regex = new RegExp(escapeRegex(searchQuery), 'gi');
+      const span = document.createElement('span');
+
+      let matchIndex = 0;
+      let match;
+      const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null, false);
+      const textNodes = [];
+      let node;
+      while (node = walker.nextNode()) {
+        if (!node.parentElement?.closest('.current-match, .match')) {
+          textNodes.push(node);
+        }
+      }
+
+      for (const textNode of textNodes) {
+        const text = textNode.textContent || '';
+        regex.lastIndex = 0;
+
+        while ((match = regex.exec(text)) !== null) {
+          matchIndex++;
+          const isCurrentMatch = matchIndex === currentMatch;
+
+          const mark = document.createElement('mark');
+          mark.className = isCurrentMatch ? 'current-match' : 'match';
+          mark.setAttribute('data-match-index', matchIndex.toString());
+          mark.textContent = match[0];
+
+          const range = document.createRange();
+          range.setStart(textNode, match.index);
+          range.setEnd(textNode, match.index + match[0].length);
+          range.deleteContents();
+          range.insertNode(mark);
+        }
+      }
+
+      updateCurrentMatchHighlight();
+    } catch (e) {
+      console.error('Highlight error:', e);
+    }
+  }
+
+  function updateCurrentMatchHighlight() {
+    if (!editorRef.current) return;
+    const editor = editorRef.current;
+
+    const allMarks = editor.querySelectorAll('mark');
+    allMarks.forEach(mark => {
+      const idx = parseInt(mark.getAttribute('data-match-index') || '0', 10);
+      if (idx === currentMatch) {
+        mark.className = 'current-match';
+      } else {
+        mark.className = 'match';
+      }
+    });
+
+    const currentMark = editor.querySelector(`mark[data-match-index="${currentMatch}"]`);
+    if (currentMark) {
+      currentMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  function clearHighlights() {
+    if (!editorRef.current) return;
+    const editor = editorRef.current;
+    const marks = editor.querySelectorAll('mark');
+    marks.forEach(mark => {
+      const text = document.createTextNode(mark.textContent || '');
+      mark.parentNode?.replaceChild(text, mark);
+    });
+    lastHighlightedQueryRef.current = '';
+  }
+
+  useEffect(() => {
+    if (isSearchVisible && searchQuery && matchCount > 0) {
+      applyHighlights();
+    } else if (!isSearchVisible) {
+      clearHighlights();
+    }
+  }, [isSearchVisible, searchQuery, currentMatch, matchCount]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">

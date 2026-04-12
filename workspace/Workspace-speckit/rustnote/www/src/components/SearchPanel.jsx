@@ -4,12 +4,9 @@ import { useSearch } from '../contexts/SearchContext';
 
 export default function SearchPanel({ isVisible, onClose }) {
   const { currentDocument, updateContent } = useDocument();
-  const { registerSearchFunctions } = useSearch();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { registerSearchFunctions, searchQuery, setSearchQuery, currentMatch, setCurrentMatch, matchCount, setMatchCount } = useSearch();
   const [replaceQuery, setReplaceQuery] = useState('');
   const [caseSensitive, setCaseSensitive] = useState(false);
-  const [matchCount, setMatchCount] = useState(0);
-  const [currentMatch, setCurrentMatch] = useState(0);
   const searchInputRef = useRef(null);
   const findNextRef = useRef(null);
   const findPrevRef = useRef(null);

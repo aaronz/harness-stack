@@ -435,10 +435,30 @@
     background: transparent !important;
 }
 
+/* Search Match Highlights */
+#editor-content .match {
+    background: #ffeb3b;
+    border-radius: 2px;
+    padding: 0 2px;
+}
+
+#editor-content .current-match {
+    background: #ff9800;
+    outline: 1px solid #e65100;
+    border-radius: 2px;
+    padding: 0 2px;
+}
+
+/* Legacy search highlight classes (for compatibility) */
 .search-highlight {
     background: #ffeb3b;
     border-radius: 2px;
     padding: 0 2px;
+}
+
+.search-highlightCurrent {
+    background: #ff9800;
+    outline: 1px solid #e65100;
 }
 
 .search-highlight-current {
