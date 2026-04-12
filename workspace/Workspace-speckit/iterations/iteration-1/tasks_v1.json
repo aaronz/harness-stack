@@ -498,7 +498,7 @@
       "priority": "P1",
       "title": "DocumentResult Headings - Populate on Load",
       "description": "Populate headings on document load: reuse existing semantic layer heading extraction, call during document open/save",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Headings are extracted when document is loaded",
         "Headings are extracted when document is saved"
