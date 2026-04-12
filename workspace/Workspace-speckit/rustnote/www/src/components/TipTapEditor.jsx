@@ -6,6 +6,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { marked } from 'marked';
 import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSearch } from '../contexts/SearchContext';
@@ -166,6 +167,46 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
           return true;
         }
 
+        return false;
+      },
+      handlePaste: (view, event) => {
+        const items = event.clipboardData?.items;
+        if (!items) return false;
+
+        for (const item of items) {
+          if (item.type.startsWith('image/')) {
+            event.preventDefault();
+            const blob = item.getAsFile();
+            if (blob) {
+              const reader = new FileReader();
+              reader.onload = async (e) => {
+                const base64 = e.target.result;
+                const workspacePath = currentDocument?.filePath
+                  ? currentDocument.filePath.substring(0, currentDocument.filePath.lastIndexOf('/'))
+                  : null;
+
+                if (!workspacePath) {
+                  console.error('Cannot paste image: document has not been saved to a workspace');
+                  return;
+                }
+
+                try {
+                  const imageInfo = await invoke('save_image_from_base64_cmd', {
+                    base64_data: base64,
+                    workspace_path: workspacePath,
+                  });
+
+                  const markdown = `![${imageInfo.file_name}](${imageInfo.relative_path})`;
+                  editor.chain().focus().insertContent(markdown).run();
+                } catch (err) {
+                  console.error('Failed to save image:', err);
+                }
+              };
+              reader.readAsDataURL(blob);
+            }
+            return true;
+          }
+        }
         return false;
       },
     },
