@@ -18,7 +18,7 @@ import { useFileWatcher } from './hooks/useFileWatcher';
 
 function AppContent() {
   const { settings } = useSettings();
-  const { createNewDocument, currentDocument, setCurrentDocument, saveDocument, openDocument } = useDocument();
+  const { createNewDocument, currentDocument, setCurrentDocument, saveDocument, openDocument, openWorkspace } = useDocument();
   const { isSearchVisible, showSearch, hideSearch, findNext, findPrev } = useSearch();
   const [isExportVisible, setIsExportVisible] = useState(false);
   const [recoverySnapshots, setRecoverySnapshots] = useState([]);
@@ -178,6 +178,12 @@ function AppContent() {
         return;
       }
 
+      if (e.ctrlKey && e.shiftKey && e.key === 'O') {
+        e.preventDefault();
+        openWorkspace();
+        return;
+      }
+
       if (modifier && e.key === 'f') {
         e.preventDefault();
         showSearch();
@@ -223,7 +229,7 @@ function AppContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSearch, hideSearch, findNext, findPrev, isSearchVisible, openDocument, currentDocument, saveDocument]);
+  }, [showSearch, hideSearch, findNext, findPrev, isSearchVisible, openDocument, openWorkspace, currentDocument, saveDocument]);
 
   return (
     <DropZone>
