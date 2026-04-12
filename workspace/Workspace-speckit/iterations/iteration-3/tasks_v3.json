@@ -24,7 +24,7 @@
       "priority": "P1",
       "title": "Undo/Redo Keyboard Shortcuts",
       "description": "Wire Ctrl+Z (undo) and Ctrl+Y (redo) keyboard shortcuts to TipTap's built-in undo/redo functionality. Add keyboard event listener to handle these shortcuts without conflicts.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Ctrl+Z triggers undo",
         "Ctrl+Y triggers redo",
@@ -43,7 +43,7 @@
       "priority": "P1",
       "title": "Recovery UI on Startup",
       "description": "Add startup recovery prompt when crash recovery snapshots exist. Currently snapshots are saved but no UI prompts the user. Create RecoveryModal, check for snapshots on startup, show modal if found.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "App checks for snapshots on startup",
         "If snapshots exist, recovery modal is shown",

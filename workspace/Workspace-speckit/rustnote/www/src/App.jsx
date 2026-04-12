@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { DocumentProvider, useDocument } from './contexts/DocumentContext';
 import { SearchProvider, useSearch } from './contexts/SearchContext';
@@ -10,6 +11,7 @@ import OutlinePanel from './components/OutlinePanel';
 import SearchPanel from './components/SearchPanel';
 import ExportModal from './components/ExportModal';
 import ExternalChangeModal from './components/ExternalChangeModal';
+import RecoveryModal from './components/RecoveryModal';
 import Toast from './components/Toast';
 import DropZone from './components/DropZone';
 import { useFileWatcher } from './hooks/useFileWatcher';
@@ -19,6 +21,9 @@ function AppContent() {
   const { createNewDocument, currentDocument, setCurrentDocument } = useDocument();
   const { isSearchVisible, showSearch, hideSearch, findNext, findPrev } = useSearch();
   const [isExportVisible, setIsExportVisible] = useState(false);
+  const [recoverySnapshots, setRecoverySnapshots] = useState([]);
+  const [isRecoveryVisible, setIsRecoveryVisible] = useState(false);
+  const [isRecovering, setIsRecovering] = useState(false);
   const editorRef = useRef(null);
 
   const {
@@ -28,6 +33,75 @@ function AppContent() {
     handleKeepCurrent,
     handleCompareLater,
   } = useFileWatcher();
+
+  useEffect(() => {
+    async function checkRecoverySnapshots() {
+      try {
+        const snapshots = await invoke('list_recovery_snapshots');
+        if (snapshots && snapshots.length > 0) {
+          setRecoverySnapshots(snapshots);
+          setIsRecoveryVisible(true);
+        }
+      } catch (e) {
+        console.error('Failed to check recovery snapshots:', e);
+      }
+    }
+    checkRecoverySnapshots();
+  }, []);
+
+  const handleRecover = async (snapshotId) => {
+    setIsRecovering(true);
+    try {
+      const recoveryData = await invoke('restore_recovery_snapshot', { id: snapshotId });
+      if (recoveryData) {
+        setCurrentDocument({
+          id: crypto.randomUUID(),
+          title: recoveryData.title || 'Recovered',
+          content: recoveryData.content,
+          filePath: recoveryData.file_path || null,
+          isDirty: true,
+        });
+        await invoke('delete_recovery_snapshot', { id: snapshotId });
+        const snapshots = await invoke('list_recovery_snapshots');
+        setRecoverySnapshots(snapshots);
+        if (snapshots.length === 0) {
+          setIsRecoveryVisible(false);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to recover snapshot:', e);
+    } finally {
+      setIsRecovering(false);
+    }
+  };
+
+  const handleDeleteSnapshot = async (snapshotId) => {
+    try {
+      await invoke('delete_recovery_snapshot', { id: snapshotId });
+      const snapshots = await invoke('list_recovery_snapshots');
+      setRecoverySnapshots(snapshots);
+      if (snapshots.length === 0) {
+        setIsRecoveryVisible(false);
+      }
+    } catch (e) {
+      console.error('Failed to delete snapshot:', e);
+    }
+  };
+
+  const handleStartFresh = async () => {
+    try {
+      for (const snapshot of recoverySnapshots) {
+        await invoke('delete_recovery_snapshot', { id: snapshot.id });
+      }
+      setRecoverySnapshots([]);
+      setIsRecoveryVisible(false);
+      createNewDocument();
+    } catch (e) {
+      console.error('Failed to start fresh:', e);
+      setIsRecoveryVisible(false);
+      createNewDocument();
+    }
+  };
 
   const handleHeadingClick = (heading) => {
     editorRef.current?.scrollToHeading(heading);
@@ -136,6 +210,14 @@ function AppContent() {
             onKeepCurrent={handleKeepCurrent}
             onCompareLater={handleCompareLater}
             isLoading={isLoading}
+          />
+          <RecoveryModal
+            isVisible={isRecoveryVisible}
+            snapshots={recoverySnapshots}
+            onRecover={handleRecover}
+            onStartFresh={handleStartFresh}
+            onDeleteSnapshot={handleDeleteSnapshot}
+            isLoading={isRecovering}
           />
           <TipTapEditor ref={editorRef} />
         </div>
