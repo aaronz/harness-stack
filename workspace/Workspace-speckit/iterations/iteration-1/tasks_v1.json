@@ -428,7 +428,7 @@
       "priority": "P1",
       "title": "Rich Text Paste Handler - Insert at Cursor",
       "description": "Insert converted Markdown at cursor position using existing insert logic, update document state",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Converted Markdown is inserted at cursor position",
         "Document state updates correctly"
@@ -436,7 +436,7 @@
       "test_commands": [
         "npm run build"
       ],
-      "impl_notes": "Use existing insert logic, pass converted content",
+      "impl_notes": "Implemented in www/src/components/Editor.jsx: handlePaste() detects HTML, sanitizes, converts via turndownService.turndown(), and calls insertText() to insert at cursor. insertText() uses selection range to position content and calls updateContent() to sync document state.",
       "dependencies": [
         "FR-018-B1.3"
       ]
