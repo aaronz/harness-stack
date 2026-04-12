@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Playwright configuration for RustNote E2E tests
  */
 export default defineConfig({
-  testDir: '../e2e',
+  testDir: './e2e',
   timeout: 30000,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
