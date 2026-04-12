@@ -62,6 +62,14 @@ export function SettingsProvider({ children }) {
     saveSettings();
   }
 
+  function setTypewriterMode(value) {
+    setSettings(prev => {
+      const newSettings = { ...prev, typewriterMode: value };
+      return newSettings;
+    });
+    saveSettings();
+  }
+
   function toggleOutline() {
     setSettings(prev => {
       const newSettings = { ...prev, outlineVisible: !prev.outlineVisible };
@@ -76,6 +84,7 @@ export function SettingsProvider({ children }) {
       toggleTheme,
       toggleFocusMode,
       toggleTypewriterMode,
+      setTypewriterMode,
       toggleOutline,
       setSettings,
     }}>

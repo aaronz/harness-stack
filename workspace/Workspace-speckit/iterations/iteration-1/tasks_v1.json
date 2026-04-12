@@ -231,7 +231,7 @@
       "priority": "P0",
       "title": "Typewriter Mode - Settings Integration",
       "description": "Add typewriterMode boolean state to Settings context with setter, persist to Tauri settings",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "typewriterMode state exists in Settings context",
         "setTypewriterMode function is available",

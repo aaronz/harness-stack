@@ -118,7 +118,7 @@
 **FR Reference:** FR-029  
 **Estimated Effort:** 1 day
 
-- [ ] **A.3.1** Add typewriterMode to Settings context
+- [x] **A.3.1** Add typewriterMode to Settings context
   - Add `typewriterMode` boolean state
   - Add `setTypewriterMode` setter
   - Persist to Tauri settings
