@@ -288,7 +288,7 @@
       "priority": "P2",
       "title": "File Watcher UI Integration",
       "description": "Connect file watcher events to frontend notification system. Show notification when external change detected with options: Reload, Keep Current, Compare Later.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Modify file externally while app is open",
         "Notification appears with user options",

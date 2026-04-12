@@ -9,8 +9,10 @@ import TipTapEditor from './components/TipTapEditor';
 import OutlinePanel from './components/OutlinePanel';
 import SearchPanel from './components/SearchPanel';
 import ExportModal from './components/ExportModal';
+import ExternalChangeModal from './components/ExternalChangeModal';
 import Toast from './components/Toast';
 import DropZone from './components/DropZone';
+import { useFileWatcher } from './hooks/useFileWatcher';
 
 function AppContent() {
   const { settings } = useSettings();
@@ -18,6 +20,14 @@ function AppContent() {
   const { isSearchVisible, showSearch, hideSearch, findNext, findPrev } = useSearch();
   const [isExportVisible, setIsExportVisible] = useState(false);
   const editorRef = useRef(null);
+
+  const {
+    externalChange,
+    isLoading,
+    handleReload,
+    handleKeepCurrent,
+    handleCompareLater,
+  } = useFileWatcher();
 
   const handleHeadingClick = (heading) => {
     editorRef.current?.scrollToHeading(heading);
@@ -119,6 +129,14 @@ function AppContent() {
           <Toolbar onExportClick={handleExportClick} />
           <SearchPanel isVisible={isSearchVisible} onClose={hideSearch} />
           <ExportModal isVisible={isExportVisible} onClose={handleExportClose} />
+          <ExternalChangeModal
+            isVisible={!!externalChange}
+            fileName={externalChange?.fileName}
+            onReload={handleReload}
+            onKeepCurrent={handleKeepCurrent}
+            onCompareLater={handleCompareLater}
+            isLoading={isLoading}
+          />
           <TipTapEditor ref={editorRef} />
         </div>
         <OutlinePanel onHeadingClick={handleHeadingClick} />
