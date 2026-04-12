@@ -1,0 +1,120 @@
+# Cargo Fuzz configuration
+# See https://rust-fuzz.github.io/book/cargo-fuzz.html
+
+[project]
+name = "rustnote"
+version = "0.1.0"
+
+[fuzz.dictionaries]
+markdown = """
+# Heading
+**bold**
+*italic*
+`code`
+- item
+1. item
+> quote
+| table |
+"""
+
+[[fuzz.target]]
+name = "parse_headings"
+mode = "blind"
+fuzz = """
+fn harness(input: &[u8]) {
+    if let Ok(s) = std::str::from_utf8(input) {
+        let _ = rustnote_lib::semantic::ast::SemanticDocument::parse(s);
+    }
+}
+"""
+
+[[fuzz.target]]
+name = "parse_emphasis"
+mode = "blind"
+fuzz = """
+fn harness(input: &[u8]) {
+    if let Ok(s) = std::str::from_utf8(input) {
+        let _ = rustnote_lib::semantic::ast::SemanticDocument::parse(s);
+    }
+}
+"""
+
+[[fuzz.target]]
+name = "parse_code"
+mode = "blind"
+fuzz = """
+fn harness(input: &[u8]) {
+    if let Ok(s) = std::str::from_utf8(input) {
+        let _ = rustnote_lib::semantic::ast::SemanticDocument::parse(s);
+    }
+}
+"""
+
+[[fuzz.target]]
+name = "parse_lists"
+mode = "blind"
+fuzz = """
+fn harness(input: &[u8]) {
+    if let Ok(s) = std::str::from_utf8(input) {
+        let _ = rustnote_lib::semantic::ast::SemanticDocument::parse(s);
+    }
+}
+"""
+
+[[fuzz.target]]
+name = "serialize"
+mode = "blind"
+fuzz = """
+fn harness(input: &[u8]) {
+    if let Ok(s) = std::str::from_utf8(input) {
+        let doc = rustnote_lib::semantic::ast::SemanticDocument::parse(s);
+        let _ = doc.serialize_to_commonmark();
+        let _ = doc.html();
+    }
+}
+"""
+
+[[fuzz.target]]
+name = "transform"
+mode = "blind"
+fuzz = """
+fn harness(input: &[u8]) {
+    if let Ok(s) = std::str::from_utf8(input) {
+        let engine = rustnote_lib::editor::transforms::TransformEngine::new();
+        let transforms = [
+            rustnote_lib::editor::transforms::Transform::Enter,
+            rustnote_lib::editor::transforms::Transform::Backspace,
+            rustnote_lib::editor::transforms::Transform::Tab,
+            rustnote_lib::editor::transforms::Transform::ShiftTab,
+        ];
+        for t in transforms.iter() {
+            let _ = engine.apply(t, s, s.len());
+        }
+    }
+}
+"""
+
+[[fuzz.target]]
+name = "offset_position"
+mode = "blind"
+fuzz = """
+fn harness(input: &[u8]) {
+    use rustnote_lib::semantic::ast::{SemanticDocument, Position};
+    
+    if input.len() < 3 {
+        return;
+    }
+    
+    let s = std::str::from_utf8(input).unwrap_or("");
+    let doc = SemanticDocument::parse(s);
+    
+    // Test various offsets
+    for &offset in &[0, s.len() / 2, s.len()] {
+        let _ = doc.offset_to_position(offset);
+    }
+    
+    // Test position to offset
+    let pos = Position::new(0, 0, 0);
+    let _ = doc.position_to_offset(pos);
+}
+"""

@@ -516,7 +516,7 @@
       "priority": "P1",
       "title": "DocumentResult Headings - JSON Serialization",
       "description": "Update DocumentResult serialization to ensure headings are included in JSON response",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "API response includes headings array",
         "Headings are properly serialized to JSON"
