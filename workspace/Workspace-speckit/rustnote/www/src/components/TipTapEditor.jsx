@@ -1,10 +1,13 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
 import { marked } from 'marked';
 import { useEffect, useRef } from 'react';
 import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { useSearch } from '../contexts/SearchContext';
+import { useAutoSaveTimer } from '../hooks/useAutoSaveTimer';
 
 marked.setOptions({
   breaks: true,
@@ -14,8 +17,10 @@ marked.setOptions({
 export default function TipTapEditor() {
   const { currentDocument, updateContent, saveDocument } = useDocument();
   const { settings } = useSettings();
+  const { searchQuery, currentMatch, matchCount } = useSearch();
   const updateTimeoutRef = useRef(null);
   const isInternalUpdateRef = useRef(false);
+  const lastHighlightedQueryRef = useRef('');
 
   const editor = useEditor({
     extensions: [
@@ -54,6 +59,9 @@ export default function TipTapEditor() {
           },
         },
       }),
+      Highlight.configure({
+        multicolor: true,
+      }),
       Placeholder.configure({
         placeholder: 'Start typing...',
       }),
@@ -71,6 +79,18 @@ export default function TipTapEditor() {
         if (modifier && event.key === 's') {
           event.preventDefault();
           saveDocument();
+          return true;
+        }
+
+        if (modifier && event.key === 'b') {
+          event.preventDefault();
+          editor.chain().focus().toggleBold().run();
+          return true;
+        }
+
+        if (modifier && event.key === 'i') {
+          event.preventDefault();
+          editor.chain().focus().toggleItalic().run();
           return true;
         }
 
@@ -97,24 +117,22 @@ export default function TipTapEditor() {
   useEffect(() => {
     if (editor && currentDocument?.content !== undefined) {
       const currentHtml = editor.getHTML();
-      if (currentDocument.content !== undefined) {
-        let parsedMarkdown = '';
-        if (currentDocument.content && currentDocument.content.trim()) {
-          parsedMarkdown = marked(currentDocument.content);
-        }
-        if (currentHtml !== parsedMarkdown) {
-          isInternalUpdateRef.current = true;
-          try {
-            if (parsedMarkdown) {
-              editor.commands.setContent(parsedMarkdown);
-            } else {
-              editor.commands.clearContent();
-            }
-          } finally {
-            setTimeout(() => {
-              isInternalUpdateRef.current = false;
-            }, 100);
+      let parsedMarkdown = '';
+      if (currentDocument.content && typeof currentDocument.content === 'string') {
+        parsedMarkdown = marked(currentDocument.content);
+      }
+      if (currentHtml !== parsedMarkdown) {
+        isInternalUpdateRef.current = true;
+        try {
+          if (parsedMarkdown) {
+            editor.commands.setContent(parsedMarkdown);
+          } else {
+            editor.commands.clearContent();
           }
+        } finally {
+          setTimeout(() => {
+            isInternalUpdateRef.current = false;
+          }, 100);
         }
       }
     }
@@ -147,6 +165,59 @@ export default function TipTapEditor() {
       }
     }
   }, [settings.typewriterMode, editor]);
+
+  useEffect(() => {
+    if (!editor) return;
+
+    if (!searchQuery || matchCount === 0) {
+      editor.chain().setHighlight({ color: 'transparent' }).run();
+      lastHighlightedQueryRef.current = '';
+      return;
+    }
+
+    if (searchQuery === lastHighlightedQueryRef.current) {
+      return;
+    }
+
+    lastHighlightedQueryRef.current = searchQuery;
+
+    const content = editor.getText();
+    const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+
+    let matchIndex = 0;
+    const decorations = [];
+
+    editor.state.doc.descendants((node, pos) => {
+      if (!node.isText) return;
+
+      const text = node.text || '';
+      let lastIndex = 0;
+
+      while ((matchIndex = regex.exec(text)) !== null) {
+        const from = pos + matchIndex.index;
+        const to = from + matchIndex[0].length;
+        decorations.push({
+          from,
+          to,
+          highlight: {
+            class: matchIndex === currentMatch - 1 ? 'current-match' : 'match',
+          },
+        });
+      }
+    });
+
+    if (decorations.length > 0) {
+      editor.chain().setHighlight({ class: 'search-highlight' }).run();
+    }
+  }, [searchQuery, currentMatch, matchCount, editor]);
+
+  useAutoSaveTimer(
+    currentDocument?.isDirty,
+    settings.autoSave,
+    settings.autoSaveInterval,
+    currentDocument?.content,
+    saveDocument
+  );
 
   return (
     <div 

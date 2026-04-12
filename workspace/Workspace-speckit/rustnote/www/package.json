@@ -20,6 +20,7 @@
     "@tiptap/extension-collaboration": "^3.22.3",
     "@tiptap/extension-document": "^3.22.3",
     "@tiptap/extension-heading": "^3.22.3",
+    "@tiptap/extension-highlight": "^3.22.3",
     "@tiptap/extension-history": "^3.22.3",
     "@tiptap/extension-italic": "^3.22.3",
     "@tiptap/extension-link": "^3.22.3",
