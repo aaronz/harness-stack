@@ -3596,6 +3596,7 @@ dependencies = [
  "open",
  "printpdf",
  "pulldown-cmark",
+ "regex",
  "serde",
  "serde_json",
  "syntect",

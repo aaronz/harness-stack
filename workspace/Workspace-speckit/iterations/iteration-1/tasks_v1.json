@@ -41,7 +41,7 @@
       "priority": "P0",
       "title": "Find/Replace UI - Search Logic Implementation",
       "description": "Implement regex-based search with case sensitivity option, match list generation, and position tracking for each match",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Search finds correct matches",
         "Case sensitivity toggle works",
