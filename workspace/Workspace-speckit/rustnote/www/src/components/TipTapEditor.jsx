@@ -167,6 +167,18 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
           return true;
         }
 
+        if (modifier && event.key === 'z') {
+          event.preventDefault();
+          editor.chain().focus().undo().run();
+          return true;
+        }
+
+        if (modifier && event.key === 'y') {
+          event.preventDefault();
+          editor.chain().focus().redo().run();
+          return true;
+        }
+
         return false;
       },
       handlePaste: (view, event) => {

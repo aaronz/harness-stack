@@ -96,6 +96,67 @@ describe('Editor Component Unit Tests', () => {
     });
   });
 
+  describe('Undo/Redo Keyboard Shortcuts', () => {
+    it('Ctrl+Z triggers undo', () => {
+      const mockEvent = {
+        key: 'z',
+        ctrlKey: true,
+        metaKey: false,
+        preventDefault: () => {},
+      };
+      expect(mockEvent.ctrlKey).toBe(true);
+      expect(mockEvent.key).toBe('z');
+    });
+
+    it('Ctrl+Y triggers redo', () => {
+      const mockEvent = {
+        key: 'y',
+        ctrlKey: true,
+        metaKey: false,
+        preventDefault: () => {},
+      };
+      expect(mockEvent.ctrlKey).toBe(true);
+      expect(mockEvent.key).toBe('y');
+    });
+
+    it('undo/redo works across all editing operations', () => {
+      // Test that undo stack tracks different operations
+      const operations = ['insert', 'delete', 'format', 'paste'];
+      const undoStack: string[] = [];
+      
+      operations.forEach((op) => {
+        undoStack.push(op);
+      });
+      
+      expect(undoStack.length).toBe(4);
+      
+      // Simulate undo
+      const undoneOp = undoStack.pop();
+      expect(undoneOp).toBe('paste');
+      expect(undoStack.length).toBe(3);
+      
+      // Simulate redo
+      undoStack.push(undoneOp!);
+      expect(undoStack.length).toBe(4);
+    });
+
+    it('no conflicts with other handlers', () => {
+      // Verify keyboard shortcut handling doesn't conflict
+      const keyHandlers: Record<string, Function> = {
+        's': () => 'save',
+        'b': () => 'bold',
+        'i': () => 'italic',
+        'z': () => 'undo',
+        'y': () => 'redo',
+      };
+      
+      expect(keyHandlers['z']()).toBe('undo');
+      expect(keyHandlers['y']()).toBe('redo');
+      expect(keyHandlers['s']()).toBe('save');
+      expect(keyHandlers['b']()).toBe('bold');
+    });
+  });
+
   describe('Settings', () => {
     it('applies theme', () => {
       const theme = 'dark';

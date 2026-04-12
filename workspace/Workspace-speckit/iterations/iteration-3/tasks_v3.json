@@ -24,7 +24,7 @@
       "priority": "P1",
       "title": "Undo/Redo Keyboard Shortcuts",
       "description": "Wire Ctrl+Z (undo) and Ctrl+Y (redo) keyboard shortcuts to TipTap's built-in undo/redo functionality. Add keyboard event listener to handle these shortcuts without conflicts.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Ctrl+Z triggers undo",
         "Ctrl+Y triggers redo",
