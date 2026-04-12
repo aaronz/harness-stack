@@ -2,6 +2,8 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
 import { marked } from 'marked';
 import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { useDocument } from '../contexts/DocumentContext';
@@ -13,6 +15,59 @@ marked.setOptions({
   breaks: true,
   gfm: true,
 });
+
+function taskListHtmlToMarkdown(html) {
+  if (!html.includes('task-list-item')) {
+    return html;
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  const taskItems = doc.querySelectorAll('.task-list-item');
+  taskItems.forEach((item) => {
+    const checkbox = item.querySelector('input[type="checkbox"]');
+    const isChecked = checkbox && checkbox.checked;
+    const checkboxState = isChecked ? '[x]' : '[ ]';
+
+    const label = item.querySelector('label');
+    let text = '';
+    if (label) {
+      const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT, null, false);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        if (node.textContent.trim() !== '') {
+          text += node.textContent.trim();
+        }
+      }
+    } else {
+      text = item.textContent.trim();
+    }
+
+    const markdownLine = `- ${checkboxState} ${text}`;
+    const wrapper = doc.createElement('div');
+    wrapper.appendChild(document.createTextNode(markdownLine));
+    item.parentNode.replaceChild(wrapper, item);
+  });
+
+  let result = doc.body.innerHTML;
+
+  result = result.replace(/<ul class="contains-task-list">([\s\S]*?)<\/ul>/gi, (match, content) => {
+    const lines = [];
+    const tempDoc = parser.parseFromString(`<ul>${content}</ul>`, 'text/html');
+    const items = tempDoc.querySelectorAll('li');
+    items.forEach((li) => {
+      const checkbox = li.querySelector('input[type="checkbox"]');
+      const isChecked = checkbox && checkbox.checked;
+      const checkboxState = isChecked ? '[x]' : '[ ]';
+      const text = li.textContent.trim();
+      lines.push(`- ${checkboxState} ${text}`);
+    });
+    return lines.join('\n');
+  });
+
+  return result;
+}
 
 const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
   const { currentDocument, updateContent, saveDocument } = useDocument();
@@ -57,6 +112,23 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
           HTMLAttributes: {
             class: 'my-1',
           },
+        },
+        taskList: {
+          HTMLAttributes: {
+            class: 'contains-task-list',
+          },
+        },
+        taskItem: {
+          HTMLAttributes: {
+            class: 'task-list-item',
+          },
+          nested: true,
+        },
+      }),
+      TaskList,
+      TaskItem.configure({
+        HTMLAttributes: {
+          class: 'task-list-item',
         },
       }),
       Highlight.configure({
@@ -108,7 +180,8 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
 
       updateTimeoutRef.current = setTimeout(() => {
         const html = editor.getHTML();
-        const markdown = marked(html);
+        const processedHtml = taskListHtmlToMarkdown(html);
+        const markdown = marked(processedHtml);
         updateContent(markdown);
       }, 150);
     },

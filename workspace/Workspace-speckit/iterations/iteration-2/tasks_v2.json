@@ -308,10 +308,10 @@
       "priority": "P2",
       "title": "Task Checkbox Toggle",
       "description": "Add click handler to task list checkboxes in TipTap to toggle markdown state between `- [ ]` and `- [x]`. Update document state with new syntax.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
-        "Click unchecked task checkbox changes to checked (- [ ] \u2192 - [x])",
-        "Click checked task checkbox changes to unchecked (- [x] \u2192 - [ ])",
+        "Click unchecked task checkbox changes to checked (- [ ] → - [x])",
+        "Click checked task checkbox changes to unchecked (- [x] → - [ ])",
         "Document state updates correctly"
       ],
       "test_commands": [
