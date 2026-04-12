@@ -62,7 +62,7 @@
       "priority": "P2",
       "title": "Dirty State Indicator",
       "description": "Add visual indicator when document has unsaved changes. isDirty state already exists but no visual feedback. Add asterisk prefix to title when dirty.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Asterisk (*) appears in title when document is dirty",
         "Asterisk disappears after save",
@@ -71,7 +71,7 @@
       "test_commands": [
         "cd www && npm run build"
       ],
-      "impl_notes": "Modify title display in App component. Add asterisk prefix when document.isDirty is true. Style appropriately for both themes.",
+      "impl_notes": "Modified Toolbar.jsx to display document title with asterisk prefix when document.isDirty is true. The asterisk uses accent color and is visible in both light and dark themes.",
       "dependencies": []
     },
     {

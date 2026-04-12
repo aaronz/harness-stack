@@ -119,16 +119,16 @@ Add startup recovery prompt when crash recovery snapshots exist. Currently snaps
 Add visual indicator when document has unsaved changes. isDirty state already exists but no visual feedback.
 
 **Acceptance Criteria:**
-- [ ] Asterisk (*) appears in title when document is dirty
-- [ ] Asterisk disappears after save
-- [ ] Indicator visible in both light and dark themes
+- [x] Asterisk (*) appears in title when document is dirty
+- [x] Asterisk disappears after save
+- [x] Indicator visible in both light and dark themes
 
 **Implementation Steps:**
-1. Modify title display in App component
-2. Add asterisk prefix when document.isDirty is true
-3. Style indicator appropriately for themes
+1. Modified title display in Toolbar component
+2. Added asterisk prefix when document.isDirty is true
+3. Styled indicator with accent color for both themes
 
-**File:** `www/src/App.jsx`
+**File:** `www/src/components/Toolbar.jsx`
 
 ---
 
@@ -371,7 +371,7 @@ Many keyboard shortcuts not wired. Need centralized shortcut handler.
 | T-001 | Image Paste Support | P1 | Medium | Done |
 | T-002 | Undo/Redo Shortcuts | P1 | Low | Pending |
 | T-003 | Recovery UI on Startup | P1 | Medium | Pending |
-| T-004 | Dirty State Indicator | P2 | Low | Pending |
+| T-004 | Dirty State Indicator | P2 | Low | Done |
 | T-005 | Ctrl+N (New) Shortcut | P2 | Low | Pending |
 | T-006 | Ctrl+O (Open) Shortcut | P2 | Low | Pending |
 | T-007 | Ctrl+Shift+O (Folder) Shortcut | P2 | Low | Pending |
@@ -413,7 +413,7 @@ T-009 (Link Behavior) ─────► TipTapEditor.jsx
 - [ ] T-003 Recovery UI - Complete
 
 ### P2 Completion (Target: 0.5 day)
-- [ ] T-004 Dirty Indicator - Complete
+- [x] T-004 Dirty Indicator - Complete
 - [ ] T-005 Ctrl+N - Complete
 - [ ] T-006 Ctrl+O - Complete
 - [ ] T-007 Ctrl+Shift+O - Complete

@@ -2,8 +2,11 @@ import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
 
 export default function Toolbar({ onExportClick }) {
-  const { createNewDocument, openDocument, saveDocument, insertImage, isSaving } = useDocument();
+  const { createNewDocument, openDocument, saveDocument, insertImage, isSaving, currentDocument } = useDocument();
   const { settings, toggleTheme, toggleFocusMode, toggleTypewriterMode, toggleOutline } = useSettings();
+
+  const documentTitle = currentDocument?.title || 'Untitled';
+  const isDirty = currentDocument?.isDirty || false;
 
   return (
     <div
@@ -57,6 +60,17 @@ export default function Toolbar({ onExportClick }) {
       >
         {isSaving ? 'Saving...' : 'Save'}
       </button>
+
+      <div className="flex-1" />
+
+      <div
+        id="document-title"
+        className="px-3 py-1.5 text-sm font-medium"
+        style={{ color: 'var(--text-primary)' }}
+        title={isDirty ? 'Unsaved changes' : 'Document title'}
+      >
+        {isDirty && <span style={{ color: 'var(--accent-color)' }}>*</span>} {documentTitle}
+      </div>
 
       <div className="flex-1" />
 
