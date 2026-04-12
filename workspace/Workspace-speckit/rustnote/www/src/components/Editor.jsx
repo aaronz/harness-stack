@@ -6,7 +6,7 @@ import { useSearch } from '../contexts/SearchContext';
 
 export default function Editor() {
   const { currentDocument, updateContent, setInsertTextCallback } = useDocument();
-  const { settings } = useSettings();
+  const { settings, toggleFocusMode } = useSettings();
   const { isSearchVisible, searchQuery, currentMatch, matchCount } = useSearch();
   const editorRef = useRef(null);
   const [cursorOffset, setCursorOffset] = useState(0);
@@ -97,6 +97,12 @@ export default function Editor() {
     if (modifier && e.key === 'i') {
       e.preventDefault();
       wrapSelection('*', '*');
+      return;
+    }
+
+    if (modifier && e.shiftKey && e.key.toLowerCase() === 'f') {
+      e.preventDefault();
+      toggleFocusMode();
       return;
     }
 

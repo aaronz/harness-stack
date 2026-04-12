@@ -214,7 +214,7 @@
       "priority": "P0",
       "title": "Focus Mode - Keyboard Shortcut",
       "description": "Add Ctrl+Shift+F keyboard shortcut to toggle focus mode",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Ctrl+Shift+F toggles focus mode on/off"
       ],
