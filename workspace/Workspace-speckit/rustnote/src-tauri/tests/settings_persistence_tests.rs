@@ -1,5 +1,5 @@
 use rustnote_lib::model::settings::{EditorSettings, Settings, Theme};
-use rustnote_lib::services::SettingsService;
+use rustnote_lib::services::{SettingsService, SettingsServiceTrait};
 use std::fs;
 
 fn create_temp_service() -> SettingsService {

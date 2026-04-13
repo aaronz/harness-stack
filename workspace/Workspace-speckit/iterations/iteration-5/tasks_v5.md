@@ -369,7 +369,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-015: Paste Handling
+### G-015: Done
 **Status:** Done
 **Priority:** P2
 **Module:** Editor

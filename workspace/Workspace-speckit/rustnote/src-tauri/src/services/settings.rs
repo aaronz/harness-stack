@@ -1,23 +1,20 @@
+use crate::model::settings::Settings;
+use crate::services::{SettingsResult, SettingsServiceError, SettingsServiceTrait};
 use rusqlite::{params, Connection, Result as SqlResult};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-use crate::model::settings::Settings;
-
-/// Database-backed settings service using rusqlite for atomic transactions and crash recovery
 pub struct SettingsService {
     pub conn: Mutex<Connection>,
     db_path: PathBuf,
 }
 
 impl SettingsService {
-    /// Create or open the settings database
     pub fn new() -> SqlResult<Self> {
         Self::new_with_path(None)
     }
 
-    /// Create or open the settings database with a custom path
     pub fn new_with_path(custom_path: Option<PathBuf>) -> SqlResult<Self> {
         let db_path = custom_path.unwrap_or_else(|| Self::get_default_db_path());
         if let Some(parent) = db_path.parent() {
@@ -31,13 +28,13 @@ impl SettingsService {
         };
         service.initialize_schema()?;
 
-        // Run migration if needed
-        service.migrate_from_json_if_needed()?;
+        if let Err(e) = service.migrate_from_json_if_needed() {
+            log::warn!("Migration warning: {}", e);
+        }
 
         Ok(service)
     }
 
-    /// Get the default database path
     fn get_default_db_path() -> PathBuf {
         dirs::data_dir()
             .unwrap_or_else(|| PathBuf::from("."))
@@ -45,7 +42,6 @@ impl SettingsService {
             .join("settings.db")
     }
 
-    /// Get the JSON settings path for migration
     fn get_json_path(&self) -> PathBuf {
         self.db_path
             .parent()
@@ -53,7 +49,6 @@ impl SettingsService {
             .unwrap_or_else(|| PathBuf::from("settings.json"))
     }
 
-    /// Initialize the database schema
     fn initialize_schema(&self) -> SqlResult<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute_batch(
@@ -80,7 +75,6 @@ impl SettingsService {
             ",
         )?;
 
-        // Set initial schema version if not set
         let version: Option<i32> = conn
             .query_row("SELECT version FROM schema_version LIMIT 1", [], |row| {
                 row.get(0)
@@ -97,11 +91,9 @@ impl SettingsService {
         Ok(())
     }
 
-    /// Migrate settings from JSON if the JSON file exists and DB is empty
-    fn migrate_from_json_if_needed(&self) -> SqlResult<()> {
+    fn migrate_from_json_if_needed(&self) -> Result<(), SettingsServiceError> {
         let json_path = self.get_json_path();
 
-        // Check if we already have settings in the DB
         let conn = self.conn.lock().unwrap();
         let has_settings: bool = conn
             .query_row(
@@ -115,21 +107,17 @@ impl SettingsService {
             return Ok(());
         }
 
-        // Check if JSON file exists
         if !json_path.exists() {
-            // Initialize with defaults
             drop(conn);
-            self.write_settings(&Settings::default())?;
-            return Ok(());
+            return self.write_settings(&Settings::default());
         }
 
-        // Read and migrate JSON settings
         if let Ok(json_content) = fs::read_to_string(&json_path) {
             if let Ok(settings) = serde_json::from_str::<Settings>(&json_content) {
                 drop(conn);
-                self.write_settings(&settings)?;
-
-                // Rename JSON file to backup
+                if let Err(e) = self.write_settings(&settings) {
+                    return Err(e);
+                }
                 let backup_path = json_path.with_extension("json.bak");
                 fs::rename(&json_path, backup_path).ok();
             }
@@ -137,12 +125,12 @@ impl SettingsService {
 
         Ok(())
     }
+}
 
-    /// Read all settings from the database
-    pub fn read_settings(&self) -> SqlResult<Settings> {
+impl SettingsServiceTrait for SettingsService {
+    fn read_settings(&self) -> SettingsResult<Settings> {
         let conn = self.conn.lock().unwrap();
 
-        // Get main settings JSON
         let settings_json: Option<String> = conn
             .query_row("SELECT value FROM settings WHERE key = 'main'", [], |row| {
                 row.get(0)
@@ -151,68 +139,53 @@ impl SettingsService {
 
         match settings_json {
             Some(json) => serde_json::from_str(&json)
-                .map_err(|e| rusqlite::Error::InvalidParameterName(e.to_string())),
+                .map_err(|e| SettingsServiceError::Serialization(e.to_string())),
             None => Ok(Settings::default()),
         }
     }
 
-    /// Write all settings to the database (atomic transaction)
-    pub fn write_settings(&self, settings: &Settings) -> SqlResult<()> {
+    fn write_settings(&self, settings: &Settings) -> SettingsResult<()> {
         let conn = self.conn.lock().unwrap();
 
-        // Use transaction for atomicity
-        conn.execute("BEGIN TRANSACTION", [])?;
+        conn.execute("BEGIN TRANSACTION", [])
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
 
-        let result = (|| {
-            let json = serde_json::to_string(settings)
-                .map_err(|e| rusqlite::Error::InvalidParameterName(e.to_string()))?;
+        let json = serde_json::to_string(settings)
+            .map_err(|e| SettingsServiceError::Serialization(e.to_string()))?;
 
+        conn.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES ('main', ?)",
+            params![json],
+        )
+        .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
+
+        conn.execute("DELETE FROM recent_files", [])
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
+
+        for (idx, path) in settings.recent_files.iter().enumerate() {
             conn.execute(
-                "INSERT OR REPLACE INTO settings (key, value) VALUES ('main', ?)",
-                params![json],
-            )?;
-
-            // Update recent files
-            conn.execute("DELETE FROM recent_files", [])?;
-            for (idx, path) in settings.recent_files.iter().enumerate() {
-                conn.execute(
-                    "INSERT INTO recent_files (id, path, last_opened) VALUES (?, ?, ?)",
-                    params![idx as i64 + 1, path, chrono::Utc::now().timestamp()],
-                )?;
-            }
-
-            Ok::<(), rusqlite::Error>(())
-        })();
-
-        match result {
-            Ok(()) => {
-                conn.execute("COMMIT", [])?;
-                Ok(())
-            }
-            Err(e) => {
-                conn.execute("ROLLBACK", [])?;
-                Err(e)
-            }
+                "INSERT INTO recent_files (id, path, last_opened) VALUES (?, ?, ?)",
+                params![idx as i64 + 1, path, chrono::Utc::now().timestamp()],
+            )
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
         }
+
+        conn.execute("COMMIT", [])
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
+        Ok(())
     }
 
-    /// Write settings atomically - all or nothing
-    pub fn write_settings_atomic(&self, settings: &Settings) -> SqlResult<()> {
-        self.write_settings(settings)
-    }
-
-    /// Update a single setting value atomically
-    pub fn update_setting(&self, key: &str, value: &str) -> SqlResult<()> {
+    fn update_setting(&self, key: &str, value: &str) -> SettingsResult<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
             "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
             params![key, value],
-        )?;
+        )
+        .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
         Ok(())
     }
 
-    /// Get a single setting value
-    pub fn get_setting(&self, key: &str) -> SqlResult<Option<String>> {
+    fn get_setting(&self, key: &str) -> SettingsResult<Option<String>> {
         let conn = self.conn.lock().unwrap();
         let result: Option<String> = conn
             .query_row(
@@ -224,51 +197,47 @@ impl SettingsService {
         Ok(result)
     }
 
-    // ===== Recent Files Operations =====
-
-    /// Add a file to recent files
-    pub fn add_recent_file(&self, path: &str) -> SqlResult<()> {
+    fn add_recent_file(&self, path: &str) -> SettingsResult<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
             "INSERT OR REPLACE INTO recent_files (path, last_opened) VALUES (?, ?)",
             params![path, chrono::Utc::now().timestamp()],
-        )?;
+        )
+        .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
         Ok(())
     }
 
-    /// Get all recent files
-    pub fn get_recent_files(&self) -> SqlResult<Vec<String>> {
+    fn get_recent_files(&self) -> SettingsResult<Vec<String>> {
         let conn = self.conn.lock().unwrap();
-        let mut stmt =
-            conn.prepare("SELECT path FROM recent_files ORDER BY last_opened DESC LIMIT 20")?;
+        let mut stmt = conn
+            .prepare("SELECT path FROM recent_files ORDER BY last_opened DESC LIMIT 20")
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
         let files = stmt
-            .query_map([], |row| row.get(0))?
+            .query_map([], |row| row.get(0))
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?
             .filter_map(|r| r.ok())
             .collect();
         Ok(files)
     }
 
-    /// Clear all recent files
-    pub fn clear_recent_files(&self) -> SqlResult<()> {
+    fn clear_recent_files(&self) -> SettingsResult<()> {
         let conn = self.conn.lock().unwrap();
-        conn.execute("DELETE FROM recent_files", [])?;
+        conn.execute("DELETE FROM recent_files", [])
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
         Ok(())
     }
 
-    // ===== Workspace State Operations =====
-
-    /// Set workspace state
-    pub fn set_workspace_state(&self, key: &str, value: &str) -> SqlResult<()> {
+    fn set_workspace_state(&self, key: &str, value: &str) -> SettingsResult<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
             "INSERT OR REPLACE INTO workspace_state (key, value) VALUES (?, ?)",
             params![key, value],
-        )?;
+        )
+        .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
         Ok(())
     }
 
-    /// Get workspace state
-    pub fn get_workspace_state(&self, key: &str) -> SqlResult<Option<String>> {
+    fn get_workspace_state(&self, key: &str) -> SettingsResult<Option<String>> {
         let conn = self.conn.lock().unwrap();
         let result: Option<String> = conn
             .query_row(
@@ -280,16 +249,23 @@ impl SettingsService {
         Ok(result)
     }
 
-    /// Delete workspace state
-    pub fn delete_workspace_state(&self, key: &str) -> SqlResult<()> {
+    fn delete_workspace_state(&self, key: &str) -> SettingsResult<()> {
         let conn = self.conn.lock().unwrap();
-        conn.execute("DELETE FROM workspace_state WHERE key = ?", params![key])?;
+        conn.execute("DELETE FROM workspace_state WHERE key = ?", params![key])
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
         Ok(())
     }
 
-    // ===== Atomic Transaction Tests =====
+    fn verify_integrity(&self) -> SettingsResult<bool> {
+        let conn = self.conn.lock().unwrap();
+        let result: String = conn
+            .query_row("PRAGMA integrity_check", [], |row| row.get(0))
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
+        Ok(result == "ok")
+    }
+}
 
-    /// Execute multiple setting changes atomically
+impl SettingsService {
     pub fn transaction_with_settings<F>(&self, f: F) -> SqlResult<()>
     where
         F: FnOnce(&Connection) -> SqlResult<()>,
@@ -311,21 +287,11 @@ impl SettingsService {
         }
     }
 
-    /// Verify database integrity
-    pub fn verify_integrity(&self) -> SqlResult<bool> {
-        let conn = self.conn.lock().unwrap();
-        let result: String = conn.query_row("PRAGMA integrity_check", [], |row| row.get(0))?;
-        Ok(result == "ok")
-    }
-
-    /// Get database path for testing
-    #[cfg(test)]
     pub fn get_db_path_for_test() -> PathBuf {
         Self::get_default_db_path()
     }
 }
 
-// Make SettingsService cloneable for testing purposes
 impl Clone for SettingsService {
     fn clone(&self) -> Self {
         let conn = Connection::open(&self.db_path).expect("Failed to reopen settings database");
@@ -339,7 +305,7 @@ impl Clone for SettingsService {
 #[cfg(test)]
 mod tests {
     use crate::model::settings::{Settings, Theme};
-    use crate::services::SettingsService;
+    use crate::services::{SettingsService, SettingsServiceTrait};
     use std::fs;
 
     fn create_test_db() -> SettingsService {
@@ -354,7 +320,6 @@ mod tests {
     fn test_settings_crud() {
         let service = create_test_db();
 
-        // Write settings
         let mut settings = Settings::default();
         settings.theme = Theme::Dark;
         settings.editor.font_size = 18;
@@ -362,7 +327,6 @@ mod tests {
 
         service.write_settings(&settings).unwrap();
 
-        // Read settings back
         let read = service.read_settings().unwrap();
         assert_eq!(read.theme, Theme::Dark);
         assert_eq!(read.editor.font_size, 18);
@@ -371,7 +335,6 @@ mod tests {
 
     #[test]
     fn test_settings_atomic_transaction() {
-        // Test successful transaction
         let service = create_test_db();
         let result = service.transaction_with_settings(|conn| {
             conn.execute(
@@ -387,23 +350,19 @@ mod tests {
 
         assert!(result.is_ok());
 
-        // Values should be present after successful transaction
         let val1: Option<String> = service.get_setting("test1").unwrap();
         assert_eq!(val1, Some("value1".to_string()));
 
-        // Test rollback on error
         let result2 = service.transaction_with_settings(|conn| {
             conn.execute(
                 "INSERT OR REPLACE INTO settings (key, value) VALUES ('test3', 'value3')",
                 [],
             )?;
-            // Return error to trigger rollback
             Err(rusqlite::Error::InvalidParameterName("Test".to_string()))
         });
 
         assert!(result2.is_err());
 
-        // Value should not be present due to rollback
         let val3: Option<String> = service.get_setting("test3").unwrap();
         assert!(val3.is_none());
     }

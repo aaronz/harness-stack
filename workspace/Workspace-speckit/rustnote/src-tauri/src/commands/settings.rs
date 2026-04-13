@@ -1,6 +1,6 @@
 use crate::model::Settings;
 use crate::commands::CommandError;
-use crate::services::SettingsService;
+use crate::services::{SettingsService, SettingsServiceTrait};
 use once_cell::sync::OnceCell;
 
 static SETTINGS_SERVICE: OnceCell<SettingsService> = OnceCell::new();

@@ -1,3 +1,4 @@
+use crate::services::{FileWatcherResult, FileWatcherServiceError, FileWatcherServiceTrait};
 use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -22,7 +23,7 @@ struct FileState {
 
 pub struct FileWatcherService {
     watcher: Option<RecommendedWatcher>,
-    receiver: Option<Receiver<Result<Event, notify::Error>>>,
+    receiver: Option<Mutex<Receiver<Result<Event, notify::Error>>>>,
     watched_paths: Arc<Mutex<HashMap<String, PathBuf>>>,
     file_states: Arc<Mutex<HashMap<String, FileState>>>,
 }
@@ -39,12 +40,46 @@ impl FileWatcherService {
             file_states,
         }
     }
+}
 
-    pub fn watch(&mut self, path: &str) -> Result<(), String> {
+impl Default for FileWatcherService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl FileWatcherServiceTrait for FileWatcherService {
+    fn watch(&mut self, path: &str) -> FileWatcherResult<()> {
+        self.watch_impl(path)
+    }
+
+    fn unwatch(&mut self, path: &str) -> FileWatcherResult<()> {
+        self.unwatch_impl(path)
+    }
+
+    fn poll_changes(&self) -> Vec<FileChange> {
+        self.poll_changes_impl()
+    }
+
+    fn check_file_changed(&self, path: &str) -> Option<bool> {
+        self.check_file_changed_impl(path)
+    }
+
+    fn update_file_state(&self, path: &str) {
+        self.update_file_state_impl(path);
+    }
+
+    fn is_watching(&self) -> bool {
+        self.is_watching_impl()
+    }
+}
+
+impl FileWatcherService {
+    pub fn watch_impl(&mut self, path: &str) -> FileWatcherResult<()> {
         let path_buf = PathBuf::from(path);
 
         if !path_buf.exists() {
-            return Err(format!("Path does not exist: {}", path));
+            return Err(FileWatcherServiceError::PathNotFound(path.to_string()));
         }
 
         if self.watcher.is_none() {
@@ -56,10 +91,10 @@ impl FileWatcherService {
                 },
                 Config::default().with_poll_interval(Duration::from_secs(2)),
             )
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| FileWatcherServiceError::WatcherError(e.to_string()))?;
 
             self.watcher = Some(watcher);
-            self.receiver = Some(rx);
+            self.receiver = Some(Mutex::new(rx));
         }
 
         let watch_path = if path_buf.is_dir() {
@@ -71,7 +106,7 @@ impl FileWatcherService {
         if let Some(ref mut watcher) = self.watcher {
             watcher
                 .watch(&watch_path, RecursiveMode::Recursive)
-                .map_err(|e| e.to_string())?;
+                .map_err(|e| FileWatcherServiceError::WatcherError(e.to_string()))?;
         }
 
         self.watched_paths
@@ -97,36 +132,40 @@ impl FileWatcherService {
         Ok(())
     }
 
-    pub fn unwatch(&mut self, path: &str) -> Result<(), String> {
+    pub fn unwatch_impl(&mut self, path: &str) -> FileWatcherResult<()> {
         if let Some(watched) = self.watched_paths.lock().unwrap().remove(path) {
             self.file_states.lock().unwrap().remove(path);
             if let Some(ref mut watcher) = self.watcher {
-                watcher.unwatch(&watched).map_err(|e| e.to_string())?;
+                watcher
+                    .unwatch(&watched)
+                    .map_err(|e| FileWatcherServiceError::WatcherError(e.to_string()))?;
             }
         }
         Ok(())
     }
 
-    pub fn poll_changes(&self) -> Vec<FileChange> {
+    pub fn poll_changes_impl(&self) -> Vec<FileChange> {
         let mut changes = Vec::new();
 
         if let Some(ref rx) = self.receiver {
-            while let Ok(result) = rx.try_recv() {
-                if let Ok(event) = result {
-                    for path in event.paths {
-                        let kind = match event.kind {
-                            notify::EventKind::Create(_) => "create",
-                            notify::EventKind::Modify(_) => "modify",
-                            notify::EventKind::Remove(_) => "remove",
-                            _ => continue,
-                        };
+            if let Ok(guard) = rx.lock() {
+                while let Ok(result) = guard.try_recv() {
+                    if let Ok(event) = result {
+                        for path in event.paths {
+                            let kind = match event.kind {
+                                notify::EventKind::Create(_) => "create",
+                                notify::EventKind::Modify(_) => "modify",
+                                notify::EventKind::Remove(_) => "remove",
+                                _ => continue,
+                            };
 
-                        if let Some(path_str) = path.to_str() {
-                            if path_str.ends_with(".md") || path_str.ends_with(".markdown") {
-                                changes.push(FileChange {
-                                    path: path_str.to_string(),
-                                    kind: kind.to_string(),
-                                });
+                            if let Some(path_str) = path.to_str() {
+                                if path_str.ends_with(".md") || path_str.ends_with(".markdown") {
+                                    changes.push(FileChange {
+                                        path: path_str.to_string(),
+                                        kind: kind.to_string(),
+                                    });
+                                }
                             }
                         }
                     }
@@ -137,7 +176,7 @@ impl FileWatcherService {
         changes
     }
 
-    pub fn check_file_changed(&self, path: &str) -> Option<bool> {
+    pub fn check_file_changed_impl(&self, path: &str) -> Option<bool> {
         let states = self.file_states.lock().unwrap();
         let previous_state = states.get(path)?;
 
@@ -151,7 +190,7 @@ impl FileWatcherService {
         )
     }
 
-    pub fn update_file_state(&self, path: &str) {
+    pub fn update_file_state_impl(&self, path: &str) {
         if let Ok(content) = fs::read_to_string(path) {
             let hash = self.compute_hash(&content);
             let modified = fs::metadata(path)
@@ -174,13 +213,7 @@ impl FileWatcherService {
         hasher.finish()
     }
 
-    pub fn is_watching(&self) -> bool {
+    pub fn is_watching_impl(&self) -> bool {
         self.watcher.is_some()
-    }
-}
-
-impl Default for FileWatcherService {
-    fn default() -> Self {
-        Self::new()
     }
 }

@@ -1,4 +1,5 @@
 use crate::services::file_watcher::FileWatcherService;
+use crate::services::FileWatcherServiceTrait;
 use std::fs;
 use std::sync::Mutex;
 
@@ -17,7 +18,7 @@ pub fn watch_file(path: String) -> Result<(), String> {
     }
 
     if let Some(ref mut watcher) = *guard {
-        watcher.watch(&path)
+        watcher.watch(&path).map_err(|e| e.to_string())
     } else {
         Err("Failed to initialize watcher".to_string())
     }
@@ -28,7 +29,7 @@ pub fn unwatch_file(path: String) -> Result<(), String> {
     let mut guard = get_watcher()?;
 
     if let Some(ref mut watcher) = *guard {
-        watcher.unwatch(&path)
+        watcher.unwatch(&path).map_err(|e| e.to_string())
     } else {
         Ok(())
     }
