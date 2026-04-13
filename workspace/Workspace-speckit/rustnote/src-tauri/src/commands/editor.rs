@@ -6,6 +6,7 @@ pub fn editor_apply_transform(
     transform: TransformType,
     content: String,
     cursor_offset: usize,
+    selection_start: Option<usize>,
 ) -> TransformResultDto {
     let engine = TransformEngine::new();
     let transform = match transform {
@@ -21,7 +22,7 @@ pub fn editor_apply_transform(
             after: after.clone(),
         },
     };
-    let result = engine.apply(&transform, &content, cursor_offset);
+    let result = engine.apply(&transform, &content, cursor_offset, selection_start);
     TransformResultDto {
         content: result.content,
         cursor_offset: result.cursor_offset,

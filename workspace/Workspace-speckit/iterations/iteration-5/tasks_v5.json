@@ -616,7 +616,7 @@
       "priority": "P1",
       "title": "Wrap Transform",
       "description": "Part of G-001 TransformEngine implementation - Wrap transform with before/after markers.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Wrap transform implemented in Rust",
         "Frontend wired to use Rust implementation"

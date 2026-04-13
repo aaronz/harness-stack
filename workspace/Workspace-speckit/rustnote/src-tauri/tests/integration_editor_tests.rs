@@ -21,7 +21,7 @@ fn test_cursor_and_transform_integration() {
     let mut cursor = cursor_at_start();
     cursor.move_forward(10);
 
-    let result = engine().apply(&Transform::Enter, content, cursor.position().offset);
+    let result = engine().apply(&Transform::Enter, content, cursor.position().offset, None);
     assert!(result.content.contains('\n'));
 }
 
@@ -46,7 +46,7 @@ fn test_parse_heading_then_transform() {
     let doc = SemanticDocument::parse(source);
     assert!(doc.get_headings().len() == 1);
 
-    let result = engine().apply(&Transform::Enter, source, 11);
+    let result = engine().apply(&Transform::Enter, source, 11, None);
     assert!(result.content.contains('#'));
 }
 
@@ -57,7 +57,7 @@ fn test_parse_list_then_transform() {
     let output = doc.serialize_to_commonmark();
     assert!(output.contains("- [x]"));
 
-    let result = engine().apply(&Transform::Enter, source, source.len());
+    let result = engine().apply(&Transform::Enter, source, source.len(), None);
     assert!(result.content.contains("- [x] Completed task"));
 }
 
@@ -67,11 +67,11 @@ fn test_multiple_transforms_sequence() {
     let mut current = content.to_string();
     let mut offset = content.len();
 
-    let result1 = engine().apply(&Transform::Enter, &current, offset);
+    let result1 = engine().apply(&Transform::Enter, &current, offset, None);
     current = result1.content;
     offset = result1.cursor_offset;
 
-    let result2 = engine().apply(&Transform::Tab, &current, offset);
+    let result2 = engine().apply(&Transform::Tab, &current, offset, None);
     current = result2.content;
 
     assert!(current.contains('\n'));
@@ -80,7 +80,7 @@ fn test_multiple_transforms_sequence() {
 #[test]
 fn test_cursor_positioning_after_transform() {
     let content = "# Heading";
-    let result = engine().apply(&Transform::Enter, content, 9);
+    let result = engine().apply(&Transform::Enter, content, 9, None);
 
     let doc = SemanticDocument::parse(&result.content);
     let pos = doc.offset_to_position(result.cursor_offset);
@@ -90,14 +90,14 @@ fn test_cursor_positioning_after_transform() {
 #[test]
 fn test_transform_in_blockquote_context() {
     let content = "> quote line\n> second line";
-    let result = engine().apply(&Transform::Enter, content, 10);
+    let result = engine().apply(&Transform::Enter, content, 10, None);
     assert!(result.content.contains("> quote"));
 }
 
 #[test]
 fn test_transform_in_nested_list() {
     let content = "- item\n  - nested item";
-    let result = engine().apply(&Transform::Enter, content, 14);
+    let result = engine().apply(&Transform::Enter, content, 14, None);
     assert!(result.content.contains('-'));
 }
 
@@ -160,8 +160,8 @@ fn test_cursor_to_position_conversion() {
 fn test_transform_state_independence() {
     let content = "- item";
 
-    let result1 = engine().apply(&Transform::Tab, content, 2);
-    let result2 = engine().apply(&Transform::Tab, content, 2);
+    let result1 = engine().apply(&Transform::Tab, content, 2, None);
+    let result2 = engine().apply(&Transform::Tab, content, 2, None);
 
     assert_eq!(result1.content, result2.content);
 }
@@ -212,14 +212,14 @@ fn test_frontmatter_roundtrip() {
 #[test]
 fn test_transform_backspace_joins_correctly() {
     let content = "line1\nline2";
-    let result = engine().apply(&Transform::Backspace, content, 6);
+    let result = engine().apply(&Transform::Backspace, content, 6, None);
     assert_eq!(result.content, "line1line2");
 }
 
 #[test]
 fn test_transform_enter_in_empty_list_exits() {
     let content = "- ";
-    let result = engine().apply(&Transform::Enter, content, 2);
+    let result = engine().apply(&Transform::Enter, content, 2, None);
     assert_eq!(result.content, "");
     assert_eq!(result.cursor_offset, 0);
 }
@@ -227,7 +227,7 @@ fn test_transform_enter_in_empty_list_exits() {
 #[test]
 fn test_transform_enter_in_empty_ordered_list_exits() {
     let content = "1. ";
-    let result = engine().apply(&Transform::Enter, content, 3);
+    let result = engine().apply(&Transform::Enter, content, 3, None);
     assert_eq!(result.content, "");
     assert_eq!(result.cursor_offset, 0);
 }
@@ -235,21 +235,21 @@ fn test_transform_enter_in_empty_ordered_list_exits() {
 #[test]
 fn test_shift_tab_dedent_when_not_indented() {
     let content = "not indented";
-    let result = engine().apply(&Transform::ShiftTab, content, 5);
+    let result = engine().apply(&Transform::ShiftTab, content, 5, None);
     assert_eq!(result.content, content);
 }
 
 #[test]
 fn test_ordered_list_number_increment() {
     let content = "1. item";
-    let result = engine().apply(&Transform::Enter, content, 7);
+    let result = engine().apply(&Transform::Enter, content, 7, None);
     assert!(result.content.contains("2. "));
 }
 
 #[test]
 fn test_task_list_continuation() {
     let content = "- [ ] todo";
-    let result = engine().apply(&Transform::Enter, content, content.len());
+    let result = engine().apply(&Transform::Enter, content, content.len(), None);
     assert!(result.content.contains("- [ ] todo"));
     assert!(result.content.contains('\n'));
 }

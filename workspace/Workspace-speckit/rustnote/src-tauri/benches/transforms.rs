@@ -9,42 +9,42 @@ fn bench_transform_enter(c: &mut Criterion) {
     c.bench_function("transform_enter_simple", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::Enter, "- item", 6)
+            e.apply(&Transform::Enter, "- item", 6, None)
         });
     });
 
     c.bench_function("transform_enter_heading", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::Enter, "# Heading", 9)
+            e.apply(&Transform::Enter, "# Heading", 9, None)
         });
     });
 
     c.bench_function("transform_enter_paragraph", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::Enter, "paragraph", 5)
+            e.apply(&Transform::Enter, "paragraph", 5, None)
         });
     });
 
     c.bench_function("transform_enter_ordered_list", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::Enter, "1. item", 7)
+            e.apply(&Transform::Enter, "1. item", 7, None)
         });
     });
 
     c.bench_function("transform_enter_blockquote", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::Enter, "> quote", 7)
+            e.apply(&Transform::Enter, "> quote", 7, None)
         });
     });
 
     c.bench_function("transform_enter_task_list", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::Enter, "- [ ] task", 10)
+            e.apply(&Transform::Enter, "- [ ] task", 10, None)
         });
     });
 }
@@ -53,21 +53,21 @@ fn bench_transform_backspace(c: &mut Criterion) {
     c.bench_function("backspace_middle", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::Backspace, "Hello world", 6)
+            e.apply(&Transform::Backspace, "Hello world", 6, None)
         });
     });
 
     c.bench_function("backspace_list_boundary", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::Backspace, "- item\n- item2", 10)
+            e.apply(&Transform::Backspace, "- item\n- item2", 10, None)
         });
     });
 
     c.bench_function("backspace_line_join", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::Backspace, "line1\nline2", 6)
+            e.apply(&Transform::Backspace, "line1\nline2", 6, None)
         });
     });
 }
@@ -76,21 +76,21 @@ fn bench_transform_tab(c: &mut Criterion) {
     c.bench_function("tab_list_item", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::Tab, "- item", 2)
+            e.apply(&Transform::Tab, "- item", 2, None)
         });
     });
 
     c.bench_function("tab_nested_list", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::Tab, "- nested item", 2)
+            e.apply(&Transform::Tab, "- nested item", 2, None)
         });
     });
 
     c.bench_function("tab_paragraph", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::Tab, "paragraph", 5)
+            e.apply(&Transform::Tab, "paragraph", 5, None)
         });
     });
 }
@@ -99,21 +99,21 @@ fn bench_transform_shift_tab(c: &mut Criterion) {
     c.bench_function("shift_tab_four_spaces", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::ShiftTab, "    - item", 6)
+            e.apply(&Transform::ShiftTab, "    - item", 6, None)
         });
     });
 
     c.bench_function("shift_tab_single_tab", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::ShiftTab, "\t-item", 1)
+            e.apply(&Transform::ShiftTab, "\t-item", 1, None)
         });
     });
 
     c.bench_function("shift_tab_no_indent", |b| {
         b.iter(|| {
             let e = engine();
-            e.apply(&Transform::ShiftTab, "paragraph", 5)
+            e.apply(&Transform::ShiftTab, "paragraph", 5, None)
         });
     });
 }
@@ -122,9 +122,9 @@ fn bench_transform_sequence(c: &mut Criterion) {
     c.bench_function("transform_sequence", |b| {
         b.iter(|| {
             let e = engine();
-            let r1 = e.apply(&Transform::Enter, "- item", 6);
-            let r2 = e.apply(&Transform::Tab, &r1.content, r1.cursor_offset);
-            let _ = e.apply(&Transform::Enter, &r2.content, r2.cursor_offset);
+            let r1 = e.apply(&Transform::Enter, "- item", 6, None);
+            let r2 = e.apply(&Transform::Tab, &r1.content, r1.cursor_offset, None);
+            let _ = e.apply(&Transform::Enter, &r2.content, r2.cursor_offset, None);
         });
     });
 }

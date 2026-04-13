@@ -64,11 +64,15 @@ impl TransformEngine {
     }
 
     /// Apply a transform to the content at the given cursor position
+    ///
+    /// For Wrap transform, selection_start indicates the beginning of a selection
+    /// (if Some) or None if there's no selection (just cursor position).
     pub fn apply(
         &self,
         transform: &Transform,
         content: &str,
         cursor_offset: usize,
+        selection_start: Option<usize>,
     ) -> TransformResult {
         match transform {
             Transform::Enter => self.apply_enter(content, cursor_offset),
@@ -83,7 +87,7 @@ impl TransformEngine {
                 self.apply_heading_enter(content, cursor_offset, *level)
             }
             Transform::Wrap { before, after } => {
-                self.apply_wrap(content, cursor_offset, before, after)
+                self.apply_wrap(content, cursor_offset, before, after, selection_start)
             }
         }
     }
@@ -366,16 +370,26 @@ impl TransformEngine {
         cursor_offset: usize,
         before_marker: &str,
         after_marker: &str,
+        selection_start: Option<usize>,
     ) -> TransformResult {
-        let (pre_cursor, post_cursor) = content.split_at(cursor_offset);
-        let new_content = format!(
-            "{}{}{}{}",
-            pre_cursor, before_marker, after_marker, post_cursor
-        );
-        TransformResult::new(
-            new_content,
-            cursor_offset + before_marker.len() + after_marker.len(),
-        )
+        match selection_start {
+            Some(start) if start < cursor_offset => {
+                let before = &content[..start];
+                let selected = &content[start..cursor_offset];
+                let after = &content[cursor_offset..];
+                let new_content = format!(
+                    "{}{}{}{}{}",
+                    before, before_marker, selected, after_marker, after
+                );
+                let new_cursor = start + before_marker.len() + selected.len() + after_marker.len();
+                TransformResult::new(new_content, new_cursor)
+            }
+            _ => {
+                let (pre_cursor, post_cursor) = content.split_at(cursor_offset);
+                let new_content = format!("{}{}{}", pre_cursor, before_marker, post_cursor);
+                TransformResult::new(new_content, cursor_offset + before_marker.len())
+            }
+        }
     }
 }
 
@@ -443,7 +457,7 @@ pub fn apply_transform(
     cursor_offset: usize,
 ) -> (String, Command) {
     let engine = TransformEngine::new();
-    let result = engine.apply(&transform, content, cursor_offset);
+    let result = engine.apply(&transform, content, cursor_offset, None);
     let cmd = Command::replace(
         SourceRange::new(
             Position::new(cursor_offset, 0, cursor_offset as u32),
@@ -463,7 +477,7 @@ mod tests {
     fn test_enter_in_empty_list_item() {
         let engine = TransformEngine::new();
         let content = "- ";
-        let result = engine.apply(&Transform::Enter, content, 2);
+        let result = engine.apply(&Transform::Enter, content, 2, None);
         assert_eq!(result.content, "");
         assert_eq!(result.cursor_offset, 0);
     }
@@ -472,7 +486,7 @@ mod tests {
     fn test_enter_in_list_item() {
         let engine = TransformEngine::new();
         let content = "- item";
-        let result = engine.apply(&Transform::Enter, content, 6);
+        let result = engine.apply(&Transform::Enter, content, 6, None);
         assert!(result.content.contains("- item"));
         assert!(result.content.contains('\n'));
     }
@@ -481,7 +495,7 @@ mod tests {
     fn test_tab_in_list_item() {
         let engine = TransformEngine::new();
         let content = "- item";
-        let result = engine.apply(&Transform::Tab, content, 2);
+        let result = engine.apply(&Transform::Tab, content, 2, None);
         assert!(result.content.starts_with("    -"));
     }
 
@@ -489,7 +503,7 @@ mod tests {
     fn test_backspace_at_line_start() {
         let engine = TransformEngine::new();
         let content = "line1\nline2";
-        let result = engine.apply(&Transform::Backspace, content, 6);
+        let result = engine.apply(&Transform::Backspace, content, 6, None);
         assert_eq!(result.content, "line1line2");
         assert_eq!(result.cursor_offset, 5);
     }

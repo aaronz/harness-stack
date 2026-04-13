@@ -181,7 +181,7 @@ fn test_shift_arrow_selection() {
 #[test]
 fn test_transform_enter_in_empty_unordered_list_item() {
     let content = "- ";
-    let result = engine().apply(&Transform::Enter, content, 2);
+    let result = engine().apply(&Transform::Enter, content, 2, None);
     assert_eq!(result.content, "");
     assert_eq!(result.cursor_offset, 0);
 }
@@ -189,7 +189,7 @@ fn test_transform_enter_in_empty_unordered_list_item() {
 #[test]
 fn test_transform_enter_in_unordered_list_item_with_content() {
     let content = "- item";
-    let result = engine().apply(&Transform::Enter, content, 6);
+    let result = engine().apply(&Transform::Enter, content, 6, None);
     assert!(result.content.contains("- item"));
     assert!(result.content.contains('\n'));
 }
@@ -197,21 +197,21 @@ fn test_transform_enter_in_unordered_list_item_with_content() {
 #[test]
 fn test_transform_enter_in_ordered_list_item() {
     let content = "1. item";
-    let result = engine().apply(&Transform::Enter, content, 7);
+    let result = engine().apply(&Transform::Enter, content, 7, None);
     assert!(result.content.contains("2. "));
 }
 
 #[test]
 fn test_transform_enter_in_task_list() {
     let content = "- [ ] task";
-    let result = engine().apply(&Transform::Enter, content, 10);
+    let result = engine().apply(&Transform::Enter, content, 10, None);
     assert!(result.content.contains("- [ ] task"));
 }
 
 #[test]
 fn test_transform_enter_in_blockquote() {
     let content = "> quote";
-    let result = engine().apply(&Transform::Enter, content, 7);
+    let result = engine().apply(&Transform::Enter, content, 7, None);
     assert!(result.content.contains("> quote"));
     assert!(result.content.contains("> "));
 }
@@ -219,7 +219,7 @@ fn test_transform_enter_in_blockquote() {
 #[test]
 fn test_transform_enter_in_heading() {
     let content = "# Heading";
-    let result = engine().apply(&Transform::Enter, content, 9);
+    let result = engine().apply(&Transform::Enter, content, 9, None);
     assert!(result.content.contains("# Heading"));
     assert!(result.content.contains("# "));
 }
@@ -227,7 +227,7 @@ fn test_transform_enter_in_heading() {
 #[test]
 fn test_transform_backspace_at_line_start_joins_lines() {
     let content = "line1\nline2";
-    let result = engine().apply(&Transform::Backspace, content, 6);
+    let result = engine().apply(&Transform::Backspace, content, 6, None);
     assert_eq!(result.content, "line1line2");
     assert_eq!(result.cursor_offset, 5);
 }
@@ -235,7 +235,7 @@ fn test_transform_backspace_at_line_start_joins_lines() {
 #[test]
 fn test_transform_backspace_in_middle() {
     let content = "Hello world";
-    let result = engine().apply(&Transform::Backspace, content, 5);
+    let result = engine().apply(&Transform::Backspace, content, 5, None);
     assert_eq!(result.content, "Hell world");
     assert_eq!(result.cursor_offset, 4);
 }
@@ -243,28 +243,28 @@ fn test_transform_backspace_in_middle() {
 #[test]
 fn test_transform_tab_indents_list_item() {
     let content = "- item";
-    let result = engine().apply(&Transform::Tab, content, 2);
+    let result = engine().apply(&Transform::Tab, content, 2, None);
     assert!(result.content.starts_with("    -"));
 }
 
 #[test]
 fn test_transform_shift_tab_dedents_list_item() {
     let content = "    - item";
-    let result = engine().apply(&Transform::ShiftTab, content, 6);
+    let result = engine().apply(&Transform::ShiftTab, content, 6, None);
     assert!(result.content.starts_with("- item"));
 }
 
 #[test]
 fn test_transform_tab_in_paragraph_inserts_tab() {
     let content = "Paragraph";
-    let result = engine().apply(&Transform::Tab, content, 4);
+    let result = engine().apply(&Transform::Tab, content, 4, None);
     assert!(result.content.contains('\t'));
 }
 
 #[test]
 fn test_transform_enter_in_empty_ordered_list_item() {
     let content = "1. ";
-    let result = engine().apply(&Transform::Enter, content, 3);
+    let result = engine().apply(&Transform::Enter, content, 3, None);
     assert_eq!(result.content, "");
     assert_eq!(result.cursor_offset, 0);
 }
@@ -272,7 +272,7 @@ fn test_transform_enter_in_empty_ordered_list_item() {
 #[test]
 fn test_transform_enter_creates_newline_in_paragraph() {
     let content = "Hello world";
-    let result = engine().apply(&Transform::Enter, content, 5);
+    let result = engine().apply(&Transform::Enter, content, 5, None);
     assert!(result.content.contains("Hello"));
     assert!(result.content.contains("world"));
     assert!(result.content.contains('\n'));
@@ -281,21 +281,21 @@ fn test_transform_enter_creates_newline_in_paragraph() {
 #[test]
 fn test_transform_enter_in_multiple_paragraphs_in_list_item() {
     let content = "- item\n  with multiple\n  paragraphs";
-    let result = engine().apply(&Transform::Enter, content, 10);
+    let result = engine().apply(&Transform::Enter, content, 10, None);
     assert!(result.content.contains("- item"));
 }
 
 #[test]
 fn test_transform_backspace_joins_list_items() {
     let content = "- item1\n- item2";
-    let result = engine().apply(&Transform::Backspace, content, 10);
+    let result = engine().apply(&Transform::Backspace, content, 10, None);
     assert!(result.content.contains("- item1"));
 }
 
 #[test]
 fn test_transform_enter_in_task_list_with_content() {
     let content = "- [x] done";
-    let result = engine().apply(&Transform::Enter, content, 10);
+    let result = engine().apply(&Transform::Enter, content, 10, None);
     assert!(result.content.contains("- [x] done"));
     assert!(result.content.contains("\n"));
 }
@@ -303,7 +303,7 @@ fn test_transform_enter_in_task_list_with_content() {
 #[test]
 fn test_transform_enter_in_nested_list() {
     let content = "- item\n  - nested";
-    let result = engine().apply(&Transform::Enter, content, 12);
+    let result = engine().apply(&Transform::Enter, content, 12, None);
     assert!(result.content.contains("- item"));
     assert!(result.content.contains('\n'));
 }

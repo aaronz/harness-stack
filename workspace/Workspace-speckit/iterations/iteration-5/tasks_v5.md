@@ -237,7 +237,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-007: Ropey Buffer
+### G-007: Done
 **Status:** Done
 **Priority:** P1
 **Module:** Buffer
