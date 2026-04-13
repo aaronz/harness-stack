@@ -1088,7 +1088,7 @@
       "priority": "P2",
       "title": "Service Interfaces",
       "description": "Refactor to expose DocumentService, EditorService, etc. Align with PRD-10 architecture.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Service interfaces exposed per PRD-10",
         "Proper interface boundaries maintained",
@@ -1139,7 +1139,7 @@
       "priority": "P2",
       "title": "Autosave Reliability",
       "description": "Consider Rust-side autosave with debounce. Ensure frontend timer fires reliably.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Autosave triggers after configured interval",
         "Crash recovery works with autosave",

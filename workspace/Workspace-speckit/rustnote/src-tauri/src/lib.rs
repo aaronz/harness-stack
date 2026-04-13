@@ -7,7 +7,7 @@ pub mod renderer;
 pub mod semantic;
 pub mod services;
 
-use commands::{check_external_change, cleanup_old_snapshots, create_document, create_file, create_folder, delete_item, delete_recovery_snapshot, editor_apply_transform, editor_find_next, editor_find_previous, editor_replace_all, editor_replace_match, editor_search, export_to_html, export_to_pdf, export_to_pdf_native, get_highlighted_code_html, get_markdown_info, get_print_html, highlight_code_block, image_markdown_from_path, insert_image, list_recovery_snapshots, list_workspace, open_document, open_external_url, parse_markdown_ast, poll_file_changes, prehighlight_markdown, read_document_content, read_settings, rename_item, render_for_editor, render_for_editor_with_highlighting, render_markdown, restore_recovery_snapshot, save_document, save_image_from_base64_cmd, save_recovery_snapshot, serialize_markdown, unwatch_file, update_source, update_watched_file_state, watch_file, write_document_content, write_settings};
+use commands::{autosave_get_config, autosave_reset_document, autosave_set_config, check_external_change, cleanup_old_snapshots, create_document, create_file, create_folder, delete_item, delete_recovery_snapshot, editor_apply_transform, editor_find_next, editor_find_previous, editor_replace_all, editor_replace_match, editor_search, export_to_html, export_to_pdf, export_to_pdf_native, get_highlighted_code_html, get_markdown_info, get_print_html, highlight_code_block, image_markdown_from_path, insert_image, list_recovery_snapshots, list_workspace, open_document, open_external_url, parse_markdown_ast, poll_file_changes, prehighlight_markdown, read_document_content, read_settings, rename_item, render_for_editor, render_for_editor_with_highlighting, render_markdown, restore_recovery_snapshot, save_document, save_image_from_base64_cmd, save_recovery_snapshot, serialize_markdown, trigger_autosave, unwatch_file, update_source, update_watched_file_state, watch_file, write_document_content, write_settings};
 
 use std::panic;
 
@@ -99,6 +99,10 @@ pub fn run() {
             check_external_change,
             update_watched_file_state,
             open_external_url,
+            trigger_autosave,
+            autosave_set_config,
+            autosave_get_config,
+            autosave_reset_document,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

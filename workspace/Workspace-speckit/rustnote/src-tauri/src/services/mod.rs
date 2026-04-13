@@ -1,11 +1,13 @@
 use std::path::PathBuf;
 use uuid::Uuid;
 
+pub mod autosave;
 pub mod document;
 pub mod editor;
 pub mod file_watcher;
 pub mod settings;
 
+pub use autosave::{compute_content_hash, AutosaveConfig, AutosaveService};
 pub use document::DocumentService;
 pub use editor::EditorService;
 pub use file_watcher::FileWatcherService;

@@ -382,7 +382,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-016: Service Interfaces
+### G-016: Done
 **Status:** Pending
 **Priority:** P2
 **Module:** Services

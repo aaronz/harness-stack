@@ -8,6 +8,7 @@ pub mod recovery;
 pub mod render;
 pub mod settings;
 pub mod workspace;
+pub mod autosave;
 
 pub use document::*;
 pub use editor::*;
@@ -19,6 +20,7 @@ pub use recovery::*;
 pub use render::*;
 pub use settings::*;
 pub use workspace::*;
+pub use autosave::*;
 
 use thiserror::Error;
 
