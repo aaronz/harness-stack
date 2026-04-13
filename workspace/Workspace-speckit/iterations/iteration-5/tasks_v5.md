@@ -343,7 +343,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-013: Focus Mode Quality
+### G-013: Done
 **Status:** Done
 **Priority:** P2
 **Module:** Display
@@ -357,15 +357,15 @@ All P0 issues must be fully resolved before claiming MVP completion.
 ---
 
 ### G-014: Typewriter Mode Quality
-**Status:** Pending
+**Status:** Done
 **Priority:** P2
 **Module:** Display
 **FR Reference:** FR-029
 
 **Task Details:**
-- [ ] Fix typewriter mode scroll behavior
-- [ ] Verify cursor stays at vertical center during navigation
-- [ ] Test with various document lengths
+- [x] Fix typewriter mode scroll behavior
+- [x] Verify cursor stays at vertical center during navigation
+- [x] Test with various document lengths
 
 ---
 

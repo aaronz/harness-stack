@@ -91,6 +91,8 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
   const frontmatterRef = useRef(null);
   const intersectionObserverRef = useRef(null);
   const [activeParagraph, setActiveParagraph] = useState(0);
+  const typewriterScrollTimeoutRef = useRef(null);
+  const isScrollingRef = useRef(false);
 
   const updateActiveParagraphClass = useCallback(() => {
     if (!editor || !settings.focusMode) return;
@@ -456,6 +458,62 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
       }
     }
   }, [settings.typewriterMode, editor]);
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const editorDom = editor.view.dom;
+    if (!editorDom) return;
+
+    const scrollToCenter = () => {
+      if (!settings.typewriterMode) return;
+
+      const dom = editor.view.dom;
+      if (!dom) return;
+
+      const cursorDom = window.getSelection()?.anchorNode;
+      if (!cursorDom) return;
+
+      let cursorElement = cursorDom.parentElement;
+      while (cursorElement && cursorElement !== dom && !cursorElement.classList.contains('ProseMirror')) {
+        cursorElement = cursorElement.parentElement;
+      }
+
+      if (cursorElement && cursorElement !== dom) {
+        cursorElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest'
+        });
+      }
+    };
+
+    const debouncedScroll = () => {
+      if (typewriterScrollTimeoutRef.current) {
+        clearTimeout(typewriterScrollTimeoutRef.current);
+      }
+      if (isScrollingRef.current) return;
+
+      typewriterScrollTimeoutRef.current = setTimeout(() => {
+        isScrollingRef.current = true;
+        scrollToCenter();
+        setTimeout(() => {
+          isScrollingRef.current = false;
+        }, 100);
+      }, 50);
+    };
+
+    editor.on('selectionUpdate', debouncedScroll);
+    editor.on('transaction', debouncedScroll);
+
+    return () => {
+      editor.off('selectionUpdate', debouncedScroll);
+      editor.off('transaction', debouncedScroll);
+      if (typewriterScrollTimeoutRef.current) {
+        clearTimeout(typewriterScrollTimeoutRef.current);
+      }
+    };
+  }, [editor, settings.typewriterMode]);
 
   useEffect(() => {
     if (!editor) return;

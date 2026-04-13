@@ -412,8 +412,12 @@ body.focus-mode #editor-content .table-wrapper {
 }
 
 /* Typewriter Mode */
-#editor-content.typewriter-mode {
+body.typewriter-mode #editor-content {
     scroll-behavior: smooth;
+}
+
+body.typewriter-mode #editor-content:focus {
+    outline: none;
 }
 
 /* Outline Panel */

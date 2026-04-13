@@ -966,7 +966,7 @@
       "priority": "P2",
       "title": "Typewriter Mode Quality",
       "description": "Fix typewriter mode scroll behavior. Cursor stays at vertical center during navigation.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Cursor stays at vertical center during typing",
         "Scroll follows cursor correctly",
