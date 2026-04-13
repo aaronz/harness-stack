@@ -1,6 +1,7 @@
 use crate::commands::CommandError;
 use crate::model::export::PdfExportOptions;
 use crate::parser::MarkdownParser;
+use crate::parser::syntax::SyntaxHighlighter;
 use printpdf::*;
 use std::fs;
 use std::io::BufWriter;
@@ -88,6 +89,7 @@ pub async fn export_to_pdf_native(
 
     let parser = MarkdownParser::new();
     let html = parser.parse_to_html(&markdown);
+    let syntax_highlighter = SyntaxHighlighter::new();
 
     let (doc, page1, layer1) = PdfDocument::new(
         "RustNote Export",
@@ -96,17 +98,24 @@ pub async fn export_to_pdf_native(
         "Layer 1",
     );
 
-    let current_layer = doc.get_page(page1).get_layer(layer1);
+    let mut current_layer = doc.get_page(page1).get_layer(layer1);
 
     let font = doc.add_builtin_font(BuiltinFont::Helvetica).map_err(|e| {
         CommandError::Io(std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))
     })?;
+    let font_bold = doc.add_builtin_font(BuiltinFont::HelveticaBold).map_err(|e| {
+        CommandError::Io(std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))
+    })?;
+    let font_mono = doc.add_builtin_font(BuiltinFont::Courier).map_err(|e| {
+        CommandError::Io(std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))
+    })?;
 
     let content_width = page_width - left_mm - right_mm;
-
-    let mut y_position = page_height - top_mm;
     let font_size = 11.0;
     let line_height = font_size * 1.4;
+
+    let mut y_position = page_height - top_mm;
+    let mut page_count = 1usize;
 
     let lines: Vec<&str> = html.lines().collect();
     let mut i = 0;
@@ -114,7 +123,7 @@ pub async fn export_to_pdf_native(
     while i < lines.len() {
         let line = lines[i].trim();
 
-        if line.is_empty() {
+        if line.is_empty() || line == "<p>" || line == "</p>" {
             y_position -= line_height * 0.5;
             i += 1;
             continue;
@@ -130,13 +139,18 @@ pub async fn export_to_pdf_native(
             let chars_per_line = ((content_width * 10.0) / (size * 0.5)) as usize;
             let wrapped = wrap_text(&text, chars_per_line);
 
+            let required_height = wrapped.len() as f32 * size * 1.2 + size * 0.3;
+            if y_position < bottom_mm + required_height {
+                let (new_page, new_layer) = doc.add_page(Mm(page_width), Mm(page_height), "");
+                current_layer = doc.get_page(new_page).get_layer(new_layer);
+                y_position = page_height - top_mm;
+                page_count += 1;
+            }
+
             y_position -= size * 0.3;
 
             for chunk in wrapped {
-                if y_position < bottom_mm + line_height {
-                    break;
-                }
-                current_layer.use_text(chunk, size, Mm(left_mm), Mm(y_position), &font);
+                current_layer.use_text(chunk, size, Mm(left_mm), Mm(y_position), &font_bold);
                 y_position -= size * 1.2;
             }
 
@@ -144,22 +158,30 @@ pub async fn export_to_pdf_native(
             continue;
         }
 
-        if line.starts_with("<pre") || line.starts_with("<code") {
-            let code_line = if line.starts_with("<pre") {
-                extract_pre_content(&lines, &mut i)
+        if line.starts_with("<pre") || (line.starts_with("<code") && line.contains("class=")) {
+            let (code_content, language) = extract_code_block_with_lang(&lines, &mut i);
+            let highlighted = if !language.is_empty() {
+                syntax_highlighter.highlight_html(&code_content, &language)
             } else {
-                strip_html_tags(line)
+                syntax_highlighter.highlight_html(&code_content, "text")
             };
-
+            let display_code = strip_html_tags(&highlighted);
+            
             y_position -= font_size * 0.5;
+
             let chars_per_line = ((content_width * 10.0) / (font_size * 0.6)) as usize;
-            let wrapped = wrap_text(&code_line, chars_per_line);
+            let wrapped = wrap_text(&code_content, chars_per_line);
+
+            let required_height = wrapped.len() as f32 * line_height * 0.9 + font_size;
+            if y_position < bottom_mm + required_height {
+                let (new_page, new_layer) = doc.add_page(Mm(page_width), Mm(page_height), "");
+                current_layer = doc.get_page(new_page).get_layer(new_layer);
+                y_position = page_height - top_mm;
+                page_count += 1;
+            }
 
             for chunk in wrapped {
-                if y_position < bottom_mm + line_height {
-                    break;
-                }
-                current_layer.use_text(chunk, font_size * 0.9, Mm(left_mm), Mm(y_position), &font);
+                current_layer.use_text(chunk, font_size * 0.85, Mm(left_mm), Mm(y_position), &font_mono);
                 y_position -= line_height * 0.9;
             }
 
@@ -168,23 +190,74 @@ pub async fn export_to_pdf_native(
         }
 
         if line.starts_with("<table") {
-            let table_result = extract_and_render_table(&lines, &mut i, &current_layer, font.clone(), left_mm, content_width, &mut y_position, bottom_mm, line_height);
-            if let Some(result) = table_result {
-                y_position = result;
+            let table_end = find_table_end(&lines, i);
+            let table_lines: Vec<&str> = lines[i..table_end].to_vec();
+            i = table_end;
+            
+            let mut table_y = y_position;
+            let mut table_lines_rendered = 0usize;
+            
+            for table_line in &table_lines {
+                if !table_line.trim().starts_with('|') {
+                    continue;
+                }
+                table_lines_rendered += 1;
             }
-            i += 1;
+            
+            let required_height = table_lines_rendered as f32 * line_height * 1.5 + 20.0;
+            if table_y < bottom_mm + required_height {
+                let (new_page, new_layer) = doc.add_page(Mm(page_width), Mm(page_height), "");
+                current_layer = doc.get_page(new_page).get_layer(new_layer);
+                table_y = page_height - top_mm;
+                page_count += 1;
+            }
+            
+            table_y -= 10.0;
+            
+            let col_count = table_lines[0].split('|').filter(|s| !s.trim().is_empty()).count();
+            if col_count > 0 {
+                let col_width = content_width / col_count as f32;
+                let row_height = line_height * 1.5;
+                
+                for tl in &table_lines {
+                    if !tl.trim().starts_with('|') {
+                        continue;
+                    }
+                    
+                    let cells: Vec<&str> = tl.split('|').filter(|s| !s.trim().is_empty()).collect();
+                    let mut x_pos = left_mm;
+                    
+                    for cell in cells {
+                        let cell_text = strip_html_tags(cell).trim().to_string();
+                        if table_y < bottom_mm + row_height {
+                            break;
+                        }
+                        current_layer.use_text(cell_text, 10.0, Mm(x_pos), Mm(table_y), &font);
+                        x_pos += col_width;
+                    }
+                    
+                    table_y -= row_height;
+                }
+            }
+            
+            y_position = table_y;
             continue;
         }
 
         if line.starts_with("<blockquote") {
             let quote_text = strip_html_tags(line);
             let wrapped = wrap_text(&quote_text, ((content_width * 10.0) / (font_size * 0.6)) as usize);
+            
+            let required_height = wrapped.len() as f32 * line_height + font_size * 0.3;
+            if y_position < bottom_mm + required_height {
+                let (new_page, new_layer) = doc.add_page(Mm(page_width), Mm(page_height), "");
+                current_layer = doc.get_page(new_page).get_layer(new_layer);
+                y_position = page_height - top_mm;
+                page_count += 1;
+            }
 
             y_position -= font_size * 0.3;
             for chunk in wrapped {
-                if y_position < bottom_mm + line_height {
-                    break;
-                }
                 current_layer.use_text(chunk, font_size, Mm(left_mm + 10.0), Mm(y_position), &font);
                 y_position -= line_height;
             }
@@ -196,15 +269,32 @@ pub async fn export_to_pdf_native(
         if line.starts_with("<li") || line.starts_with("<ul") || line.starts_with("<ol") {
             let item_text = strip_html_tags(line);
             let wrapped = wrap_text(&item_text, ((content_width * 10.0) / (font_size * 0.6)) as usize);
+            
+            let required_height = wrapped.len() as f32 * line_height;
+            if y_position < bottom_mm + required_height {
+                let (new_page, new_layer) = doc.add_page(Mm(page_width), Mm(page_height), "");
+                current_layer = doc.get_page(new_page).get_layer(new_layer);
+                y_position = page_height - top_mm;
+                page_count += 1;
+            }
 
             for chunk in wrapped {
-                if y_position < bottom_mm + line_height {
-                    break;
-                }
                 current_layer.use_text(format!("  • {}", chunk), font_size, Mm(left_mm), Mm(y_position), &font);
                 y_position -= line_height;
             }
 
+            i += 1;
+            continue;
+        }
+
+        if line.starts_with("<img") {
+            if y_position < bottom_mm + line_height * 5.0 {
+                let (new_page, new_layer) = doc.add_page(Mm(page_width), Mm(page_height), "");
+                current_layer = doc.get_page(new_page).get_layer(new_layer);
+                y_position = page_height - top_mm;
+                page_count += 1;
+            }
+            y_position -= line_height;
             i += 1;
             continue;
         }
@@ -218,11 +308,16 @@ pub async fn export_to_pdf_native(
         if !text.is_empty() {
             let chars_per_line = ((content_width * 10.0) / (font_size * 0.5)) as usize;
             let wrapped = wrap_text(&text, chars_per_line);
+            
+            let required_height = wrapped.len() as f32 * line_height;
+            if y_position < bottom_mm + required_height {
+                let (new_page, new_layer) = doc.add_page(Mm(page_width), Mm(page_height), "");
+                current_layer = doc.get_page(new_page).get_layer(new_layer);
+                y_position = page_height - top_mm;
+                page_count += 1;
+            }
 
             for chunk in wrapped {
-                if y_position < bottom_mm + line_height {
-                    break;
-                }
                 current_layer.use_text(chunk, font_size, Mm(left_mm), Mm(y_position), &font);
                 y_position -= line_height;
             }
@@ -236,6 +331,55 @@ pub async fn export_to_pdf_native(
     doc.save(&mut writer).map_err(|e| CommandError::Io(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
 
     Ok(())
+}
+
+fn extract_code_block_with_lang<'a>(lines: &'a [&str], index: &mut usize) -> (String, String) {
+    let mut content = String::new();
+    let mut language = String::new();
+    
+    let first_line = lines[*index];
+    if let Some(class_start) = first_line.find("class=\"") {
+        if let Some(class_end) = first_line[class_start..].find('"') {
+            let class_value = &first_line[class_start + 7..class_start + class_end];
+            if let Some(lang_start) = class_value.find("language-") {
+                language = class_value[lang_start + 10..].split_whitespace().next().unwrap_or("").to_string();
+            } else if let Some(lang_start) = class_value.find("lang-") {
+                language = class_value[lang_start + 5..].split_whitespace().next().unwrap_or("").to_string();
+            }
+        }
+    }
+    
+    *index += 1;
+    
+    while *index < lines.len() {
+        let line = lines[*index];
+        if line.contains("</pre>") || line.contains("</code>") {
+            break;
+        }
+        if !content.is_empty() {
+            content.push('\n');
+        }
+        content.push_str(strip_html_tags(line).trim());
+        *index += 1;
+    }
+    
+    (content, language)
+}
+
+fn find_table_end(lines: &[&str], start: usize) -> usize {
+    let mut depth = 0;
+    for i in start..lines.len() {
+        if lines[i].contains("<table") {
+            depth += 1;
+        }
+        if lines[i].contains("</table>") {
+            depth -= 1;
+            if depth == 0 {
+                return i + 1;
+            }
+        }
+    }
+    lines.len()
 }
 
 fn strip_html_tags(html: &str) -> String {

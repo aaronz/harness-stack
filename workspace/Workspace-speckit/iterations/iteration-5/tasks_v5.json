@@ -329,7 +329,7 @@
       "priority": "P1",
       "title": "Cursor Mapping",
       "description": "Implement bidirectional cursor mapping with AST-aware offset calculation. Must account for HTML tag insertion in mapping.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Cursor position preserved when editing",
         "Cursor maps correctly through HTML tag insertions",
@@ -405,7 +405,7 @@
       "priority": "P1",
       "title": "PDF Export Quality",
       "description": "Integrate proper HTML-to-PDF rendering. Ensure code blocks render with highlighting, images render correctly, and multi-page documents work.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "PDF export produces valid PDF file",
         "Code blocks have syntax highlighting",

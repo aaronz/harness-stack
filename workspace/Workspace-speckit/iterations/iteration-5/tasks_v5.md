@@ -184,7 +184,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-004: Cursor Mapping
+### G-004: Done
 **Status:** Pending
 **Priority:** P1
 **Module:** Editor (Rust + Frontend)
