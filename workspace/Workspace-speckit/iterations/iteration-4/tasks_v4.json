@@ -1,0 +1,411 @@
+{
+  "tasks": [
+    {
+      "id": "IT-001",
+      "priority": "P1",
+      "title": "Link Editing Behavior",
+      "description": "Create LinkPopover.jsx component with URL input, text input, Save/Cancel buttons, and delete link option. Integrate with TipTap Link extension. Define click behavior to open popover, Ctrl+click to follow URL in new tab. Handle Enter/Escape keyboard. Position popover near link.",
+      "status": "in_progress",
+      "test_criteria": [
+        "Links are clickable and open editor popover",
+        "Ctrl+click opens URL in new tab",
+        "Popover positions correctly near links",
+        "Keyboard navigation works (Enter saves, Escape closes)"
+      ],
+      "test_commands": [
+        "cd www && npm run build"
+      ],
+      "impl_notes": "Integrate LinkPopover with TipTap Link extension. Test with various link formats (URL, relative, anchor).",
+      "dependencies": []
+    },
+    {
+      "id": "IT-002",
+      "priority": "P1",
+      "title": "Code Syntax Highlighting Integration",
+      "description": "Verify CodeBlockHighlight.jsx component exists and works. Check backend highlight_code_block command implementation. Wire CodeBlockHighlight into TipTap code block node rendering. Ensure language detection works (js, ts, python, rust, etc.). Test highlighting renders correctly for fenced code blocks.",
+      "status": "done",
+      "test_criteria": [
+        "Code blocks render with syntax highlighting",
+        "Language is detected correctly",
+        "Theme toggle maintains highlighting visibility"
+      ],
+      "test_commands": [
+        "cd www && npm run build",
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Check backend highlight_code_block command in src-tauri/src/commands/editor.rs. Verify scroll behavior for long code blocks and dark/light theme compatibility.",
+      "dependencies": []
+    },
+    {
+      "id": "IT-003",
+      "priority": "P2",
+      "title": "Frontmatter UI Component",
+      "description": "Create FrontmatterBlock.jsx component to detect frontmatter at document start (YAML --- delimited). Display as collapsible block with toggle. Apply syntax styling (key: value pairs). Parse and display metadata (title, tags, date, etc.). Handle missing/invalid frontmatter gracefully.",
+      "status": "todo",
+      "test_criteria": [
+        "Frontmatter displays as styled collapsible block",
+        "Toggle expands/collapses content",
+        "Invalid frontmatter shows error state"
+      ],
+      "test_commands": [
+        "cd www && npm run build"
+      ],
+      "impl_notes": "Allow expand/collapse toggle. Display metadata in key: value format.",
+      "dependencies": []
+    },
+    {
+      "id": "IT-004",
+      "priority": "P2",
+      "title": "Ropey Buffer for Large Documents",
+      "description": "Research ropey crate. Design buffer interface. Implement ropey-based text buffer. Update editor commands to use buffer. Test with 5MB+ documents.",
+      "status": "todo",
+      "test_criteria": [
+        "Ropey crate integrated successfully",
+        "Buffer interface designed and implemented",
+        "Editor commands updated to use buffer",
+        "5MB+ document test passes"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote"
+      ],
+      "impl_notes": "Deferred to post-MVP due to significant architecture change.",
+      "dependencies": []
+    },
+    {
+      "id": "IT-005",
+      "priority": "P2",
+      "title": "Parser Migration Path",
+      "description": "Research tree-sitter + comrak. Design migration strategy. Implement incremental parsing. Ensure backward compatibility.",
+      "status": "todo",
+      "test_criteria": [
+        "Parser migration strategy documented",
+        "Incremental parsing implemented",
+        "Backward compatibility maintained"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote"
+      ],
+      "impl_notes": "Deferred per PRD acknowledgment (MVP uses pulldown-cmark).",
+      "dependencies": []
+    },
+    {
+      "id": "IT-006",
+      "priority": "P2",
+      "title": "ProseMirror Markdown Bridge",
+      "description": "Evaluate prosemirror-markdown library. Design bridge architecture. Implement serialization/deserialization. Ensure round-trip fidelity.",
+      "status": "todo",
+      "test_criteria": [
+        "ProseMirror markdown bridge implemented",
+        "Round-trip fidelity verified"
+      ],
+      "test_commands": [
+        "cd www && npm run build"
+      ],
+      "impl_notes": "Deferred per PRD acknowledgment (MVP uses marked.js).",
+      "dependencies": []
+    },
+    {
+      "id": "IT-007",
+      "priority": "P2",
+      "title": "Visual Regression Testing Baseline",
+      "description": "Review existing Playwright visual tests. Run screenshot tests to establish baselines. Save baselines to visual-baselines/ directory. Document baseline capture process. Add baseline verification to CI.",
+      "status": "todo",
+      "test_criteria": [
+        "All VIS-* test cases have baseline images",
+        "Running tests produces zero unexpected differences"
+      ],
+      "test_commands": [
+        "cd e2e && npx playwright test --update-baselines"
+      ],
+      "impl_notes": "Review existing Playwright visual tests in e2e/visual/. Document baseline capture process.",
+      "dependencies": []
+    },
+    {
+      "id": "IT-008",
+      "priority": "P3",
+      "title": "Table Cell Editing Safety",
+      "description": "Monitor table cell editing behavior. PRD acceptable - no action for MVP.",
+      "status": "todo",
+      "test_criteria": [
+        "Table cell editing behavior documented"
+      ],
+      "test_commands": [],
+      "impl_notes": "Deferred per PRD acceptable - monitor only, no action for MVP.",
+      "dependencies": []
+    },
+    {
+      "id": "IT-009",
+      "priority": "P3",
+      "title": "Fuzz Testing",
+      "description": "Implement fuzz testing for security vulnerabilities.",
+      "status": "todo",
+      "test_criteria": [
+        "Fuzz testing implemented"
+      ],
+      "test_commands": [],
+      "impl_notes": "Deferred to post-MVP.",
+      "dependencies": []
+    },
+    {
+      "id": "IT-010",
+      "priority": "P3",
+      "title": "IME Composition Handling",
+      "description": "Test and implement IME composition handling for international input.",
+      "status": "todo",
+      "test_criteria": [
+        "IME composition handling verified"
+      ],
+      "test_commands": [],
+      "impl_notes": "Test post-MVP.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-001",
+      "priority": "P0",
+      "title": "New file - create untitled, save to chosen location",
+      "description": "File Operations: New file functionality - create untitled document and save to user-chosen location.",
+      "status": "done",
+      "test_criteria": [
+        "New untitled document created",
+        "Save to chosen location works"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-002",
+      "priority": "P0",
+      "title": "Open file - open Markdown from disk, drag-and-drop",
+      "description": "File Operations: Open Markdown files from disk and via drag-and-drop.",
+      "status": "done",
+      "test_criteria": [
+        "Open file dialog works",
+        "Drag-and-drop file opening works"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-003",
+      "priority": "P0",
+      "title": "Open folder - workspace with sidebar file tree",
+      "description": "File Operations: Open folder as workspace with sidebar file tree navigation.",
+      "status": "done",
+      "test_criteria": [
+        "Folder workspace opens correctly",
+        "Sidebar file tree displays and navigates"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-004",
+      "priority": "P0",
+      "title": "Save - manual save, atomic write",
+      "description": "File Operations: Manual save with atomic write to prevent corruption.",
+      "status": "done",
+      "test_criteria": [
+        "Manual save works",
+        "Atomic write prevents file corruption"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-005",
+      "priority": "P0",
+      "title": "Auto-save - configurable, dirty-state indication",
+      "description": "File Operations: Auto-save with configurable intervals and dirty-state indicator.",
+      "status": "done",
+      "test_criteria": [
+        "Auto-save triggers correctly",
+        "Dirty-state indicator shows when unsaved"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-006",
+      "priority": "P0",
+      "title": "Recovery - restore after crash/force close",
+      "description": "File Operations: Recovery mechanism to restore documents after crash or force close.",
+      "status": "done",
+      "test_criteria": [
+        "Recovery modal UI works",
+        "Documents restore after crash"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-007",
+      "priority": "P0",
+      "title": "External changes - detect, prompt user",
+      "description": "File Operations: Detect external file changes and prompt user for action.",
+      "status": "done",
+      "test_criteria": [
+        "External change detection works",
+        "User prompt appears for external changes"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-008",
+      "priority": "P0",
+      "title": "Single-pane live rendering",
+      "description": "Core Editing: Single-pane live Markdown rendering.",
+      "status": "done",
+      "test_criteria": [
+        "Single-pane live rendering works"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-009",
+      "priority": "P0",
+      "title": "Heading behavior",
+      "description": "Core Editing: Heading markdown behavior (# headings).",
+      "status": "done",
+      "test_criteria": [
+        "Headings render correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-010",
+      "priority": "P0",
+      "title": "Emphasis behavior",
+      "description": "Core Editing: Emphasis markdown behavior (bold, italic).",
+      "status": "done",
+      "test_criteria": [
+        "Bold and italic render correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-012",
+      "priority": "P0",
+      "title": "List behavior",
+      "description": "Core Editing: List markdown behavior (ordered/unordered lists).",
+      "status": "done",
+      "test_criteria": [
+        "Lists render correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-013",
+      "priority": "P0",
+      "title": "Task list behavior",
+      "description": "Core Editing: Task list markdown behavior (- [ ] todo items).",
+      "status": "done",
+      "test_criteria": [
+        "Task lists render correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-014",
+      "priority": "P0",
+      "title": "Blockquote behavior",
+      "description": "Core Editing: Blockquote markdown behavior (> quotes).",
+      "status": "done",
+      "test_criteria": [
+        "Blockquotes render correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-017",
+      "priority": "P0",
+      "title": "Image behavior",
+      "description": "Core Editing: Image markdown behavior.",
+      "status": "done",
+      "test_criteria": [
+        "Images render correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-018",
+      "priority": "P0",
+      "title": "Paste behavior",
+      "description": "Core Editing: Paste handling for rich content.",
+      "status": "done",
+      "test_criteria": [
+        "Paste handling works correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    },
+    {
+      "id": "FR-019",
+      "priority": "P0",
+      "title": "Undo/redo",
+      "description": "Core Editing: Undo and redo functionality.",
+      "status": "done",
+      "test_criteria": [
+        "Ctrl+Z undo works",
+        "Ctrl+Y redo works"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote"
+      ],
+      "impl_notes": "Completed in previous iterations.",
+      "dependencies": []
+    }
+  ]
+}

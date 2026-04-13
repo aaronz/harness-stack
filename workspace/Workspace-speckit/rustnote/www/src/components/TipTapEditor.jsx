@@ -4,14 +4,16 @@ import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
+import Link from '@tiptap/extension-link';
 import { marked } from 'marked';
-import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSearch } from '../contexts/SearchContext';
 import { useAutoSaveTimer } from '../hooks/useAutoSaveTimer';
 import CodeBlockHighlight from './CodeBlockHighlight';
+import LinkPopover from './LinkPopover';
 
 marked.setOptions({
   breaks: true,
@@ -78,6 +80,13 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
   const updateTimeoutRef = useRef(null);
   const isInternalUpdateRef = useRef(false);
   const lastHighlightedQueryRef = useRef('');
+  const [linkPopover, setLinkPopover] = useState({
+    isVisible: false,
+    position: { left: 0, top: 0 },
+    url: '',
+    text: '',
+    linkElement: null,
+  });
 
   const editor = useEditor({
     extensions: [
@@ -133,6 +142,12 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
       Highlight.configure({
         multicolor: true,
       }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'cursor-pointer',
+        },
+      }),
       Placeholder.configure({
         placeholder: 'Start typing...',
       }),
@@ -178,6 +193,47 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
         }
 
         return false;
+      },
+      handleClick: (view, event) => {
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const modifier = isMac ? event.metaKey : event.ctrlKey;
+
+        const link = event.target.closest('a');
+        if (!link) {
+          if (linkPopover.isVisible) {
+            setLinkPopover((prev) => ({ ...prev, isVisible: false }));
+          }
+          return false;
+        }
+
+        const href = link.getAttribute('href');
+
+        if (modifier) {
+          event.preventDefault();
+          if (href) {
+            window.open(href, '_blank', 'noopener,noreferrer');
+          }
+          return true;
+        }
+
+        event.preventDefault();
+
+        const rect = link.getBoundingClientRect();
+        const editorDom = editor.view.dom;
+        const editorRect = editorDom.getBoundingClientRect();
+
+        setLinkPopover({
+          isVisible: true,
+          position: {
+            left: rect.left - editorRect.left + rect.width / 2,
+            top: rect.bottom - editorRect.top + 8,
+          },
+          url: href || '',
+          text: link.textContent || '',
+          linkElement: link,
+        });
+
+        return true;
       },
       handlePaste: (view, event) => {
         const items = event.clipboardData?.items;

@@ -312,9 +312,103 @@ body.focus-mode #editor-content table,
 body.focus-mode #editor-content th,
 body.focus-mode #editor-content td,
 body.focus-mode #editor-content .code-block,
+body.focus-mode #editor-content .code-block-highlight-wrapper,
 body.focus-mode #editor-content .table-wrapper {
     opacity: 1 !important;
     transition: none;
+}
+
+/* Code Block Highlighting */
+.code-block-highlight-wrapper {
+    position: relative;
+    margin: 1em 0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.code-block-container {
+    position: relative;
+    background: #282c34;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.code-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: #21252b;
+    border-bottom: 1px solid #181a1f;
+    color: #abb2bf;
+    font-size: 0.75rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.code-block-content {
+    padding: 1rem;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #abb2bf;
+}
+
+.code-block-content code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+}
+
+/* Dark theme for code blocks */
+[data-theme="dark"] .code-block-container {
+    background: #282c34;
+}
+
+[data-theme="dark"] .code-block-header {
+    background: #21252b;
+    border-bottom-color: #181a1f;
+    color: #abb2bf;
+}
+
+[data-theme="dark"] .code-block-content {
+    color: #abb2bf;
+}
+
+/* Light theme for code blocks */
+[data-theme="light"] .code-block-container,
+:root:not([data-theme="dark"]) .code-block-container {
+    background: #282c34;
+}
+
+[data-theme="light"] .code-block-header,
+:root:not([data-theme="dark"]) .code-block-header {
+    background: #21252b;
+    border-bottom-color: #181a1f;
+    color: #abb2bf;
+}
+
+[data-theme="light"] .code-block-content,
+:root:not([data-theme="dark"]) .code-block-content {
+    color: #abb2bf;
+}
+
+/* Ensure scroll behavior for long code blocks */
+.code-block-content::-webkit-scrollbar {
+    height: 8px;
+}
+
+.code-block-content::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+.code-block-content::-webkit-scrollbar-thumb {
+    background: #4a4a4a;
+    border-radius: 4px;
+}
+
+.code-block-content::-webkit-scrollbar-thumb:hover {
+    background: #5a5a5a;
 }
 
 /* Typewriter Mode */
