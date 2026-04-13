@@ -41,7 +41,7 @@
       "priority": "P2",
       "title": "Frontmatter UI Component",
       "description": "Create FrontmatterBlock.jsx component to detect frontmatter at document start (YAML --- delimited). Display as collapsible block with toggle. Apply syntax styling (key: value pairs). Parse and display metadata (title, tags, date, etc.). Handle missing/invalid frontmatter gracefully.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Frontmatter displays as styled collapsible block",
         "Toggle expands/collapses content",
@@ -58,7 +58,7 @@
       "priority": "P2",
       "title": "Ropey Buffer for Large Documents",
       "description": "Research ropey crate. Design buffer interface. Implement ropey-based text buffer. Update editor commands to use buffer. Test with 5MB+ documents.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Ropey crate integrated successfully",
         "Buffer interface designed and implemented",

@@ -44,6 +44,7 @@ once_cell = "1"
 printpdf = "0.7"
 open = "5"
 regex = "1"
+ropey = "1.6.1"
 
 [dev-dependencies]
 criterion = "0.5"

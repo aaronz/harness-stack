@@ -1,3 +1,4 @@
+pub mod buffer;
 pub mod commands;
 pub mod editor;
 pub mod model;
@@ -35,7 +36,7 @@ pub fn run() {
     
     log::info!("Starting RustNote application");
     
-    let mut builder = tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
