@@ -794,7 +794,7 @@
       "priority": "P2",
       "title": "HTML Export Modes",
       "description": "Add option for linked vs inline asset export. Implement linked-assets mode per FR-031.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Linked assets mode exports HTML with external assets",
         "Inline mode embeds all assets in HTML",

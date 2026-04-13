@@ -304,7 +304,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-010: Table Editing
+### G-010: Done
 **Status:** Pending
 **Priority:** P2
 **Module:** Editor
@@ -318,15 +318,15 @@ All P0 issues must be fully resolved before claiming MVP completion.
 ---
 
 ### G-011: HTML Export Modes
-**Status:** Pending
+**Status:** Done
 **Priority:** P2
 **Module:** Export
 **FR Reference:** FR-031
 
 **Task Details:**
-- [ ] Add option for linked vs inline asset export
-- [ ] Implement "linked-assets mode" per FR-031
-- [ ] Test with images and other assets
+- [x] Add option for linked vs inline asset export
+- [x] Implement "linked-assets mode" per FR-031
+- [x] Test with images and other assets
 
 ---
 

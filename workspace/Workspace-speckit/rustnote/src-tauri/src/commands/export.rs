@@ -1,40 +1,158 @@
 use crate::commands::CommandError;
-use crate::model::export::PdfExportOptions;
+use crate::model::export::{HtmlExportMode, HtmlExportOptions, PdfExportOptions};
 use crate::parser::MarkdownParser;
 use crate::parser::syntax::SyntaxHighlighter;
+use base64::Engine;
 use printpdf::*;
 use std::fs;
 use std::io::BufWriter;
+use std::path::Path;
+
+const DEFAULT_CSS: &str = r#"body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
+pre { background: #f5f5f5; padding: 16px; border-radius: 4px; overflow-x: auto; }
+code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 16px; color: #666; }"#;
 
 #[tauri::command]
-pub async fn export_to_html(markdown: String, output_path: String) -> Result<(), CommandError> {
+pub async fn export_to_html(
+    markdown: String,
+    output_path: String,
+    options: HtmlExportOptions,
+) -> Result<(), CommandError> {
     let parser = MarkdownParser::new();
     let html = parser.parse_to_html(&markdown);
-    
+
+    let output_dir = Path::new(&output_path).parent().unwrap_or(Path::new("."));
+    let (processed_html, css_link) = match &options.mode {
+        HtmlExportMode::Linked { assets_dir } => {
+            let assets_path = output_dir.join(assets_dir);
+            fs::create_dir_all(&assets_path)?;
+
+            let css_path = assets_path.join("styles.css");
+            fs::write(&css_path, DEFAULT_CSS)?;
+
+            let processed = process_images_linked(&html, &assets_path)?;
+            let css_href = format!("{}/styles.css", assets_dir);
+            (processed, Some(css_href))
+        }
+        HtmlExportMode::Inline => {
+            let processed = process_images_inline(&html)?;
+            (processed, None)
+        }
+    };
+
+    let head_section = if options.embed_css {
+        if let Some(ref css_href) = css_link {
+            format!(r#"<link rel="stylesheet" href="{}">"#, css_href)
+        } else {
+            format!(r#"<style>{}</style>"#, DEFAULT_CSS)
+        }
+    } else if let Some(ref css_href) = css_link {
+        format!(r#"<link rel="stylesheet" href="{}">"#, css_href)
+    } else {
+        format!(r#"<style>{}</style>"#, DEFAULT_CSS)
+    };
+
     let full_html = format!(
         r#"<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <title>Exported Document</title>
-    <style>
-        body {{ font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }}
-        pre {{ background: #f5f5f5; padding: 16px; border-radius: 4px; overflow-x: auto; }}
-        code {{ background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }}
-        table {{ border-collapse: collapse; width: 100%; }}
-        th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-        blockquote {{ border-left: 4px solid #ddd; margin: 0; padding-left: 16px; color: #666; }}
-    </style>
+    {}
 </head>
 <body>
 {}
 </body>
 </html>"#,
-        html
+        head_section, processed_html
     );
-    
+
     fs::write(&output_path, full_html)?;
     Ok(())
+}
+
+fn process_images_linked(html: &str, assets_dir: &Path) -> Result<String, CommandError> {
+    let mut result = html.to_string();
+    let mut img_index = 0;
+
+    while let Some(img_start) = result.find("<img ") {
+        if let Some(src_start) = result[img_start..].find("src=\"") {
+            let src_start = img_start + src_start + 5;
+            if let Some(src_end) = result[src_start..].find('"') {
+                let original_src = &result[src_start..src_start + src_end];
+                let extension = Path::new(original_src)
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .unwrap_or("png");
+                let filename = format!("image_{}.{}", img_index, extension);
+                let target_path = assets_dir.join(&filename);
+
+                if let Ok(data) = fs::read(original_src) {
+                    fs::write(&target_path, &data)?;
+                    result = format!(
+                        "{}{}",
+                        &result[..src_start],
+                        format!("{}/{}", assets_dir.file_name().unwrap_or_default().to_string_lossy(), filename)
+                    );
+                }
+                img_index += 1;
+            }
+        }
+
+        if let Some(next_tag) = result[img_start + 5..].find("<img ") {
+            result = format!("{}{}", &result[..img_start + 5], &result[img_start + 5..]);
+        } else {
+            break;
+        }
+    }
+
+    Ok(result)
+}
+
+fn process_images_inline(html: &str) -> Result<String, CommandError> {
+    let mut result = html.to_string();
+    let mut offset = 0;
+
+    while let Some(img_start) = result[offset..].find("<img ") {
+        let actual_start = offset + img_start;
+        if let Some(src_start) = result[actual_start..].find("src=\"") {
+            let src_pos = actual_start + src_start + 5;
+            if let Some(src_end) = result[src_pos..].find('"') {
+                let original_src = &result[src_pos..src_pos + src_end];
+                if let Ok(data) = fs::read(original_src) {
+                    let mime_type = guess_mime_type(original_src);
+                    let base64_data = base64::engine::general_purpose::STANDARD.encode(&data);
+                    let embedded = format!("data:{};base64,{}", mime_type, base64_data);
+                    result = format!("{}{}", &result[..src_pos], embedded);
+                    offset = src_pos + embedded.len();
+                    continue;
+                }
+            }
+        }
+        offset = actual_start + 5;
+    }
+
+    Ok(result)
+}
+
+fn guess_mime_type(path: &str) -> &'static str {
+    let ext = Path::new(path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+    match ext.as_str() {
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "svg" => "image/svg+xml",
+        "bmp" => "image/bmp",
+        _ => "application/octet-stream",
+    }
 }
 
 #[tauri::command]

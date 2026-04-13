@@ -1,5 +1,42 @@
 use serde::{Deserialize, Serialize};
 
+/// HTML export mode - determines how assets are handled
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "type", content = "value")]
+pub enum HtmlExportMode {
+    /// Linked mode: assets (images, CSS) are separate files
+    Linked {
+        /// Directory to store linked assets (relative to output HTML)
+        assets_dir: String,
+    },
+    /// Inline mode: all assets embedded as base64 in HTML
+    Inline,
+}
+
+impl Default for HtmlExportMode {
+    fn default() -> Self {
+        Self::Inline
+    }
+}
+
+/// Options for HTML export
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HtmlExportOptions {
+    /// Export mode (linked vs inline assets)
+    pub mode: HtmlExportMode,
+    /// Whether to embed CSS inline (true) or link to external file (false)
+    pub embed_css: bool,
+}
+
+impl Default for HtmlExportOptions {
+    fn default() -> Self {
+        Self {
+            mode: HtmlExportMode::default(),
+            embed_css: true,
+        }
+    }
+}
+
 /// Options for PDF export
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PdfExportOptions {
