@@ -1,32 +1,26 @@
 use crate::model::Settings;
 use crate::commands::CommandError;
-use std::fs;
-use std::path::PathBuf;
+use crate::services::SettingsService;
+use once_cell::sync::OnceCell;
 
-fn get_settings_path() -> PathBuf {
-    dirs::data_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join("rustnote")
-        .join("settings.json")
+static SETTINGS_SERVICE: OnceCell<SettingsService> = OnceCell::new();
+
+fn get_settings_service() -> Result<&'static SettingsService, CommandError> {
+    SETTINGS_SERVICE
+        .get_or_try_init(|| SettingsService::new())
+        .map_err(|e| CommandError::Io(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))
 }
 
 #[tauri::command]
 pub async fn read_settings() -> Result<Settings, CommandError> {
-    let path = get_settings_path();
-    if !path.exists() {
-        return Ok(Settings::default());
-    }
-    let content = fs::read_to_string(&path)?;
-    Ok(serde_json::from_str(&content)?)
+    let service = get_settings_service()?;
+    service.read_settings()
+        .map_err(|e| CommandError::Io(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))
 }
 
 #[tauri::command]
 pub async fn write_settings(settings: Settings) -> Result<(), CommandError> {
-    let path = get_settings_path();
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    let content = serde_json::to_string_pretty(&settings)?;
-    fs::write(&path, content)?;
-    Ok(())
+    let service = get_settings_service()?;
+    service.write_settings(&settings)
+        .map_err(|e| CommandError::Io(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))
 }

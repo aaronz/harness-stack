@@ -84,7 +84,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-002: Fix Undo/Redo Fidelity
+### G-002: Done
 **Status:** Pending
 **Priority:** P0 (Blocking)
 **Module:** Editor (Frontend + Backend)
