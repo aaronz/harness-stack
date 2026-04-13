@@ -134,7 +134,12 @@ impl SemanticDocument {
     }
 
     pub fn html(&self) -> String {
-        markdown_to_html(&self.source, &Options::default())
+        let mut options = Options::default();
+        options.extension.table = true;
+        options.extension.tasklist = true;
+        options.extension.strikethrough = true;
+        options.extension.autolink = true;
+        markdown_to_html(&self.source, &options)
     }
 
     pub fn html_with_frontmatter(&self) -> String {

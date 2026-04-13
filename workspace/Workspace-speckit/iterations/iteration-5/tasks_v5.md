@@ -272,7 +272,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-009: Image Path Handling
+### G-009: Done
 **Status:** Done
 **Priority:** P1
 **Module:** Image

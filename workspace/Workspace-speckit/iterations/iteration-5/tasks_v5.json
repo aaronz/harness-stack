@@ -676,7 +676,7 @@
       "priority": "P1",
       "title": "Image Path Handling",
       "description": "Verify relative path calculation based on document location. Test with documents in subdirectories.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Relative paths calculated correctly from document location",
         "Images in subdirectories resolve correctly",
@@ -740,7 +740,7 @@
       "priority": "P2",
       "title": "Table Editing",
       "description": "Document table editing constraints. Ensure no data loss with TipTap default behavior.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Table editing documented with constraints",
         "No data loss during table operations",
