@@ -1193,7 +1193,7 @@
       "priority": "P2",
       "title": "Syntax Highlighter",
       "description": "Verify SyntaxHighlighter implementation matches PRD (Shiki vs syntect). Document deviations.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Syntax highlighting matches PRD specification",
         "Deviations from PRD documented",
