@@ -349,4 +349,248 @@ mod tests {
         buffer.clear();
         assert!(buffer.is_empty());
     }
+
+    // TC-G007-001: Buffer_basic_operations
+    #[test]
+    fn test_buffer_basic_operations_tc_g007_001() {
+        let mut buffer = TextBuffer::from_string("Hello".to_string());
+        buffer.insert(5, " World");
+        assert_eq!(buffer.to_string(), "Hello World");
+    }
+
+    #[test]
+    fn test_buffer_basic_operations_multiple_inserts() {
+        let mut buffer = TextBuffer::new();
+        buffer.insert(0, "Hello");
+        assert_eq!(buffer.to_string(), "Hello");
+
+        buffer.insert(5, " World");
+        assert_eq!(buffer.to_string(), "Hello World");
+
+        buffer.delete(6, 11);
+        assert_eq!(buffer.to_string(), "Hello ");
+
+        buffer.insert(5, "!");
+        assert_eq!(buffer.to_string(), "Hello! ");
+
+        buffer.clear();
+        assert!(buffer.is_empty());
+        buffer.insert(0, "New");
+        assert_eq!(buffer.to_string(), "New");
+    }
+
+    // TC-G007-002: Buffer_large_document (performance)
+    #[test]
+    fn test_buffer_large_document_tc_g007_002() {
+        use std::time::Instant;
+
+        let mb: usize = 1024 * 1024;
+        let large_content = "x".repeat(5 * mb);
+        assert_eq!(large_content.len(), 5 * mb);
+        let mut buffer = TextBuffer::from_string(large_content);
+        assert_eq!(buffer.len_bytes(), 5 * mb);
+
+        let mid_offset = buffer.len_bytes() / 2;
+        let start = Instant::now();
+        buffer.insert(mid_offset, "INSERTED");
+        let insert_duration = start.elapsed();
+
+        assert!(
+            insert_duration.as_millis() < 50,
+            "Insert operation took {}ms, expected < 50ms",
+            insert_duration.as_millis()
+        );
+
+        let content = buffer.to_string();
+        assert_eq!(content.len(), 5 * mb + 8);
+    }
+
+    #[test]
+    fn test_buffer_large_document_delete_performance() {
+        use std::time::Instant;
+
+        let large_content = "xxxxxxxxxx".repeat(512 * 1024);
+        let mut buffer = TextBuffer::from_string(large_content.clone());
+
+        let mid_offset = buffer.len_bytes() / 2;
+
+        let start = Instant::now();
+        buffer.delete(mid_offset, mid_offset + 10);
+        let delete_duration = start.elapsed();
+
+        assert!(
+            delete_duration.as_millis() < 50,
+            "Delete operation took {}ms, expected < 50ms",
+            delete_duration.as_millis()
+        );
+    }
+
+    #[test]
+    fn test_buffer_large_document_memory_usage() {
+        let large_content = "y".repeat(5 * 1024 * 1024);
+        let buffer = TextBuffer::from_string(large_content.clone());
+
+        assert_eq!(buffer.len_bytes(), 5 * 1024 * 1024);
+        assert_eq!(buffer.slice(0, 100).to_string(), "y".repeat(100));
+
+        let end_slice = buffer.slice(buffer.len_bytes() - 100, buffer.len_bytes());
+        assert_eq!(end_slice.to_string(), "y".repeat(100));
+    }
+
+    // TC-G007-003: Buffer_cursor_operations
+    #[test]
+    fn test_buffer_cursor_operations_tc_g007_003() {
+        let large_content = "a".repeat(2 * 1024 * 1024);
+        let buffer = TextBuffer::from_string(large_content.clone());
+
+        let positions = vec![0, 1024, 1024 * 1024, 2 * 1024 * 1024 - 1];
+
+        for pos in positions {
+            let char_at = buffer.char_at(pos);
+            assert_eq!(
+                char_at,
+                Some('a'),
+                "Character at offset {} should be 'a'",
+                pos
+            );
+        }
+
+        assert_eq!(buffer.len_chars(), buffer.len_bytes());
+    }
+
+    #[test]
+    fn test_buffer_cursor_operations_unicode() {
+        let content = "Hello 世界 🌍".to_string();
+        let buffer = TextBuffer::from_string(content.clone());
+
+        assert_eq!(buffer.len_chars(), content.chars().count());
+
+        let pos = buffer.offset_to_position(0);
+        assert_eq!(pos.line, 0);
+        assert_eq!(pos.column, 0);
+    }
+
+    #[test]
+    fn test_buffer_cursor_operations_line_col() {
+        let content = "Line 1\nLine 2\nLine 3".to_string();
+        let buffer = TextBuffer::from_string(content);
+
+        assert_eq!(buffer.line_col_to_offset(0, 0), 0);
+        assert_eq!(buffer.line_col_to_offset(0, 5), 5);
+        assert_eq!(buffer.line_col_to_offset(1, 0), 8);
+        assert_eq!(buffer.line_col_to_offset(2, 0), 16);
+
+        let (line, col) = buffer.offset_to_line_col(0);
+        assert_eq!(line, 0);
+        assert_eq!(col, 0);
+
+        let (line, col) = buffer.offset_to_line_col(7);
+        assert_eq!(line, 1);
+        assert_eq!(col, 0);
+    }
+
+    // TC-G007-004: Buffer_undo_redo
+    #[test]
+    fn test_buffer_undo_redo_tc_g007_004() {
+        let mut buffer = TextBuffer::from_string("Start".to_string());
+        let initial = buffer.to_string();
+        assert_eq!(initial, "Start");
+
+        buffer.insert(5, " Middle");
+        let after_insert = buffer.to_string();
+        assert_eq!(after_insert, "Start Middle");
+
+        buffer.delete(5, 12);
+        let after_delete = buffer.to_string();
+        assert_eq!(after_delete, "Start");
+        assert_eq!(after_delete, initial);
+    }
+
+    #[test]
+    fn test_buffer_undo_redo_multiple_operations() {
+        let initial = "Start".to_string();
+
+        let mut buf1 = TextBuffer::from_string(initial.clone());
+        buf1.insert(5, " One");
+        let after_first = buf1.to_string();
+
+        let mut buf1_undo = TextBuffer::from_string(initial.clone());
+        buf1_undo.delete(5, 9);
+        assert_eq!(buf1_undo.to_string(), initial);
+
+        let mut buf1_redo = TextBuffer::from_string(initial.clone());
+        buf1_redo.insert(5, " One");
+        assert_eq!(buf1_redo.to_string(), after_first);
+
+        let mut buf2 = TextBuffer::from_string(after_first.clone());
+        buf2.insert(9, " Two");
+        let after_second = buf2.to_string();
+
+        let mut buf2_undo = TextBuffer::from_string(after_first.clone());
+        buf2_undo.delete(9, 13);
+        assert_eq!(buf2_undo.to_string(), after_first);
+
+        let mut buf2_redo = TextBuffer::from_string(after_first);
+        buf2_redo.insert(9, " Two");
+        assert_eq!(buf2_redo.to_string(), after_second);
+    }
+
+    #[test]
+    fn test_buffer_undo_redo_complex_edits() {
+        let initial = "Hello World".to_string();
+
+        let mut buf_replace = TextBuffer::from_string(initial.clone());
+        buf_replace.delete(6, 11);
+        buf_replace.insert(6, "Rust");
+        assert_eq!(buf_replace.to_string(), "Hello Rust");
+
+        let mut buf_replace_undo = TextBuffer::from_string(initial.clone());
+        buf_replace_undo.delete(6, 11);
+        buf_replace_undo.insert(6, "Rust");
+        buf_replace_undo.delete(6, 10);
+        buf_replace_undo.insert(6, "World");
+        assert_eq!(buf_replace_undo.to_string(), initial);
+    }
+
+    #[test]
+    fn test_buffer_unicode_edge_cases() {
+        let content = "日本語テスト\n中文测试\n한국어테스트";
+        let buffer = TextBuffer::from_string(content.to_string());
+
+        assert_eq!(buffer.len_lines(), 3);
+        assert_eq!(buffer.line(0).to_string(), "日本語テスト\n");
+
+        let japanese_line = buffer.line(0);
+        let byte_len = japanese_line.len_bytes();
+        let char_len = japanese_line.len_chars();
+        assert!(
+            byte_len > char_len,
+            "Japanese text should have more bytes than chars"
+        );
+    }
+
+    #[test]
+    fn test_buffer_empty_operations() {
+        let mut buffer = TextBuffer::new();
+        buffer.insert(0, "Hello");
+        assert_eq!(buffer.to_string(), "Hello");
+
+        let mut buffer2 = TextBuffer::new();
+        buffer2.delete(0, 10);
+        assert!(buffer2.is_empty());
+    }
+
+    #[test]
+    fn test_buffer_boundary_conditions() {
+        let mut buffer = TextBuffer::from_string("Hello".to_string());
+
+        buffer.insert(5, "!");
+        assert_eq!(buffer.to_string(), "Hello!");
+
+        buffer.insert(100, "X");
+        assert_eq!(buffer.to_string(), "Hello!X");
+
+        buffer.delete(0, 1000);
+        assert!(buffer.is_empty());
+    }
 }

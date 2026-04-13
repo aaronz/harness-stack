@@ -482,7 +482,7 @@
       "priority": "P1",
       "title": "Tree-sitter Parser",
       "description": "Research tree-sitter + comrak integration and implement tree-sitter-based incremental parsing wrapper.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Tree-sitter parser integrated with existing parsing",
         "Incremental parsing works for edits",
@@ -552,7 +552,7 @@
       "priority": "P1",
       "title": "Ropey Buffer",
       "description": "Implement ropey-based text buffer per PRD specification for efficient large document handling.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Ropey buffer replaces existing text operations",
         "Large documents (5MB+) handled efficiently",

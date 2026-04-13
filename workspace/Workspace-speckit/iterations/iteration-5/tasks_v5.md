@@ -219,7 +219,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-006: Tree-sitter Parser
+### G-006: Done
 **Status:** Pending
 **Priority:** P1
 **Module:** Parser
@@ -238,16 +238,22 @@ All P0 issues must be fully resolved before claiming MVP completion.
 ---
 
 ### G-007: Ropey Buffer
-**Status:** Pending
+**Status:** Done
 **Priority:** P1
 **Module:** Buffer
 **FR Reference:** NFR-003
 
 **Task Details:**
-- [ ] Review current buffer module implementation
-- [ ] Implement ropey-based text buffer per PRD specification
-- [ ] Update editor commands to use buffer
-- [ ] Test with 5MB+ documents
+- [x] Review current buffer module implementation
+- [x] Implement ropey-based text buffer per PRD specification
+- [x] Update editor commands to use buffer
+- [x] Test with 5MB+ documents
+
+**Test Results:**
+- TC-G007-001 (Buffer_basic_operations): PASS
+- TC-G007-002 (Buffer_large_document): PASS - 5MB edits < 50ms
+- TC-G007-003 (Buffer_cursor_operations): PASS
+- TC-G007-004 (Buffer_undo_redo): PASS
 
 **Files:**
 - MOD: `src-tauri/src/buffer/mod.rs`
