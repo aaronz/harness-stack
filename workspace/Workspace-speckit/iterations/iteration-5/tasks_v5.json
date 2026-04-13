@@ -1021,7 +1021,7 @@
       "priority": "P2",
       "title": "Paste Handling",
       "description": "Improve paste handling for common rich text formats. Ensure Markdown conversion fidelity.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Paste from common rich text formats works",
         "Markdown conversion fidelity maintained",

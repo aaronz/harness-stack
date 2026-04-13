@@ -356,7 +356,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-014: Typewriter Mode Quality
+### G-014: Done
 **Status:** Done
 **Priority:** P2
 **Module:** Display
@@ -370,15 +370,15 @@ All P0 issues must be fully resolved before claiming MVP completion.
 ---
 
 ### G-015: Paste Handling
-**Status:** Pending
+**Status:** Done
 **Priority:** P2
 **Module:** Editor
 **FR Reference:** FR-018
 
 **Task Details:**
-- [ ] Improve paste handling for common rich text formats
-- [ ] Test with various paste sources
-- [ ] Ensure Markdown conversion fidelity
+- [x] Improve paste handling for common rich text formats
+- [x] Test with various paste sources
+- [x] Ensure Markdown conversion fidelity
 
 ---
 

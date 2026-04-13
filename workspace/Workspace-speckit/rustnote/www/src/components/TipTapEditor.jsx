@@ -6,6 +6,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Link from '@tiptap/extension-link';
 import { marked } from 'marked';
+import TurndownService from 'turndown';
 import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, useState, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useDocument } from '../contexts/DocumentContext';
@@ -20,6 +21,92 @@ marked.setOptions({
   breaks: true,
   gfm: true,
 });
+
+// Turndown service for HTML to Markdown conversion
+const turndownService = new TurndownService({
+  headingStyle: 'atx',
+  codeBlockStyle: 'fenced',
+  bulletListMarker: '-',
+  emDelimiter: '*',
+  strongDelimiter: '**',
+  linkStyle: 'inlined',
+});
+
+// Add custom rules for common rich text formats
+turndownService.addRule('bold', {
+  filter: ['strong', 'b'],
+  replacement: (content) => `**${content}**`,
+});
+
+turndownService.addRule('italic', {
+  filter: ['em', 'i'],
+  replacement: (content) => `*${content}*`,
+});
+
+turndownService.addRule('code', {
+  filter: (node) => {
+    const hasCodeClass = node.classList?.contains('highlight');
+    const isCodeElement = node.nodeName === 'CODE' && !hasCodeClass;
+    const isPreCode = node.nodeName === 'PRE';
+    return isCodeElement || isPreCode;
+  },
+  replacement: (content) => {
+    if (content.includes('\n')) {
+      const trimmed = content.trim();
+      return '\n```\n' + trimmed + '\n```\n';
+    }
+    return '`' + content + '`';
+  },
+});
+
+turndownService.addRule('link', {
+  filter: (node) => {
+    return node.nodeName === 'A' && node.href;
+  },
+  replacement: (content, node) => {
+    const href = node.href || '';
+    const title = node.title ? ` "${node.title}"` : '';
+    return `[${content}](${href}${title})`;
+  },
+});
+
+turndownService.addRule('taskListItem', {
+  filter: (node) => {
+    return node.classList?.contains('task-list-item');
+  },
+  replacement: (content, node) => {
+    const checkbox = node.querySelector('input[type="checkbox"]');
+    const isChecked = checkbox?.checked;
+    return `\n- [${isChecked ? 'x' : ' '}] ${content.trim()}\n`;
+  },
+});
+
+function looksLikeMarkdown(text) {
+  const markdownPatterns = [
+    /^#{1,6}\s/m,
+    /^\s*[-*+]\s/m,
+    /^\s*\d+\.\s/m,
+    /\*\*[^*]+\*\*/,
+    /\*[^*]+\*/,
+    /`[^`]+`/,
+    /```[\s\S]*?```/,
+    /\[.+?\]\(.+?\)/,
+    /^>\s/m,
+    /^---$/m,
+    /^\|\s.+\s\|/,
+  ];
+  const matchCount = markdownPatterns.filter((pattern) => pattern.test(text)).length;
+  return matchCount >= 2;
+}
+
+function processPastedMarkdown(markdown) {
+  let processed = markdown;
+  processed = processed.replace(/\\\*([^*]+)\\\*/g, '*$1*');
+  processed = processed.replace(/\\\_([^_]+)\\_/g, '_$1_');
+  processed = processed.replace(/\\`([^`]+)\\`/g, '`$1`');
+  processed = processed.replace(/<[^>]+>/g, '');
+  return processed;
+}
 
 function taskListHtmlToMarkdown(html) {
   if (!html.includes('task-list-item')) {
@@ -377,6 +464,35 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
               };
               reader.readAsDataURL(blob);
             }
+            return true;
+          }
+
+          if (item.type === 'text/html' || item.type === 'text/plain') {
+            event.preventDefault();
+            const getPasteContent = async () => {
+              if (item.type === 'text/html') {
+                const html = event.clipboardData.getData('text/html');
+                if (html && html.trim()) {
+                  let markdown = turndownService.turndown(html);
+                  markdown = processPastedMarkdown(markdown);
+                  return markdown;
+                }
+              }
+              const text = event.clipboardData.getData('text/plain');
+              if (text) {
+                if (looksLikeMarkdown(text)) {
+                  return text;
+                }
+                return text;
+              }
+              return null;
+            };
+
+            getPasteContent().then((content) => {
+              if (content) {
+                editor.chain().focus().insertContent(content).run();
+              }
+            });
             return true;
           }
         }
