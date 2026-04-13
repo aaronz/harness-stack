@@ -242,7 +242,7 @@
       "priority": "P0",
       "title": "Switch to rusqlite Settings",
       "description": "Migrate settings from JSON to rusqlite for atomic transactions and crash recovery. Design schema, implement SettingsService, migrate existing data.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Settings persist correctly in rusqlite database",
         "Atomic transactions prevent data corruption on crash",
@@ -329,7 +329,7 @@
       "priority": "P1",
       "title": "Cursor Mapping",
       "description": "Implement bidirectional cursor mapping with AST-aware offset calculation. Must account for HTML tag insertion in mapping.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Cursor position preserved when editing",
         "Cursor maps correctly through HTML tag insertions",

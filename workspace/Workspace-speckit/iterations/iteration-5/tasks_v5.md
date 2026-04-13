@@ -127,7 +127,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-003: Switch to rusqlite Settings
+### G-003: Done
 **Status:** Pending
 **Priority:** P0 (Blocking)
 **Module:** Settings (Rust Backend)

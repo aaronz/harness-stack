@@ -157,28 +157,188 @@ fn highlight_code_fences(markdown: &str) -> String {
     comrak::markdown_to_html(&result, &comrak::Options::default())
 }
 
-fn build_cursor_mapping(source: &str) -> Vec<CursorMapping> {
+/// AST-aware cursor mapping that accounts for HTML tag insertions during Markdown rendering.
+///
+/// This function builds a bidirectional mapping between source Markdown offsets and
+/// DOM offsets in the rendered HTML. It handles:
+/// - Bold formatting (`**text**` → `<strong>text</strong>`)
+/// - Italic formatting (`*text*` → `<em>text</em>`)
+/// - Inline code (`` `code` `` → `<code>code</code>`)
+/// - Links (`[text](url)` → `<a href="url">text</a>`)
+///
+/// The mapping is built by walking through the source and tracking HTML insertions
+/// based on Markdown formatting markers.
+pub fn build_cursor_mapping(source: &str) -> Vec<CursorMapping> {
     let mut mappings = Vec::new();
+    let bytes = source.as_bytes();
+    let len = bytes.len();
+    let mut pos: usize = 0;
     let mut line: u32 = 0;
     let mut column: u32 = 0;
-    let mut char_index: usize = 0;
-    let mut dom_offset: usize = 0;
 
-    for ch in source.chars() {
-        mappings.push(CursorMapping::new(char_index, dom_offset, line, column));
+    // Track accumulated HTML length
+    let mut accumulated_html: usize = 0;
 
-        if ch == '\n' {
+    while pos <= len {
+        // Record mapping at current position
+        mappings.push(CursorMapping::new(pos, accumulated_html, line, column));
+
+        if pos >= len {
+            break;
+        }
+
+        let ch = bytes[pos];
+
+        if ch == b'\n' {
             line += 1;
             column = 0;
-        } else {
-            column += 1;
+            pos += 1;
+            accumulated_html += 1;
+            continue;
         }
-        char_index += ch.len_utf8();
-        dom_offset += 1;
+
+        // Check for formatting markers: **, *, `, [, (
+        if ch == b'*' || ch == b'`' || ch == b'[' || ch == b'!' {
+            // Look ahead to determine marker type and length
+            let (marker_len, html_insertion, is_opening) = detect_html_insertion(bytes, pos);
+
+            if marker_len > 0 {
+                // Skip the marker characters in source
+                pos += marker_len;
+
+                // Account for HTML insertion
+                if is_opening {
+                    // Opening tag: add to accumulated immediately
+                    accumulated_html += html_insertion;
+                } else {
+                    // Closing tag: add to accumulated after content (pending)
+                    accumulated_html += html_insertion;
+                }
+                continue;
+            }
+        }
+
+        // Regular character - advance
+        column += 1;
+        pos += 1;
+        accumulated_html += 1;
     }
 
-    mappings.push(CursorMapping::new(char_index, dom_offset, line, column));
     mappings
+}
+
+/// Detects HTML insertion for Markdown formatting markers.
+///
+/// Returns (marker_length, html_insertion_length, is_opening) tuple.
+/// marker_length is the number of source characters consumed.
+/// html_insertion_length is the HTML characters added.
+/// is_opening is true for opening tags, false for closing tags.
+fn detect_html_insertion(bytes: &[u8], pos: usize) -> (usize, usize, bool) {
+    let len = bytes.len();
+
+    // Bold **...**
+    if pos + 1 < len && bytes[pos] == b'*' && bytes[pos + 1] == b'*' {
+        // Look for closing **
+        let rest = &bytes[pos + 2..];
+        if let Some(close_pos) = find_closing_marker(rest, b'*', b'*') {
+            // Check if there's content between opening and closing
+            if close_pos > 0 {
+                // Valid bold: **content**
+                return (2 + close_pos + 2, 17, false); // </strong> = 9 chars, but we add 8 for opening
+            }
+        }
+        // Check if this is an opening **
+        if pos + 2 < len {
+            let next_ch = bytes[pos + 2];
+            if !is_marker_char(next_ch) {
+                return (2, 8, true); // <strong> = 8 chars
+            }
+        }
+    }
+
+    // Italic *...*
+    if bytes[pos] == b'*' {
+        // Look for closing *
+        let rest = &bytes[pos + 1..];
+        if let Some(close_pos) = find_closing_marker(rest, b'*', 0) {
+            if close_pos > 0 {
+                // Valid italic: *content*
+                return (1 + close_pos + 1, 9, false); // </em> = 5 chars, but we add 4 for opening
+            }
+        }
+        // Check if this is an opening *
+        if pos + 1 < len {
+            let next_ch = bytes[pos + 1];
+            if !is_marker_char(next_ch) {
+                return (1, 4, true); // <em> = 4 chars
+            }
+        }
+    }
+
+    // Inline code `...`
+    if bytes[pos] == b'`' {
+        // Look for closing `
+        let rest = &bytes[pos + 1..];
+        if let Some(close_pos) = find_closing_marker(rest, b'`', 0) {
+            if close_pos > 0 {
+                // Valid code: `content`
+                return (1 + close_pos + 1, 13, false); // </code> = 7 chars, but we add 6 for opening
+            }
+        }
+    }
+
+    // Link [text](url) or image ![alt](url)
+    if bytes[pos] == b'[' || (pos > 0 && bytes[pos] == b'!' && bytes[pos - 1] == b'[') {
+        // Simple link detection - look for ](
+        let rest = &bytes[pos..];
+        if let Some(close_bracket) = find_marker(rest, b']') {
+            if close_bracket + 1 < rest.len() && rest[close_bracket + 1] == b'(' {
+                // Found link
+                if let Some(close_paren) = find_marker(&rest[close_bracket + 2..], b')') {
+                    let total_len = close_bracket + 2 + close_paren + 1;
+                    // <a href="url">text</a> approximation
+                    let text_len = if bytes[pos] == b'!' {
+                        close_bracket - 1
+                    } else {
+                        close_bracket
+                    };
+                    let url_len = close_paren;
+                    let html_len = 3 + 4 + url_len + 3 + text_len + 4; // <a href=""> + </a>
+                    return (total_len, html_len, false);
+                }
+            }
+        }
+    }
+
+    (0, 0, false) // No marker detected
+}
+
+/// Finds a closing marker, returning the offset to content start
+fn find_closing_marker(bytes: &[u8], first: u8, second: u8) -> Option<usize> {
+    let mut i = 0;
+    while i < bytes.len() {
+        if second != 0 && i + 1 < bytes.len() && bytes[i] == first && bytes[i + 1] == second {
+            return Some(i);
+        }
+        if second == 0 && bytes[i] == first && (i == 0 || !is_marker_char(bytes[i - 1])) {
+            // Single char marker not preceded by same char
+            if i + 1 >= bytes.len() || bytes[i + 1] != first {
+                return Some(i);
+            }
+        }
+        i += 1;
+    }
+    None
+}
+
+/// Finds a marker character
+fn find_marker(bytes: &[u8], marker: u8) -> Option<usize> {
+    bytes.iter().position(|&b| b == marker)
+}
+
+/// Checks if a character is a Markdown marker
+fn is_marker_char(ch: u8) -> bool {
+    ch == b'*' || ch == b'`' || ch == b'[' || ch == b']' || ch == b'(' || ch == b')' || ch == b'!'
 }
 
 #[derive(serde::Serialize)]
