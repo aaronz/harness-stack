@@ -229,3 +229,98 @@ fn test_roundtrip_complex_document() {
     let output = doc.serialize_to_commonmark();
     assert_eq!(output, source);
 }
+
+#[test]
+fn test_tc_g001_001_enter_in_list_item_empty_exits() {
+    let content = "- ";
+    let result = engine().apply(&Transform::EnterInListItem { is_empty: true }, content, 2);
+    assert_eq!(result.content, "\n");
+    assert_eq!(result.cursor_offset, 1);
+}
+
+#[test]
+fn test_tc_g001_002_enter_in_list_item_with_content() {
+    let content = "- Item 1";
+    let result = engine().apply(&Transform::EnterInListItem { is_empty: false }, content, 8);
+    assert!(result.content.contains("- Item 1"));
+    assert!(result.content.contains("\n"));
+    assert!(result.content.contains("- "));
+}
+
+#[test]
+fn test_tc_g001_003_enter_in_list_item_nested() {
+    let content = "  - Nested item";
+    let result = engine().apply(&Transform::EnterInListItem { is_empty: false }, content, 15);
+    assert!(result.content.contains("  - Nested item"));
+    assert!(result.content.contains("\n"));
+    assert!(result.content.contains("  - "));
+}
+
+#[test]
+fn test_tc_g001_004_enter_in_blockquote_empty_exits() {
+    let content = "> ";
+    let result = engine().apply(&Transform::EnterInBlockQuote, content, 2);
+    assert_eq!(result.content, "");
+    assert_eq!(result.cursor_offset, 0);
+}
+
+#[test]
+fn test_tc_g001_005_enter_in_blockquote_with_content() {
+    let content = "> Quote line";
+    let result = engine().apply(&Transform::EnterInBlockQuote, content, 12);
+    assert!(result.content.contains("> Quote line"));
+    assert!(result.content.contains("\n> "));
+}
+
+#[test]
+fn test_tc_g001_006_enter_in_heading_empty_converts() {
+    let content = "# ";
+    let result = engine().apply(&Transform::EnterInHeading { level: 1 }, content, 2);
+    assert!(result.content.contains("# "));
+}
+
+#[test]
+fn test_tc_g001_007_enter_in_heading_with_content() {
+    let content = "# Heading";
+    let result = engine().apply(&Transform::EnterInHeading { level: 1 }, content, 9);
+    assert!(result.content.contains("# Heading"));
+    assert!(result.content.contains("\n# "));
+}
+
+#[test]
+fn test_tc_g001_008_enter_in_heading_setext_underline() {
+    let content = "Heading\n===\n";
+    let result = engine().apply(&Transform::EnterInHeading { level: 1 }, content, 11);
+    assert!(result.content.contains("Heading"));
+    assert!(result.content.contains("==="));
+}
+
+#[test]
+fn test_tc_g001_010_wrap_no_selection() {
+    let content = "text";
+    let result = engine().apply(
+        &Transform::Wrap {
+            before: "**".to_string(),
+            after: "**".to_string(),
+        },
+        content,
+        4,
+    );
+    assert!(result.content.contains("text"));
+    assert!(result.content.contains("**"));
+}
+
+#[test]
+fn test_tc_g001_011_wrap_nested_markers() {
+    let content = "**already bold**";
+    let result = engine().apply(
+        &Transform::Wrap {
+            before: "**".to_string(),
+            after: "**".to_string(),
+        },
+        content,
+        14,
+    );
+    assert!(result.content.contains("**already bold**"));
+    assert!(result.content.contains("****"));
+}

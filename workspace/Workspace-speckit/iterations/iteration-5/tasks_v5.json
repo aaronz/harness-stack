@@ -1,0 +1,1358 @@
+{
+  "tasks": [
+    {
+      "id": "G-001",
+      "priority": "P0",
+      "title": "Complete TransformEngine Implementation",
+      "description": "Implement all TransformEngine transforms in Rust backend: EnterInListItem, EnterInBlockQuote, EnterInHeading, and Wrap transforms. This is a blocking P0 issue - all transforms must be fully implemented in Rust with frontend wired to use them.",
+      "status": "done",
+      "test_criteria": [
+        "All TransformType enum variants have Rust implementations",
+        "EnterInListItem: empty item exits list and creates paragraph, content creates new item",
+        "EnterInBlockQuote: empty quote exits and creates paragraph, content continues quote",
+        "EnterInHeading: empty heading converts to paragraph, content creates same-level heading",
+        "Wrap transform wraps selection with before/after markers",
+        "Nested structures handled correctly",
+        "cargo test passes for transform module"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote --lib editor::transforms",
+        "cargo test --package rustnote --lib transform",
+        "npm run test --prefix www 2>/dev/null || echo 'Frontend tests not configured'"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G001-001",
+          "name": "EnterInListItem_empty_exits",
+          "category": "unit",
+          "description": "Pressing Enter in an empty list item should exit the list and create a paragraph",
+          "input": "- \n",
+          "expected_behavior": "Converts to paragraph: `\n`"
+        },
+        {
+          "id": "TC-G001-002",
+          "name": "EnterInListItem_with_content",
+          "category": "unit",
+          "description": "Pressing Enter in a list item with content should create a new list item below",
+          "input": "- Item 1\n",
+          "expected_behavior": "Creates new list item: `- Item 1\n-\n`"
+        },
+        {
+          "id": "TC-G001-003",
+          "name": "EnterInListItem_nested",
+          "category": "unit",
+          "description": "Pressing Enter in a nested list item should maintain nesting",
+          "input": "  - Nested item\n",
+          "expected_behavior": "Creates new nested item: `  - Nested item\n  -\n`"
+        },
+        {
+          "id": "TC-G001-004",
+          "name": "EnterInBlockQuote_empty_exits",
+          "category": "unit",
+          "description": "Pressing Enter in an empty blockquote should exit and create paragraph",
+          "input": "> \n",
+          "expected_behavior": "Converts to paragraph: `\n`"
+        },
+        {
+          "id": "TC-G001-005",
+          "name": "EnterInBlockQuote_with_content",
+          "category": "unit",
+          "description": "Pressing Enter in a blockquote with content should continue the quote",
+          "input": "> Quote line\n",
+          "expected_behavior": "Continues quote on new line: `> Quote line\n> \n`"
+        },
+        {
+          "id": "TC-G001-006",
+          "name": "EnterInHeading_empty_converts",
+          "category": "unit",
+          "description": "Pressing Enter in an empty heading should convert to paragraph",
+          "input": "# \n",
+          "expected_behavior": "Converts to paragraph: `\n`"
+        },
+        {
+          "id": "TC-G001-007",
+          "name": "EnterInHeading_with_content",
+          "category": "unit",
+          "description": "Pressing Enter in a heading with content should create same-level heading",
+          "input": "# Heading\n",
+          "expected_behavior": "Creates same-level heading: `# Heading\n# \n`"
+        },
+        {
+          "id": "TC-G001-008",
+          "name": "EnterInHeading_setext_underline",
+          "category": "unit",
+          "description": "Pressing Enter after Setext heading underline should create paragraph",
+          "input": "Heading\n===\n",
+          "expected_behavior": "Creates paragraph: `Heading\n===\n\n`"
+        },
+        {
+          "id": "TC-G001-009",
+          "name": "Wrap_with_selection",
+          "category": "unit",
+          "description": "Wrap transform should wrap selected text with markers",
+          "input": "**text** with cursor at end",
+          "expected_behavior": "Wraps selection: `**selected**`"
+        },
+        {
+          "id": "TC-G001-010",
+          "name": "Wrap_no_selection",
+          "category": "unit",
+          "description": "Wrap transform with no selection should insert markers at cursor",
+          "input": "text| (cursor)",
+          "expected_behavior": "Inserts markers: `text**|`"
+        },
+        {
+          "id": "TC-G001-011",
+          "name": "Wrap_nested_markers",
+          "category": "unit",
+          "description": "Wrap should handle already-wrapped content gracefully",
+          "input": "**already bold**",
+          "expected_behavior": "Double wrap: `****already bold****`"
+        },
+        {
+          "id": "TC-G001-012",
+          "name": "EndToEnd_EnterInList",
+          "category": "integration",
+          "description": "Frontend presses Enter in list item - Rust transform called via Tauri",
+          "input": "- Item 1\n| (cursor at end)",
+          "expected_behavior": "New list item created, UI updates correctly"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "list_item",
+          "blockquote",
+          "heading",
+          "bold",
+          "italic",
+          "strikethrough"
+        ],
+        "edge_cases": [
+          "empty_nodes",
+          "nested_structures",
+          "cursor_at_boundaries",
+          "unicode_content"
+        ],
+        "browser_features": [
+          "keyboard_enter",
+          "selection_api"
+        ]
+      },
+      "impl_notes": "TransformEngine should be a struct with apply_enter_* methods. Each method takes &mut self and Markdown source, returns transformed source. Wire frontend via Tauri invoke.",
+      "dependencies": []
+    },
+    {
+      "id": "G-002",
+      "priority": "P0",
+      "title": "Fix Undo/Redo Fidelity",
+      "description": "Fix undo/redo implementation to ensure structural edits are atomic and state is preserved correctly across multiple undo/redo cycles. Add comprehensive round-trip tests.",
+      "status": "todo",
+      "test_criteria": [
+        "Round-trip tests pass: do -> undo -> do -> undo = original state",
+        "Structural edits (lists, headings, blockquotes) undo correctly",
+        "No state corruption after multiple undo/redo cycles",
+        "Undo/redo works after save and reopen"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote undo",
+        "cargo test --package rustnote redo",
+        "cargo test --package rustnote --test editor_undo_redo_tests"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G002-001",
+          "name": "UndoRedo_roundtrip_list",
+          "category": "integration",
+          "description": "Add list item -> undo -> add again -> undo returns to original state",
+          "input": "- Item 1\n",
+          "expected_behavior": "State identical after each cycle"
+        },
+        {
+          "id": "TC-G002-002",
+          "name": "UndoRedo_roundtrip_heading",
+          "category": "integration",
+          "description": "Change heading level -> undo -> change again -> original preserved",
+          "input": "# Title\n",
+          "expected_behavior": "Original heading level restored"
+        },
+        {
+          "id": "TC-G002-003",
+          "name": "UndoRedo_multiple_cycles",
+          "category": "integration",
+          "description": "10 consecutive undo/redo cycles should not corrupt state",
+          "input": "- Item 1\n- Item 2\n",
+          "expected_behavior": "State consistent after each cycle"
+        },
+        {
+          "id": "TC-G002-004",
+          "name": "UndoRedo_structural_edit_atomic",
+          "category": "unit",
+          "description": "Structural edits like list->blockquote are atomic",
+          "input": "- Item\n",
+          "expected_behavior": "Undo converts back to list, not intermediate state"
+        },
+        {
+          "id": "TC-G002-005",
+          "name": "UndoRedo_after_save_reload",
+          "category": "integration",
+          "description": "Undo/redo works correctly after save and document reopen",
+          "input": "- Item\n(save) -> reopen -> undo",
+          "expected_behavior": "Undo works same as before save"
+        },
+        {
+          "id": "TC-G002-006",
+          "name": "UndoRedo_nested_structures",
+          "category": "unit",
+          "description": "Undo/redo handles nested lists correctly",
+          "input": "  - Nested\n    - Deep\n",
+          "expected_behavior": "Nesting preserved through undo/redo cycles"
+        },
+        {
+          "id": "TC-G002-007",
+          "name": "UndoRedo_rapid_operations",
+          "category": "edge_case",
+          "description": "Rapid undo/redo (50+ operations) maintains fidelity",
+          "input": "Multiple rapid edits",
+          "expected_behavior": "No dropped operations or corrupted state"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "list_item",
+          "blockquote",
+          "heading",
+          "task_list"
+        ],
+        "edge_cases": [
+          "rapid_operations",
+          "nested_structures",
+          "save_reload_boundaries"
+        ],
+        "browser_features": [
+          "keyboard_shortcuts"
+        ]
+      },
+      "impl_notes": "TipTap has built-in undo manager. May need to integrate with Rust transaction log or replace with custom implementation for structural edit support.",
+      "dependencies": [
+        "G-001"
+      ]
+    },
+    {
+      "id": "G-003",
+      "priority": "P0",
+      "title": "Switch to rusqlite Settings",
+      "description": "Migrate settings from JSON to rusqlite for atomic transactions and crash recovery. Design schema, implement SettingsService, migrate existing data.",
+      "status": "todo",
+      "test_criteria": [
+        "Settings persist correctly in rusqlite database",
+        "Atomic transactions prevent data corruption on crash",
+        "Existing settings.json migrates correctly",
+        "cargo test passes for settings module"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote settings",
+        "cargo test --package rustnote --test settings_persistence_tests"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G003-001",
+          "name": "Settings_basic_crud",
+          "category": "unit",
+          "description": "Create, read, update, delete settings operations work",
+          "input": "{\"theme\": \"dark\", \"fontSize\": 14}",
+          "expected_behavior": "Settings persisted and retrieved accurately"
+        },
+        {
+          "id": "TC-G003-002",
+          "name": "Settings_atomic_transaction",
+          "category": "unit",
+          "description": "Multiple settings updates in transaction all succeed or all fail",
+          "input": "Transaction with 5 setting changes",
+          "expected_behavior": "Either all 5 applied or none applied"
+        },
+        {
+          "id": "TC-G003-003",
+          "name": "Settings_crash_recovery",
+          "category": "integration",
+          "description": "Settings survive abnormal termination",
+          "input": "Write settings -> crash simulation",
+          "expected_behavior": "Original settings restored after restart"
+        },
+        {
+          "id": "TC-G003-004",
+          "name": "Settings_migration_from_json",
+          "category": "integration",
+          "description": "Existing settings.json migrates to rusqlite correctly",
+          "input": "settings.json with all setting types",
+          "expected_behavior": "All settings migrated with values preserved"
+        },
+        {
+          "id": "TC-G003-005",
+          "name": "Settings_concurrent_access",
+          "category": "edge_case",
+          "description": "Multiple simultaneous read/write operations don't corrupt",
+          "input": "Concurrent settings operations",
+          "expected_behavior": "No data corruption, proper locking"
+        },
+        {
+          "id": "TC-G003-006",
+          "name": "Settings_recent_files_persist",
+          "category": "unit",
+          "description": "Recent files list persists correctly",
+          "input": "Open 10 files -> check recent_files table",
+          "expected_behavior": "All 10 files recorded with correct paths"
+        },
+        {
+          "id": "TC-G003-007",
+          "name": "Settings_workspace_state",
+          "category": "unit",
+          "description": "Workspace state (open files, panel sizes) persists",
+          "input": "Set workspace state -> close -> reopen",
+          "expected_behavior": "Workspace state restored exactly"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "crash_recovery",
+          "concurrent_access",
+          "migration_edge_cases",
+          "empty_database"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Schema should include: settings(key, value), recent_files(id, path, last_opened), workspace_state(key, value). Use serde_rusqlite for JSON serialization.",
+      "dependencies": []
+    },
+    {
+      "id": "G-004",
+      "priority": "P1",
+      "title": "Cursor Mapping",
+      "description": "Implement bidirectional cursor mapping with AST-aware offset calculation. Must account for HTML tag insertion in mapping.",
+      "status": "todo",
+      "test_criteria": [
+        "Cursor position preserved when editing",
+        "Cursor maps correctly through HTML tag insertions",
+        "Works with various document lengths and structures"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote position",
+        "cargo test --package rustnote cursor"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G004-001",
+          "name": "Cursor_simple_mapping",
+          "category": "unit",
+          "description": "Cursor position maps correctly in simple document",
+          "input": "# Title\n\nParagraph|",
+          "expected_behavior": "Cursor at correct offset after render"
+        },
+        {
+          "id": "TC-G004-002",
+          "name": "Cursor_with_html_tags",
+          "category": "unit",
+          "description": "Cursor maps correctly when HTML tags inserted by renderer",
+          "input": "**bold**|",
+          "expected_behavior": "Cursor after bold tag, not inside it"
+        },
+        {
+          "id": "TC-G004-003",
+          "name": "Cursor_nested_formatting",
+          "category": "unit",
+          "description": "Cursor maps correctly with nested formatting",
+          "input": "***bold italic***|",
+          "expected_behavior": "Correct offset through multiple tags"
+        },
+        {
+          "id": "TC-G004-004",
+          "name": "Cursor_preserved_on_edit",
+          "category": "integration",
+          "description": "Cursor position maintained after typing",
+          "input": "**bold**| -> type ' text'",
+          "expected_behavior": "Cursor remains correctly positioned"
+        },
+        {
+          "id": "TC-G004-005",
+          "name": "Cursor_large_document",
+          "category": "edge_case",
+          "description": "Cursor mapping works with 1000+ line document",
+          "input": "1000 lines with various formatting",
+          "expected_behavior": "Mapping completes in <100ms"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "bold",
+          "italic",
+          "code",
+          "links"
+        ],
+        "edge_cases": [
+          "html_tag_offsets",
+          "nested_markup",
+          "large_documents"
+        ],
+        "browser_features": [
+          "cursor_movement"
+        ]
+      },
+      "impl_notes": "Position mapping needs to account for HTML tags inserted during render. AST-aware offset calculation should traverse the semantic tree.",
+      "dependencies": []
+    },
+    {
+      "id": "G-005",
+      "priority": "P1",
+      "title": "PDF Export Quality",
+      "description": "Integrate proper HTML-to-PDF rendering. Ensure code blocks render with highlighting, images render correctly, and multi-page documents work.",
+      "status": "todo",
+      "test_criteria": [
+        "PDF export produces valid PDF file",
+        "Code blocks have syntax highlighting",
+        "Images embedded correctly in PDF",
+        "Multi-page documents paginate correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote export",
+        "cargo test --package rustnote pdf"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G005-001",
+          "name": "PDF_basic_export",
+          "category": "integration",
+          "description": "Basic Markdown exports to valid PDF",
+          "input": "# Title\n\nParagraph text.",
+          "expected_behavior": "Valid PDF with title and paragraph"
+        },
+        {
+          "id": "TC-G005-002",
+          "name": "PDF_code_blocks",
+          "category": "integration",
+          "description": "Code blocks render with syntax highlighting",
+          "input": "```rust\nfn main() {\n    println!(\"hello\");\n}\n```",
+          "expected_behavior": "PDF shows highlighted Rust code"
+        },
+        {
+          "id": "TC-G005-003",
+          "name": "PDF_images",
+          "category": "integration",
+          "description": "Images embedded correctly in PDF",
+          "input": "![alt](image.png)",
+          "expected_behavior": "Image visible in PDF output"
+        },
+        {
+          "id": "TC-G005-004",
+          "name": "PDF_multipage",
+          "category": "integration",
+          "description": "Long document paginates correctly",
+          "input": "50 paragraphs of text",
+          "expected_behavior": "Proper pagination, no content cut off"
+        },
+        {
+          "id": "TC-G005-005",
+          "name": "PDF_complex_document",
+          "category": "integration",
+          "description": "Complex document with tables, lists, quotes exports",
+          "input": "Mixed elements document",
+          "expected_behavior": "All elements render correctly"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "code_block",
+          "fenced_code",
+          "image",
+          "table",
+          "list",
+          "blockquote"
+        ],
+        "edge_cases": [
+          "large_images",
+          "page_breaks",
+          "unicode_in_code"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Consider html2pdf, puppeteer, or webview print API. Puppeteer provides best fidelity but adds Node dependency.",
+      "dependencies": []
+    },
+    {
+      "id": "G-006",
+      "priority": "P1",
+      "title": "Tree-sitter Parser",
+      "description": "Research tree-sitter + comrak integration and implement tree-sitter-based incremental parsing wrapper.",
+      "status": "todo",
+      "test_criteria": [
+        "Tree-sitter parser integrated with existing parsing",
+        "Incremental parsing works for edits",
+        "Backward compatibility maintained",
+        "Works with large documents (5MB+)"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote parser",
+        "cargo test --package rustnote tree_sitter"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G006-001",
+          "name": "Parser_basic_markdown",
+          "category": "unit",
+          "description": "Basic Markdown parsing with tree-sitter",
+          "input": "# Heading\n\nParagraph",
+          "expected_behavior": "Correct AST generated"
+        },
+        {
+          "id": "TC-G006-002",
+          "name": "Parser_incremental_edit",
+          "category": "unit",
+          "description": "Incremental parse only re-parses changed regions",
+          "input": "Large doc + small edit",
+          "expected_behavior": "Parse time < 50ms for small edit"
+        },
+        {
+          "id": "TC-G006-003",
+          "name": "Parser_large_document",
+          "category": "performance",
+          "description": "5MB document parses without memory issues",
+          "input": "5MB Markdown file",
+          "expected_behavior": "Parses in < 5s, memory < 500MB"
+        },
+        {
+          "id": "TC-G006-004",
+          "name": "Parser_backward_compat",
+          "category": "integration",
+          "description": "Output compatible with existing render pipeline",
+          "input": "Various Markdown",
+          "expected_behavior": "Same render output as comrak"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "heading",
+          "paragraph",
+          "list",
+          "blockquote",
+          "code_block",
+          "table",
+          "emphasis"
+        ],
+        "edge_cases": [
+          "malformed_markdown",
+          "large_documents",
+          "incremental_edits"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Tree-sitter grammar for Markdown is tree-sitter/tree-sitter-markdown. Wrap with incremental parse API.",
+      "dependencies": []
+    },
+    {
+      "id": "G-007",
+      "priority": "P1",
+      "title": "Ropey Buffer",
+      "description": "Implement ropey-based text buffer per PRD specification for efficient large document handling.",
+      "status": "todo",
+      "test_criteria": [
+        "Ropey buffer replaces existing text operations",
+        "Large documents (5MB+) handled efficiently",
+        "Cursor and selection operations work correctly",
+        "Undo/redo still functions with buffer"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote buffer",
+        "cargo test --package rustnote ropey"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G007-001",
+          "name": "Buffer_basic_operations",
+          "category": "unit",
+          "description": "Insert, delete, replace operations work",
+          "input": "\"Hello\" -> insert \" World\" at 5",
+          "expected_behavior": "\"Hello World\""
+        },
+        {
+          "id": "TC-G007-002",
+          "name": "Buffer_large_document",
+          "category": "performance",
+          "description": "5MB document loads and edits efficiently",
+          "input": "5MB text",
+          "expected_behavior": "Edit operations < 50ms"
+        },
+        {
+          "id": "TC-G007-003",
+          "name": "Buffer_cursor_operations",
+          "category": "unit",
+          "description": "Cursor movement and selection work with rope",
+          "input": "Multi-megabyte doc",
+          "expected_behavior": "Character offset correct"
+        },
+        {
+          "id": "TC-G007-004",
+          "name": "Buffer_undo_redo",
+          "category": "integration",
+          "description": "Undo/redo integrates with ropey",
+          "input": "Edit -> undo -> redo",
+          "expected_behavior": "State restored correctly"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "large_documents",
+          "memory_usage",
+          "unicode_content"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Ropey provides Rope struct for efficient text operations. Integrate with EditorState.",
+      "dependencies": [
+        "G-002"
+      ]
+    },
+    {
+      "id": "G-008",
+      "priority": "P1",
+      "title": "Wrap Transform",
+      "description": "Part of G-001 TransformEngine implementation - Wrap transform with before/after markers.",
+      "status": "todo",
+      "test_criteria": [
+        "Wrap transform implemented in Rust",
+        "Frontend wired to use Rust implementation"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote wrap"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G008-001",
+          "name": "Wrap_bold",
+          "category": "unit",
+          "description": "Wrap selection with **bold**",
+          "input": "text with **selection** here",
+          "expected_behavior": "Text wrapped correctly"
+        },
+        {
+          "id": "TC-G008-002",
+          "name": "Wrap_italic",
+          "category": "unit",
+          "description": "Wrap selection with *italic*",
+          "input": "text with *selection* here",
+          "expected_behavior": "Text wrapped correctly"
+        },
+        {
+          "id": "TC-G008-003",
+          "name": "Wrap_no_selection",
+          "category": "unit",
+          "description": "Wrap with no selection inserts markers",
+          "input": "text|",
+          "expected_behavior": "**| inserted at cursor"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "bold",
+          "italic",
+          "strikethrough",
+          "code"
+        ],
+        "edge_cases": [
+          "no_selection",
+          "already_wrapped",
+          "partial_selection"
+        ],
+        "browser_features": [
+          "selection_api"
+        ]
+      },
+      "impl_notes": "See G-001 for full implementation details.",
+      "dependencies": [
+        "G-001"
+      ]
+    },
+    {
+      "id": "G-009",
+      "priority": "P1",
+      "title": "Image Path Handling",
+      "description": "Verify relative path calculation based on document location. Test with documents in subdirectories.",
+      "status": "todo",
+      "test_criteria": [
+        "Relative paths calculated correctly from document location",
+        "Images in subdirectories resolve correctly",
+        "Cross-platform path handling works"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote image",
+        "cargo test --package rustnote path"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G009-001",
+          "name": "ImagePath_same_directory",
+          "category": "unit",
+          "description": "Image path resolves when in same directory as doc",
+          "input": "doc.md and img.png in same folder",
+          "expected_behavior": "![alt](img.png) resolves correctly"
+        },
+        {
+          "id": "TC-G009-002",
+          "name": "ImagePath_subdirectory",
+          "category": "unit",
+          "description": "Image path resolves for subdirectory documents",
+          "input": "docs/sub/doc.md with ../../images/img.png",
+          "expected_behavior": "Path resolves to correct absolute path"
+        },
+        {
+          "id": "TC-G009-003",
+          "name": "ImagePath_cross_platform",
+          "category": "edge_case",
+          "description": "Paths work on Windows/macOS/Linux",
+          "input": "Various path formats",
+          "expected_behavior": "Correct resolution on all platforms"
+        },
+        {
+          "id": "TC-G009-004",
+          "name": "ImagePath_move_document",
+          "category": "integration",
+          "description": "Images still resolve after document is moved",
+          "input": "Open doc -> move doc -> check images",
+          "expected_behavior": "Images load if relative path valid"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "image"
+        ],
+        "edge_cases": [
+          "subdirectory_docs",
+          "cross_platform",
+          "moved_documents",
+          "absolute_vs_relative"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Use std::path for cross-platform path handling. Store relative paths, resolve at render time.",
+      "dependencies": []
+    },
+    {
+      "id": "G-010",
+      "priority": "P2",
+      "title": "Table Editing",
+      "description": "Document table editing constraints. Ensure no data loss with TipTap default behavior.",
+      "status": "todo",
+      "test_criteria": [
+        "Table editing documented with constraints",
+        "No data loss during table operations",
+        "Consider custom cell-model if time permits"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote table"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G010-001",
+          "name": "Table_no_data_loss",
+          "category": "integration",
+          "description": "Editing table cell doesn't lose content",
+          "input": "| A | B |\n|---|---|\n| 1 | 2 |",
+          "expected_behavior": "Edit cell preserves all data"
+        },
+        {
+          "id": "TC-G010-002",
+          "name": "Table_add_row",
+          "category": "integration",
+          "description": "Adding row preserves existing data",
+          "input": "| A |\n|---|\n| 1 | -> add row",
+          "expected_behavior": "Original row preserved"
+        },
+        {
+          "id": "TC-G010-003",
+          "name": "Table_complex_content",
+          "category": "edge_case",
+          "description": "Cells with pipes and special chars",
+          "input": "| a | b | c |\n|--|--|--|\n| x | y | z |",
+          "expected_behavior": "Content preserved through edits"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "table"
+        ],
+        "edge_cases": [
+          "pipes_in_content",
+          "empty_cells",
+          "unicode_content"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "TipTap tables can lose data in some edge cases. Document constraints and add safety checks.",
+      "dependencies": []
+    },
+    {
+      "id": "G-011",
+      "priority": "P2",
+      "title": "HTML Export Modes",
+      "description": "Add option for linked vs inline asset export. Implement linked-assets mode per FR-031.",
+      "status": "todo",
+      "test_criteria": [
+        "Linked assets mode exports HTML with external assets",
+        "Inline mode embeds all assets in HTML",
+        "Images and other assets export correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote export",
+        "cargo test --package rustnote html_export"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G011-001",
+          "name": "HTMLExport_linked_mode",
+          "category": "integration",
+          "description": "Linked mode creates HTML with external asset refs",
+          "input": "![img](image.png)",
+          "expected_behavior": "HTML references image.png, not embedded"
+        },
+        {
+          "id": "TC-G011-002",
+          "name": "HTMLExport_inline_mode",
+          "category": "integration",
+          "description": "Inline mode embeds assets as base64",
+          "input": "![img](image.png)",
+          "expected_behavior": "Image embedded as base64 in HTML"
+        },
+        {
+          "id": "TC-G011-003",
+          "name": "HTMLExport_css_styles",
+          "category": "integration",
+          "description": "CSS styles included correctly",
+          "input": "Styled document",
+          "expected_behavior": "CSS inline or linked"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "image",
+          "style"
+        ],
+        "edge_cases": [
+          "large_images",
+          "many_assets"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Two modes: linked (separate files, use paths) and inline (base64 encode all assets).",
+      "dependencies": []
+    },
+    {
+      "id": "G-012",
+      "priority": "P2",
+      "title": "Frontmatter Parsing",
+      "description": "Improve frontmatter parsing to handle complex YAML. Test with various formats.",
+      "status": "todo",
+      "test_criteria": [
+        "Complex YAML frontmatter parses correctly",
+        "Invalid frontmatter handled gracefully",
+        "Missing frontmatter doesn't break document"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote frontmatter"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G012-001",
+          "name": "Frontmatter_basic",
+          "category": "unit",
+          "description": "Basic YAML frontmatter parses",
+          "input": "---\ntitle: Hello\n---\n",
+          "expected_behavior": "title: Hello extracted"
+        },
+        {
+          "id": "TC-G012-002",
+          "name": "Frontmatter_complex_yaml",
+          "category": "unit",
+          "description": "Complex YAML (lists, nested) parses",
+          "input": "---\ntitle: Hello\ntags: [a, b]\nmetadata:\n  author: John\n---",
+          "expected_behavior": "All fields extracted correctly"
+        },
+        {
+          "id": "TC-G012-003",
+          "name": "Frontmatter_invalid_yaml",
+          "category": "edge_case",
+          "description": "Invalid YAML doesn't crash",
+          "input": "---\ntitle: [unclosed\n---",
+          "expected_behavior": "Graceful handling, document still loads"
+        },
+        {
+          "id": "TC-G012-004",
+          "name": "Frontmatter_missing",
+          "category": "edge_case",
+          "description": "Document without frontmatter loads normally",
+          "input": "Just paragraph\n",
+          "expected_behavior": "Document loads, no frontmatter"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "frontmatter"
+        ],
+        "edge_cases": [
+          "invalid_yaml",
+          "missing_frontmatter",
+          "nested_yaml"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Use serde_yaml for parsing. Wrap in Result and handle errors gracefully.",
+      "dependencies": []
+    },
+    {
+      "id": "G-013",
+      "priority": "P2",
+      "title": "Focus Mode Quality",
+      "description": "Enhance focus mode to properly dim/hide non-current paragraphs. Test with various lengths.",
+      "status": "todo",
+      "test_criteria": [
+        "Non-current paragraphs dimmed",
+        "Distraction reduction per FR-028",
+        "Works with various document lengths"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote focus"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G013-001",
+          "name": "FocusMode_dim_others",
+          "category": "integration",
+          "description": "Non-current paragraphs are dimmed",
+          "input": "Para 1\n\nPara 2\n\nPara 3",
+          "expected_behavior": "Active para 100%, others dimmed to ~30%"
+        },
+        {
+          "id": "TC-G013-002",
+          "name": "FocusMode_long_document",
+          "category": "integration",
+          "description": "Focus mode works with 100+ paragraph doc",
+          "input": "100 paragraphs",
+          "expected_behavior": "Only current + neighbors visible"
+        },
+        {
+          "id": "TC-G013-003",
+          "name": "FocusMode_transitions",
+          "category": "integration",
+          "description": "Smooth transition when changing paragraph",
+          "input": "Navigate between paras",
+          "expected_behavior": "Dim transitions smoothly"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "paragraph"
+        ],
+        "edge_cases": [
+          "long_documents",
+          "many_headings"
+        ],
+        "browser_features": [
+          "keyboard_navigation"
+        ]
+      },
+      "impl_notes": "CSS opacity for dimming. Intersection Observer for visibility.",
+      "dependencies": []
+    },
+    {
+      "id": "G-014",
+      "priority": "P2",
+      "title": "Typewriter Mode Quality",
+      "description": "Fix typewriter mode scroll behavior. Cursor stays at vertical center during navigation.",
+      "status": "todo",
+      "test_criteria": [
+        "Cursor stays at vertical center during typing",
+        "Scroll follows cursor correctly",
+        "Works with various document lengths"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote typewriter"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G014-001",
+          "name": "Typewriter_cursor_center",
+          "category": "integration",
+          "description": "Cursor stays at vertical center when typing",
+          "input": "Type in middle of document",
+          "expected_behavior": "Viewport scrolls to keep cursor centered"
+        },
+        {
+          "id": "TC-G014-002",
+          "name": "Typewriter_navigation",
+          "category": "integration",
+          "description": "Arrow key navigation keeps cursor centered",
+          "input": "Navigate with arrows",
+          "expected_behavior": "Scroll follows cursor"
+        },
+        {
+          "id": "TC-G014-003",
+          "name": "Typewriter_long_doc",
+          "category": "integration",
+          "description": "Typewriter mode works at end of long doc",
+          "input": "Go to end of 200-line doc",
+          "expected_behavior": "Cursor centered, scroll works"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "document_boundaries",
+          "rapid_typing",
+          "scroll_performance"
+        ],
+        "browser_features": [
+          "keyboard_navigation",
+          "scroll_behavior"
+        ]
+      },
+      "impl_notes": "Use scrollIntoView with center option. Debounce scroll updates.",
+      "dependencies": []
+    },
+    {
+      "id": "G-015",
+      "priority": "P2",
+      "title": "Paste Handling",
+      "description": "Improve paste handling for common rich text formats. Ensure Markdown conversion fidelity.",
+      "status": "todo",
+      "test_criteria": [
+        "Paste from common rich text formats works",
+        "Markdown conversion fidelity maintained",
+        "Various paste sources tested"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote paste"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G015-001",
+          "name": "Paste_rich_text",
+          "category": "integration",
+          "description": "Paste from word processor converts",
+          "input": "Bold and italic from Word",
+          "expected_behavior": "Converted to Markdown"
+        },
+        {
+          "id": "TC-G015-002",
+          "name": "Paste_html",
+          "category": "integration",
+          "description": "Paste HTML content converts to Markdown",
+          "input": "<b>bold</b> text",
+          "expected_behavior": "**bold** text"
+        },
+        {
+          "id": "TC-G015-003",
+          "name": "Paste_markdown",
+          "category": "integration",
+          "description": "Paste Markdown preserves formatting",
+          "input": "**bold** and *italic*",
+          "expected_behavior": "Exact Markdown preserved"
+        },
+        {
+          "id": "TC-G015-004",
+          "name": "Paste_code",
+          "category": "integration",
+          "description": "Paste code preserves formatting",
+          "input": "Code block from IDE",
+          "expected_behavior": "Code block Markdown"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "bold",
+          "italic",
+          "code",
+          "links"
+        ],
+        "edge_cases": [
+          "html_paste",
+          "cross_application",
+          "unicode_content"
+        ],
+        "browser_features": [
+          "clipboard_paste"
+        ]
+      },
+      "impl_notes": "Handle clipboard events, detect content type, convert HTML to Markdown using turndown or similar.",
+      "dependencies": []
+    },
+    {
+      "id": "G-016",
+      "priority": "P2",
+      "title": "Service Interfaces",
+      "description": "Refactor to expose DocumentService, EditorService, etc. Align with PRD-10 architecture.",
+      "status": "todo",
+      "test_criteria": [
+        "Service interfaces exposed per PRD-10",
+        "Proper interface boundaries maintained",
+        "No circular dependencies"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote service"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G016-001",
+          "name": "Service_document_interface",
+          "category": "unit",
+          "description": "DocumentService interface properly exposed",
+          "input": "Module inspection",
+          "expected_behavior": "Public API includes all Document operations"
+        },
+        {
+          "id": "TC-G016-002",
+          "name": "Service_editor_interface",
+          "category": "unit",
+          "description": "EditorService interface properly exposed",
+          "input": "Module inspection",
+          "expected_behavior": "Public API includes all Editor operations"
+        },
+        {
+          "id": "TC-G016-003",
+          "name": "Service_no_circular_deps",
+          "category": "architecture",
+          "description": "Services don't have circular dependencies",
+          "input": "Dependency graph",
+          "expected_behavior": "DAG structure, no cycles"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "interface_boundaries",
+          "circular_deps"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Define traits for each service. Use dependency injection.",
+      "dependencies": []
+    },
+    {
+      "id": "G-017",
+      "priority": "P2",
+      "title": "Autosave Reliability",
+      "description": "Consider Rust-side autosave with debounce. Ensure frontend timer fires reliably.",
+      "status": "todo",
+      "test_criteria": [
+        "Autosave triggers after configured interval",
+        "Crash recovery works with autosave",
+        "No data loss on normal close"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote autosave"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G017-001",
+          "name": "Autosave_interval",
+          "category": "integration",
+          "description": "Autosave triggers after configured interval",
+          "input": "Edit -> wait 30s",
+          "expected_behavior": "File saved at 30s mark"
+        },
+        {
+          "id": "TC-G017-002",
+          "name": "Autosave_crash_recovery",
+          "category": "integration",
+          "description": "Crash recovery restores autosaved content",
+          "input": "Edit -> crash -> restart",
+          "expected_behavior": "Autosaved content restored"
+        },
+        {
+          "id": "TC-G017-003",
+          "name": "Autosave_debounce",
+          "category": "unit",
+          "description": "Rapid edits don't trigger multiple saves",
+          "input": "Rapid typing for 10s",
+          "expected_behavior": "Single save after debounce"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "rapid_edits",
+          "crash_during_save",
+          "network_files"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Rust-side debounce timer may be more reliable. Use notify crate for file watching.",
+      "dependencies": [
+        "G-003"
+      ]
+    },
+    {
+      "id": "G-018",
+      "priority": "P2",
+      "title": "Syntax Highlighter",
+      "description": "Verify SyntaxHighlighter implementation matches PRD (Shiki vs syntect). Document deviations.",
+      "status": "todo",
+      "test_criteria": [
+        "Syntax highlighting matches PRD specification",
+        "Deviations from PRD documented",
+        "Code blocks highlight correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote syntax",
+        "cargo test --package rustnote highlight"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G018-001",
+          "name": "SyntaxHighlighter_rust",
+          "category": "integration",
+          "description": "Rust code blocks highlight correctly",
+          "input": "```rust\nfn main() {}\n```",
+          "expected_behavior": "Rust keywords, functions highlighted"
+        },
+        {
+          "id": "TC-G018-002",
+          "name": "SyntaxHighlighter_javascript",
+          "category": "integration",
+          "description": "JavaScript code blocks highlight correctly",
+          "input": "```javascript\nconst x = 1;\n```",
+          "expected_behavior": "JS syntax highlighted"
+        },
+        {
+          "id": "TC-G018-003",
+          "name": "SyntaxHighlighter_prd_compliance",
+          "category": "architecture",
+          "description": "Implementation matches PRD specification",
+          "input": "Check Shiki vs syntect choice",
+          "expected_behavior": "PRD deviation documented if any"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "fenced_code"
+        ],
+        "edge_cases": [
+          "unknown_language",
+          "malformed_code",
+          "large_code_blocks"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "PRD specifies Shiki. If using syntect, document why and any behavior differences.",
+      "dependencies": []
+    },
+    {
+      "id": "G-019",
+      "priority": "P3",
+      "title": "Table Cell Editing Safety",
+      "description": "Deferred to post-MVP. Monitor only, no action for MVP per PRD acceptable.",
+      "status": "todo",
+      "test_criteria": [
+        "Table cell editing behavior documented",
+        "No critical data loss bugs observed"
+      ],
+      "test_commands": [],
+      "test_cases": [
+        {
+          "id": "TC-G019-001",
+          "name": "TableCell_monitoring",
+          "category": "edge_case",
+          "description": "Monitor table cell editing behavior",
+          "input": "Various table operations",
+          "expected_behavior": "No data loss (post-MVP)"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "table"
+        ],
+        "edge_cases": [
+          "cell_editing",
+          "row_col_ops"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Deferred to post-MVP. PRD acceptable - monitor only.",
+      "dependencies": []
+    },
+    {
+      "id": "G-020",
+      "priority": "P3",
+      "title": "Fuzz Testing",
+      "description": "Deferred to post-MVP security testing.",
+      "status": "todo",
+      "test_criteria": [
+        "Fuzz testing infrastructure in place",
+        "No critical bugs found (post-MVP)"
+      ],
+      "test_commands": [],
+      "test_cases": [
+        {
+          "id": "TC-G020-001",
+          "name": "Fuzz_markdown_parsing",
+          "category": "security",
+          "description": "Fuzz test Markdown parser",
+          "input": "Random Markdown input",
+          "expected_behavior": "No crashes (post-MVP)"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "all"
+        ],
+        "edge_cases": [
+          "malformed_input",
+          "large_input",
+          "unicode_attack"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Deferred to post-MVP. Use cargo-fuzz or libfuzzer.",
+      "dependencies": []
+    },
+    {
+      "id": "G-021",
+      "priority": "P3",
+      "title": "IME Composition Handling",
+      "description": "Test post-MVP. Handle IME composition for CJK input.",
+      "status": "todo",
+      "test_criteria": [
+        "IME composition works correctly",
+        "No phantom characters"
+      ],
+      "test_commands": [],
+      "test_cases": [
+        {
+          "id": "TC-G021-001",
+          "name": "IME_japanese",
+          "category": "edge_case",
+          "description": "Japanese IME composition works",
+          "input": "Japanese input via IME",
+          "expected_behavior": "Characters commit correctly"
+        },
+        {
+          "id": "TC-G021-002",
+          "name": "IME_chinese",
+          "category": "edge_case",
+          "description": "Chinese IME composition works",
+          "input": "Chinese input via IME",
+          "expected_behavior": "Characters commit correctly"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "ime_composition",
+          "multi_byte_characters"
+        ],
+        "browser_features": [
+          "ime_input"
+        ]
+      },
+      "impl_notes": "Test post-MVP. Need composition events handling in frontend.",
+      "dependencies": []
+    }
+  ]
+}

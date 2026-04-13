@@ -8,6 +8,8 @@
       "status": "done",
       "test_criteria": ["scripts/ directory exists"],
       "test_commands": ["test -d scripts"],
+      "test_cases": [],
+      "coverage_requirements": {},
       "impl_notes": "Directory created for housing modular bash scripts",
       "dependencies": []
     },
@@ -17,8 +19,19 @@
       "title": "Create scripts/task-json.sh",
       "description": "Create task-json.sh for task JSON generation, status management, and retrieval functions",
       "status": "done",
-      "test_criteria": ["task-json.sh exists and is executable"],
+      "test_criteria": ["task-json.sh exists and is executable", "test_cases field supported in JSON schema"],
       "test_commands": ["test -f scripts/task-json.sh && test -x scripts/task-json.sh"],
+      "test_cases": [
+        {
+          "id": "TC-001",
+          "name": "generates valid JSON with test_cases field",
+          "category": "unit",
+          "description": "verify generate_tasks_json produces valid JSON with test_cases array",
+          "input": "mock task markdown with test_cases defined",
+          "expected_behavior": "JSON output contains test_cases array with proper structure"
+        }
+      ],
+      "coverage_requirements": {},
       "impl_notes": "Includes get_next_todo_task, check_remaining_p0_p1, update_task_status, generate_tasks_json functions",
       "dependencies": ["IT-001"]
     },
@@ -30,6 +43,8 @@
       "status": "done",
       "test_criteria": ["constitution.sh exists and is executable"],
       "test_commands": ["test -f scripts/constitution.sh && test -x scripts/constitution.sh"],
+      "test_cases": [],
+      "coverage_requirements": {},
       "impl_notes": "Includes load_constitution, validate_constitution, get_constitution_summary functions",
       "dependencies": ["IT-001"]
     },
@@ -41,6 +56,8 @@
       "status": "done",
       "test_criteria": ["opencode-wrapper.sh exists and is executable"],
       "test_commands": ["test -f scripts/opencode-wrapper.sh && test -x scripts/opencode-wrapper.sh"],
+      "test_cases": [],
+      "coverage_requirements": {},
       "impl_notes": "Includes check_file, generate_if_missing, run_phase, run_opencode_with_session_export functions",
       "dependencies": ["IT-001"]
     },
@@ -50,8 +67,27 @@
       "title": "Create scripts/phases.sh",
       "description": "Create phases.sh containing phase execution logic for the iteration workflow",
       "status": "done",
-      "test_criteria": ["phases.sh exists and is executable"],
+      "test_criteria": ["phases.sh exists and is executable", "test coverage verification runs"],
       "test_commands": ["test -f scripts/phases.sh && test -x scripts/phases.sh"],
+      "test_cases": [
+        {
+          "id": "TC-002",
+          "name": "verify_test_coverage generates coverage report",
+          "category": "integration",
+          "description": "verify_test_coverage function generates markdown coverage report",
+          "input": "tasks.json with test_cases defined",
+          "expected_behavior": "test-coverage-report.md generated with table of test coverage status"
+        },
+        {
+          "id": "TC-003",
+          "name": "implement_task includes test_cases in prompt",
+          "category": "unit",
+          "description": "implement_task prompt includes test_cases and coverage_requirements",
+          "input": "task with test_cases defined",
+          "expected_behavior": "LLM prompt includes Required Test Cases section"
+        }
+      ],
+      "coverage_requirements": {},
       "impl_notes": "Includes run_phase_gap_analysis, run_phase_constitution, run_phase_spec, run_phase_plan, run_phase_implementation, run_phase_verification, implement_task functions",
       "dependencies": ["IT-001", "IT-002", "IT-003", "IT-004"]
     },
@@ -63,6 +99,8 @@
       "status": "done",
       "test_criteria": ["iterate-prd.sh exists and is executable"],
       "test_commands": ["test -f iterate-prd.sh && test -x iterate-prd.sh"],
+      "test_cases": [],
+      "coverage_requirements": {},
       "impl_notes": "Main entry point that sources all scripts and runs phases 1-6",
       "dependencies": ["IT-002", "IT-003", "IT-004", "IT-005"]
     },
@@ -74,6 +112,8 @@
       "status": "todo",
       "test_criteria": ["All scripts are executable"],
       "test_commands": ["chmod +x iterate-prd.sh scripts/*.sh"],
+      "test_cases": [],
+      "coverage_requirements": {},
       "impl_notes": "Set executable bit on all bash scripts",
       "dependencies": ["IT-001", "IT-002", "IT-003", "IT-004", "IT-005", "IT-006"]
     }

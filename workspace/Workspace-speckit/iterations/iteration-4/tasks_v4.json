@@ -58,7 +58,7 @@
       "priority": "P2",
       "title": "Ropey Buffer for Large Documents",
       "description": "Research ropey crate. Design buffer interface. Implement ropey-based text buffer. Update editor commands to use buffer. Test with 5MB+ documents.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Ropey crate integrated successfully",
         "Buffer interface designed and implemented",
@@ -76,7 +76,7 @@
       "priority": "P2",
       "title": "Parser Migration Path",
       "description": "Research tree-sitter + comrak. Design migration strategy. Implement incremental parsing. Ensure backward compatibility.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Parser migration strategy documented",
         "Incremental parsing implemented",

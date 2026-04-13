@@ -16,6 +16,10 @@ pub fn editor_apply_transform(
         TransformType::EnterInListItem => Transform::EnterInListItem { is_empty: false },
         TransformType::EnterInBlockQuote => Transform::EnterInBlockQuote,
         TransformType::EnterInHeading { level } => Transform::EnterInHeading { level },
+        TransformType::Wrap { before, after } => Transform::Wrap {
+            before: before.clone(),
+            after: after.clone(),
+        },
     };
     let result = engine.apply(&transform, &content, cursor_offset);
     TransformResultDto {
@@ -148,6 +152,7 @@ pub enum TransformType {
     EnterInListItem,
     EnterInBlockQuote,
     EnterInHeading { level: u8 },
+    Wrap { before: String, after: String },
 }
 
 #[derive(serde::Serialize)]

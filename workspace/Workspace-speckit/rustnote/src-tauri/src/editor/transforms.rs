@@ -25,6 +25,8 @@ pub enum Transform {
     EnterInBlockQuote,
     /// Enter in heading
     EnterInHeading { level: u8 },
+    /// Wrap selection with markers
+    Wrap { before: String, after: String },
 }
 
 /// Transform result containing the new content and cursor position
@@ -79,6 +81,9 @@ impl TransformEngine {
             Transform::EnterInBlockQuote => self.apply_blockquote_enter(content, cursor_offset),
             Transform::EnterInHeading { level } => {
                 self.apply_heading_enter(content, cursor_offset, *level)
+            }
+            Transform::Wrap { before, after } => {
+                self.apply_wrap(content, cursor_offset, before, after)
             }
         }
     }
@@ -243,13 +248,68 @@ impl TransformEngine {
         &self,
         content: &str,
         cursor_offset: usize,
-        _is_empty: bool,
+        is_empty: bool,
     ) -> TransformResult {
-        self.apply_enter(content, cursor_offset)
+        let before = &content[..cursor_offset];
+        let after = &content[cursor_offset..];
+
+        let line_start = before.rfind('\n').map(|i| i + 1).unwrap_or(0);
+        let current_line = &before[line_start..];
+
+        let indent = current_line.len() - current_line.trim_start().len();
+        let indent_str = &current_line[..indent];
+
+        let marker_str: String = if current_line.trim_start().starts_with("- [ ] ")
+            || current_line.trim_start().starts_with("- [x] ")
+            || current_line.trim_start().starts_with("- [X] ")
+        {
+            "- [ ] ".to_string()
+        } else if current_line.trim_start().starts_with("- ")
+            || current_line.trim_start().starts_with("* ")
+        {
+            "- ".to_string()
+        } else if Self::is_ordered_list_line(current_line) {
+            let num = current_line.trim_start().split('.').next().unwrap_or("1");
+            format!("{}. ", num)
+        } else {
+            "- ".to_string()
+        };
+
+        if is_empty {
+            let new_content = format!("{}{}\n{}", &content[..line_start], indent_str, after);
+            return TransformResult::new(new_content, line_start + indent_str.len() + 1);
+        }
+
+        let new_content = format!(
+            "{}{}\n{}{}",
+            before,
+            marker_str.trim_end(),
+            indent_str,
+            marker_str
+        );
+        let cursor_pos = new_content.len();
+        TransformResult::new(new_content, cursor_pos)
     }
 
     fn apply_blockquote_enter(&self, content: &str, cursor_offset: usize) -> TransformResult {
-        self.apply_enter(content, cursor_offset)
+        let before = &content[..cursor_offset];
+        let after = &content[cursor_offset..];
+
+        let line_start = before.rfind('\n').map(|i| i + 1).unwrap_or(0);
+        let current_line = &before[line_start..];
+
+        let line_content = current_line.trim_start();
+        let is_empty_quote = line_content == ">"
+            || line_content.starts_with("> ") && line_content[2..].trim().is_empty();
+
+        if is_empty_quote {
+            let new_content = format!("{}{}", &content[..line_start], after);
+            return TransformResult::new(new_content, line_start);
+        }
+
+        let new_content = format!("{}{}> ", before, "\n");
+        let cursor_pos = new_content.len();
+        TransformResult::new(new_content, cursor_pos)
     }
 
     fn apply_heading_enter(
@@ -258,13 +318,24 @@ impl TransformEngine {
         cursor_offset: usize,
         level: u8,
     ) -> TransformResult {
+        let before = &content[..cursor_offset];
+
+        let line_start = before.rfind('\n').map(|i| i + 1).unwrap_or(0);
+        let current_line = &before[line_start..];
+
+        let trimmed = current_line.trim();
+        let is_setext = trimmed == "===" || trimmed == "---";
+
+        if is_setext {
+            let new_content = format!("{}{}", before, "\n");
+            let cursor_pos = new_content.len();
+            return TransformResult::new(new_content, cursor_pos);
+        }
+
         let heading_prefix = "#".repeat(level as usize);
-        let (before, _after) = content.split_at(cursor_offset);
-        let newline = "\n";
-        TransformResult::new(
-            format!("{}{}{} ", before, newline, heading_prefix),
-            cursor_offset + 1 + level as usize,
-        )
+        let new_content = format!("{}{}{} ", before, "\n", heading_prefix);
+        let cursor_pos = new_content.len();
+        TransformResult::new(new_content, cursor_pos)
     }
 
     fn is_ordered_list_line(line: &str) -> bool {
@@ -287,6 +358,24 @@ impl TransformEngine {
             }
         }
         None
+    }
+
+    fn apply_wrap(
+        &self,
+        content: &str,
+        cursor_offset: usize,
+        before_marker: &str,
+        after_marker: &str,
+    ) -> TransformResult {
+        let (pre_cursor, post_cursor) = content.split_at(cursor_offset);
+        let new_content = format!(
+            "{}{}{}{}",
+            pre_cursor, before_marker, after_marker, post_cursor
+        );
+        TransformResult::new(
+            new_content,
+            cursor_offset + before_marker.len() + after_marker.len(),
+        )
     }
 }
 

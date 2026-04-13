@@ -208,6 +208,8 @@ generate_tasks_json_fallback() {
         echo "      \"status\": \"$status\","
         echo "      \"test_criteria\": [\"Code compiles\", \"Tests pass\"],"
         echo "      \"test_commands\": [\"cargo build\"],"
+        echo "      \"test_cases\": [],"
+        echo "      \"coverage_requirements\": {},"
         echo "      \"impl_notes\": \"\","
         echo "      \"dependencies\": []"
         echo -n "    }"
@@ -267,7 +269,7 @@ generate_tasks_json() {
 
     echo "Generating structured task JSON (using LLM): $json_file"
 
-    local prompt="Based on the task Markdown file, generate a structured JSON task file.
+    local prompt="Based on the task Markdown file, generate a structured JSON task file with comprehensive test case specifications.
 
 ## Important Constraints
 - Do NOT use subagent or task tools to spawn other agents
@@ -290,6 +292,21 @@ JSON format must contain the following fields:
       \"status\": \"todo|done|in_progress\",
       \"test_criteria\": [\"Test criteria 1\", \"Test criteria 2\"],
       \"test_commands\": [\"cargo test --package <pkg>\", \"npm run build\"],
+      \"test_cases\": [
+        {
+          \"id\": \"TC-001\",
+          \"name\": \"Descriptive test name\",
+          \"category\": \"unit|integration|render|edge_case\",
+          \"description\": \"What this test verifies\",
+          \"input\": \"Input markdown or scenario\",
+          \"expected_behavior\": \"What the implementation should produce\"
+        }
+      ],
+      \"coverage_requirements\": {
+        \"markdown_syntax\": [\"table\", \"strikethrough\", \"horizontal_rule\"],
+        \"edge_cases\": [\"empty_cells\", \"unicode_content\", \"nested_markup\"],
+        \"browser_features\": [\"clipboard_paste\", \"drag_drop\"]
+      },
       \"impl_notes\": \"Implementation notes\",
       \"dependencies\": [\"Dependent task ID\"]
     }
@@ -301,7 +318,13 @@ JSON format must contain the following fields:
 2. test_commands should be concrete commands that can verify task completion
 3. dependencies should reference other task IDs (if any)
 4. Parse status markers from Markdown (- [ ] = todo, - [x] = done)
-5. Output must be valid JSON, write directly to file, no other content"
+5. test_cases MUST be specified for ALL feature tasks - this is critical for coverage
+6. For markdown rendering tasks, include test_cases covering:
+   - Basic syntax (e.g., basic table, basic bold)
+   - Edge cases (empty cells, unicode, special characters)
+   - Edge cases (nested markup, malformed input)
+7. coverage_requirements should enumerate all markdown syntax or features affected
+8. Output must be valid JSON, write directly to file, no other content"
 
     run_opencode_with_session_export "$prompt" "$SESSION_EXPORT_DIR/tasks_json_${task_file##*/}.json" "$MODEL"
 

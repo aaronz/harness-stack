@@ -273,6 +273,107 @@ run_phase_implementation() {
     done
 }
 
+verify_test_coverage() {
+    local tasks_json="$1"
+    local output_dir="$2"
+    local test_cov_file="$output_dir/test-coverage-report.md"
+    
+    if [ ! -f "$tasks_json" ]; then
+        echo "Warning: Tasks JSON not found: $tasks_json"
+        return 1
+    fi
+    
+    echo "Analyzing test case coverage..."
+    
+    python3 << 'PYTHON_SCRIPT' > "$test_cov_file"
+import json
+import sys
+from pathlib import Path
+
+def read_tasks_json(json_path):
+    try:
+        with open(json_path, 'r') as f:
+            data = json.load(f)
+        return data.get('tasks', [])
+    except Exception as e:
+        print(f"Error reading JSON: {e}", file=sys.stderr)
+        return []
+
+def count_test_files(test_dir, patterns=['*.test.js', '*.test.ts', '*.test.jsx', '*.spec.ts', '*.spec.js']):
+    count = 0
+    if test_dir.exists():
+        for pattern in patterns:
+            count += len(list(test_dir.glob(f"**/{pattern}")))
+    return count
+
+def main():
+    tasks_json_path = sys.argv[1] if len(sys.argv) > 1 else 'tasks.json'
+    tasks = read_tasks_json(tasks_json_path)
+    
+    # Find project root by looking for package.json or similar
+    project_root = Path(tasks_json_path).parent.parent
+    test_dirs = list(project_root.glob('**/__tests__'))
+    
+    # Collect all test files
+    test_files = []
+    for test_dir in test_dirs:
+        for pattern in ['*.test.js', '*.test.ts', '*.test.jsx', '*.spec.ts', '*.spec.js']:
+            test_files.extend(test_dir.glob(f"**/{pattern}"))
+    
+    total_planned = 0
+    total_with_tests = 0
+    
+    report = ["# Test Coverage Report\n"]
+    report.append("| Task ID | Task Title | Planned Tests | Status |")
+    report.append("|---------|------------|---------------|--------|")
+    
+    for task in tasks:
+        task_id = task.get('id', 'N/A')
+        title = task.get('title', 'N/A')[:40]
+        test_cases = task.get('test_cases', [])
+        planned = len(test_cases)
+        total_planned += planned
+        
+        # Check if task has test cases defined
+        if planned > 0:
+            # Check if there are test files in the project
+            has_tests = len(test_files) > 0
+            status = "✓ Has Tests" if has_tests else "✗ Missing Tests"
+            if has_tests:
+                total_with_tests += 1
+        else:
+            status = "- No tests required"
+        
+        report.append(f"| {task_id} | {title} | {planned} | {status} |")
+    
+    # Summary
+    coverage_pct = (total_with_tests / max(1, total_planned)) * 100 if total_planned > 0 else 100
+    
+    report.append(f"\n## Summary\n")
+    report.append(f"- Total tasks: {len(tasks)}")
+    report.append(f"- Tasks requiring tests: {total_planned}")
+    report.append(f"- Tasks with test files: {total_with_tests}")
+    report.append(f"- Test coverage: {coverage_pct:.1f}%")
+    report.append(f"- Test files found: {len(test_files)}")
+    
+    if total_planned > 0 and total_with_tests < total_planned:
+        report.append(f"\n## ⚠️ Missing Test Coverage\n")
+        for task in tasks:
+            if len(task.get('test_cases', [])) > 0:
+                test_cases = task.get('test_cases', [])
+                report.append(f"\n### {task.get('id')}: {task.get('title')}\n")
+                for tc in test_cases:
+                    report.append(f"- [ ] {tc.get('id')}: {tc.get('name')} ({tc.get('category', 'N/A')})")
+    
+    print('\n'.join(report))
+
+if __name__ == '__main__':
+    main()
+PYTHON_SCRIPT
+    
+    echo "Test coverage report generated: $test_cov_file"
+}
+
 run_phase_verification() {
     local gap_analysis="$1"
     local tasks_md="$2"
@@ -280,11 +381,16 @@ run_phase_verification() {
     local output_dir="$4"
 
     local verif_file="$output_dir/verification-report.md"
+    local test_cov_file="$output_dir/test-coverage-report.md"
 
     if check_file_quiet "$verif_file"; then
         echo "Skipping verification report (exists)"
         return 0
     fi
+
+    echo ""
+    echo "[6/6a] Running test coverage verification..."
+    verify_test_coverage "$tasks_json" "$output_dir"
 
     PROMPT_VERIFICATION="Generate iteration verification report and write report to file: $verif_file
 
@@ -303,6 +409,9 @@ $(cat $tasks_md)
 ## Task JSON
 $(cat $tasks_json 2>/dev/null || echo "{}")
 
+## Test Coverage Report
+$(cat $test_cov_file 2>/dev/null || echo "No test coverage data available")
+
 ## Implementation Status
 Check ./iterations/src/ directory for code and git commit history
 
@@ -313,8 +422,10 @@ Report must include:
 1. P0 issue status (table: Issue | Status | Notes)
 2. Constitution compliance check
 3. PRD completeness evaluation
-4. Remaining issues list
-5. Next steps suggestions"
+4. Test coverage status (table: Task | Planned Tests | Implemented Tests | Coverage %)
+5. Missing test cases list
+6. Remaining issues list
+7. Next steps suggestions"
 
     generate_if_missing "$verif_file" "$PROMPT_VERIFICATION" 5
 }
@@ -355,6 +466,36 @@ implement_task() {
 ## Task Information
 $(echo "$task_details" | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'ID: {d.get(\"id\",\"\")}'); print(f'Title: {d.get(\"title\",\"\")}'); print(f'Description: {d.get(\"description\",\"\")}'); print(f'Priority: {d.get(\"priority\",\"\")}'); print(f'Test criteria: {chr(10).join(d.get(\"test_criteria\",[]))}'); print(f'Test commands: {chr(10).join(d.get(\"test_commands\",[]))}'); print(f'Implementation notes: {d.get(\"impl_notes\",\"\")}'); print(f'Dependencies: {d.get(\"dependencies\",[])}')" 2>/dev/null || echo "$task_details")
 
+## Required Test Cases (MUST IMPLEMENT)
+$(echo "$task_details" | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+test_cases=d.get('test_cases', [])
+if test_cases:
+    print('The following test cases MUST be implemented:')
+    for tc in test_cases:
+        print(f'  - {tc.get(\"id\")}: {tc.get(\"name\")}')
+        print(f'    Category: {tc.get(\"category\", \"N/A\")}')
+        print(f'    Input: {tc.get(\"input\", \"N/A\")[:100]}')
+        print(f'    Expected: {tc.get(\"expected_behavior\", \"N/A\")}')
+else:
+    print('No specific test cases defined - write generic tests based on test_criteria')
+" 2>/dev/null || echo "No test cases available")
+
+## Coverage Requirements
+$(echo "$task_details" | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+cov=d.get('coverage_requirements', {})
+if cov:
+    print('Markdown syntax to cover:')
+    for item in cov.get('markdown_syntax', []):
+        print(f'  - {item}')
+    print('Edge cases to cover:')
+    for item in cov.get('edge_cases', []):
+        print(f'  - {item}')
+" 2>/dev/null || echo "No coverage requirements specified")
+
 ## Spec
 $(cat $spec_file)
 
@@ -367,13 +508,15 @@ $constitution_content
 ## Task
 1. Analyze task requirements and test criteria
 2. Implement code
-3. Run test commands to verify
-4. Ensure cargo build and cargo test pass
-5. After completion, update task status
+3. IMPLEMENT ALL REQUIRED TEST CASES - this is critical
+4. Run test commands to verify
+5. Ensure cargo build and cargo test pass
+6. After completion, update task status
 
 ## Verification
 - Must pass: cargo build
 - Must pass: cargo test
+- All test_cases from the task JSON must be implemented
 
 ## After Completion
 1. Update status in task JSON file to done

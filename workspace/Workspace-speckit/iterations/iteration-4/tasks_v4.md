@@ -102,7 +102,7 @@ All P0 issues have been resolved in previous iterations.
 
 ---
 
-### IT-004: Ropey Buffer for Large Documents
+### IT-004: Done
 **Status:** Done
 **Priority:** P2
 **Module:** Backend
