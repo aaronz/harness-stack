@@ -330,7 +330,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-012: Frontmatter Parsing
+### G-012: Done
 **Status:** Pending
 **Priority:** P2
 **Module:** Parser
@@ -344,15 +344,15 @@ All P0 issues must be fully resolved before claiming MVP completion.
 ---
 
 ### G-013: Focus Mode Quality
-**Status:** Pending
+**Status:** Done
 **Priority:** P2
 **Module:** Display
 **FR Reference:** FR-028
 
 **Task Details:**
-- [ ] Enhance focus mode to properly dim/hide non-current paragraphs
-- [ ] Test with various document lengths
-- [ ] Verify distraction reduction per FR-028
+- [x] Enhance focus mode to properly dim/hide non-current paragraphs
+- [x] Test with various document lengths
+- [x] Verify distraction reduction per FR-028
 
 ---
 

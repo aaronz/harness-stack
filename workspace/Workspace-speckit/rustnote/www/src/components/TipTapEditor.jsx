@@ -89,6 +89,109 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
     linkElement: null,
   });
   const frontmatterRef = useRef(null);
+  const intersectionObserverRef = useRef(null);
+  const [activeParagraph, setActiveParagraph] = useState(0);
+
+  const updateActiveParagraphClass = useCallback(() => {
+    if (!editor || !settings.focusMode) return;
+    
+    const editorDom = editor.view.dom;
+    if (!editorDom) return;
+    
+    const paragraphs = editorDom.querySelectorAll('p, h1, h2, h3, h4, h5, h6, .paragraph');
+    
+    paragraphs.forEach((p, index) => {
+      if (index === activeParagraph) {
+        p.classList.add('active');
+      } else {
+        p.classList.remove('active');
+      }
+    });
+  }, [editor, settings.focusMode, activeParagraph]);
+
+  useEffect(() => {
+    if (!editor || !settings.focusMode) return;
+
+    const handleSelectionChange = () => {
+      const { from } = editor.state.selection;
+      let paragraphIndex = 0;
+      
+      const allParagraphs = [];
+      editor.state.doc.descendants((node, pos) => {
+        if (node.isBlock && (node.type.name === 'paragraph' || node.type.name === 'heading')) {
+          allParagraphs.push({ pos });
+        }
+      });
+      
+      for (let i = 0; i < allParagraphs.length; i++) {
+        if (allParagraphs[i].pos <= from) {
+          paragraphIndex = i;
+        }
+      }
+      
+      setActiveParagraph(paragraphIndex);
+    };
+
+    editor.on('selectionUpdate', handleSelectionChange);
+    
+    return () => {
+      editor.off('selectionUpdate', handleSelectionChange);
+    };
+  }, [editor, settings.focusMode]);
+
+  useEffect(() => {
+    updateActiveParagraphClass();
+  }, [updateActiveParagraphClass]);
+
+  useEffect(() => {
+    if (!editor || !settings.focusMode) {
+      if (intersectionObserverRef.current) {
+        intersectionObserverRef.current.disconnect();
+        intersectionObserverRef.current = null;
+      }
+      return;
+    }
+
+    const editorDom = editor.view.dom;
+    if (!editorDom) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let bestEntry = null;
+        let bestRatio = -1;
+        
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
+            bestRatio = entry.intersectionRatio;
+            bestEntry = entry;
+          }
+        });
+        
+        if (bestEntry) {
+          const paragraphs = editorDom.querySelectorAll('p, h1, h2, h3, h4, h5, h6, .paragraph');
+          paragraphs.forEach((p, index) => {
+            if (p === bestEntry.target) {
+              setActiveParagraph(index);
+            }
+          });
+        }
+      },
+      {
+        root: editorDom,
+        threshold: [0, 0.25, 0.5, 0.75, 1],
+        rootMargin: '-20% 0px -20% 0px',
+      }
+    );
+
+    intersectionObserverRef.current = observer;
+
+    const paragraphs = editorDom.querySelectorAll('p, h1, h2, h3, h4, h5, h6, .paragraph');
+    paragraphs.forEach((p) => observer.observe(p));
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [editor, settings.focusMode, updateActiveParagraphClass]);
 
   const editor = useEditor({
     extensions: [

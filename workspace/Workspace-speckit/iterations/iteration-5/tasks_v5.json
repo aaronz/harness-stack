@@ -849,7 +849,7 @@
       "priority": "P2",
       "title": "Frontmatter Parsing",
       "description": "Improve frontmatter parsing to handle complex YAML. Test with various formats.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Complex YAML frontmatter parses correctly",
         "Invalid frontmatter handled gracefully",
@@ -911,7 +911,7 @@
       "priority": "P2",
       "title": "Focus Mode Quality",
       "description": "Enhance focus mode to properly dim/hide non-current paragraphs. Test with various lengths.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Non-current paragraphs dimmed",
         "Distraction reduction per FR-028",
