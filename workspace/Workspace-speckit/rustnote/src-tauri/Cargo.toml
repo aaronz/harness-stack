@@ -33,6 +33,8 @@ tauri-plugin-shell = "2"
 pulldown-cmark = "0.12"
 syntect = "5"
 comrak = "0.52"
+tree-sitter = "0.19"
+tree-sitter-markdown = "0.7"
 uuid = { version = "1", features = ["v4"] }
 chrono = { version = "0.4", features = ["serde"] }
 env_logger = "0.11"

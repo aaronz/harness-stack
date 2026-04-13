@@ -482,7 +482,7 @@
       "priority": "P1",
       "title": "Tree-sitter Parser",
       "description": "Research tree-sitter + comrak integration and implement tree-sitter-based incremental parsing wrapper.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Tree-sitter parser integrated with existing parsing",
         "Incremental parsing works for edits",

@@ -201,7 +201,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-005: PDF Export Quality
+### G-005: Done
 **Status:** Pending
 **Priority:** P1
 **Module:** Export
