@@ -146,7 +146,7 @@
       "priority": "P0",
       "title": "Fix Undo/Redo Fidelity",
       "description": "Fix undo/redo implementation to ensure structural edits are atomic and state is preserved correctly across multiple undo/redo cycles. Add comprehensive round-trip tests.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Round-trip tests pass: do -> undo -> do -> undo = original state",
         "Structural edits (lists, headings, blockquotes) undo correctly",

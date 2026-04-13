@@ -14,7 +14,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-001: Complete TransformEngine Implementation
+### G-001: Done
 **Status:** Pending
 **Priority:** P0 (Blocking)
 **Module:** Editor (Rust Backend)

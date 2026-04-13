@@ -15,6 +15,14 @@ pub enum Command {
         new_text: String,
         old_text: String,
     },
+    /// Inverse of Replace: removes new_text that was inserted and inserts old_text that was deleted
+    /// This is needed because Replace is a compound operation (delete + insert) and its inverse
+    /// must also be compound (delete the new_text, insert the old_text)
+    UndoReplace {
+        range: SourceRange,
+        old_text: String,
+        new_text: String,
+    },
     Format {
         range: SourceRange,
         format: FormatKind,
@@ -75,6 +83,16 @@ impl Command {
                 content.drain(start..end);
                 content.insert_str(start, new_text);
             }
+            Command::UndoReplace {
+                range,
+                old_text,
+                new_text,
+            } => {
+                let start = range.start.offset.min(content.len());
+                let end = (start + new_text.len()).min(content.len());
+                content.drain(start..end);
+                content.insert_str(start, old_text);
+            }
             Command::Format { range, format } => {
                 let start = range.start.offset.min(content.len());
                 let end = range.end.offset.min(content.len());
@@ -96,8 +114,15 @@ impl Command {
             )),
             Command::Delete { range, deleted } => Some(Command::insert(range.start, &deleted)),
             Command::Replace {
-                range, old_text, ..
-            } => Some(Command::insert(range.start, &old_text)),
+                range,
+                new_text,
+                old_text,
+                ..
+            } => Some(Command::UndoReplace {
+                range: range.clone(),
+                old_text: old_text.clone(),
+                new_text: new_text.clone(),
+            }),
             Command::Format { range, format } => {
                 let (prefix, suffix) = format.markdown_syntax();
                 let start = range.start.offset;
@@ -124,6 +149,9 @@ impl Command {
                     None
                 }
             }
+            // UndoReplace is the inverse of Replace - it cannot be further inverted
+            // because we've lost the original new_text content
+            Command::UndoReplace { .. } => None,
         }
     }
 }
