@@ -849,7 +849,7 @@
       "priority": "P2",
       "title": "Frontmatter Parsing",
       "description": "Improve frontmatter parsing to handle complex YAML. Test with various formats.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Complex YAML frontmatter parses correctly",
         "Invalid frontmatter handled gracefully",

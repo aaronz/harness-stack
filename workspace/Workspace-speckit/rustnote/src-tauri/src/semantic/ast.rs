@@ -1,16 +1,23 @@
 use comrak::{markdown_to_html, Options};
 
+use super::frontmatter::{FrontmatterError, YamlFrontmatter};
+
 pub struct SemanticDocument {
     source: String,
     frontmatter: Option<String>,
+    frontmatter_parsed: Option<YamlFrontmatter>,
 }
 
 impl SemanticDocument {
     pub fn parse(source: &str) -> Self {
         let (frontmatter, markdown) = Self::parse_frontmatter(source);
+        let frontmatter_parsed = frontmatter
+            .as_ref()
+            .and_then(|fm| YamlFrontmatter::parse(fm).ok());
         SemanticDocument {
             source: markdown.to_string(),
             frontmatter,
+            frontmatter_parsed,
         }
     }
 
@@ -39,21 +46,25 @@ impl SemanticDocument {
 
         let between_dashes = &after_newline[..end_pos];
 
-        let newline_count = between_dashes.chars().filter(|&c| c == '\n').count();
-        if newline_count > 2 {
-            return (None, source);
-        }
-
-        if !between_dashes.contains(':') && !between_dashes.contains('-') {
-            return (None, source);
-        }
-
         let remaining = &after_newline[end_pos + 4..];
-        if !remaining.starts_with('\n') {
+        if !remaining.starts_with('\n') && !remaining.is_empty() {
+            return (None, source);
+        }
+
+        if between_dashes.trim().is_empty() {
             return (None, source);
         }
 
         let frontmatter_content = &after_newline[..end_pos];
+
+        let has_yaml_structure = frontmatter_content.contains(':')
+            || frontmatter_content
+                .lines()
+                .any(|line| line.trim_start().starts_with('-'));
+
+        if !has_yaml_structure {
+            return (None, source);
+        }
 
         (
             Some(frontmatter_content.to_string()),
@@ -71,6 +82,19 @@ impl SemanticDocument {
 
     pub fn get_frontmatter(&self) -> Option<&str> {
         self.frontmatter.as_deref()
+    }
+
+    pub fn get_frontmatter_parsed(&self) -> Option<&YamlFrontmatter> {
+        self.frontmatter_parsed.as_ref()
+    }
+
+    pub fn parse_frontmatter_yaml(&self) -> Result<&YamlFrontmatter, FrontmatterError> {
+        match &self.frontmatter_parsed {
+            Some(fm) => Ok(fm),
+            None => Err(FrontmatterError::InvalidYaml(
+                "No frontmatter present".to_string(),
+            )),
+        }
     }
 
     pub fn serialize_to_commonmark(&self) -> String {

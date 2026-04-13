@@ -317,7 +317,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-011: HTML Export Modes
+### G-011: Done
 **Status:** Done
 **Priority:** P2
 **Module:** Export
