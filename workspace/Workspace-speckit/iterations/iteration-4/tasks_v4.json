@@ -41,7 +41,7 @@
       "priority": "P2",
       "title": "Frontmatter UI Component",
       "description": "Create FrontmatterBlock.jsx component to detect frontmatter at document start (YAML --- delimited). Display as collapsible block with toggle. Apply syntax styling (key: value pairs). Parse and display metadata (title, tags, date, etc.). Handle missing/invalid frontmatter gracefully.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Frontmatter displays as styled collapsible block",
         "Toggle expands/collapses content",

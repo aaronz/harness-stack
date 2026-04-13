@@ -6,7 +6,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Link from '@tiptap/extension-link';
 import { marked } from 'marked';
-import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, useState } from 'react';
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, useState, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
@@ -14,6 +14,7 @@ import { useSearch } from '../contexts/SearchContext';
 import { useAutoSaveTimer } from '../hooks/useAutoSaveTimer';
 import CodeBlockHighlight from './CodeBlockHighlight';
 import LinkPopover from './LinkPopover';
+import FrontmatterBlock, { extractFrontmatter } from './FrontmatterBlock';
 
 marked.setOptions({
   breaks: true,
@@ -87,6 +88,7 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
     text: '',
     linkElement: null,
   });
+  const frontmatterRef = useRef(null);
 
   const editor = useEditor({
     extensions: [
@@ -289,7 +291,9 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
         const html = editor.getHTML();
         const processedHtml = taskListHtmlToMarkdown(html);
         const markdown = marked(processedHtml);
-        updateContent(markdown);
+        const currentFrontmatter = frontmatterRef.current;
+        const fullContent = currentFrontmatter ? currentFrontmatter + markdown : markdown;
+        updateContent(fullContent);
       }, 150);
     },
   });
@@ -299,7 +303,11 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
       const currentHtml = editor.getHTML();
       let parsedMarkdown = '';
       if (currentDocument.content && typeof currentDocument.content === 'string') {
-        parsedMarkdown = marked(currentDocument.content);
+        const { frontmatter, contentWithoutFrontmatter } = extractFrontmatter(currentDocument.content);
+        frontmatterRef.current = frontmatter;
+        parsedMarkdown = marked(contentWithoutFrontmatter);
+      } else {
+        frontmatterRef.current = null;
       }
       if (currentHtml !== parsedMarkdown) {
         isInternalUpdateRef.current = true;
@@ -499,11 +507,16 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
     scrollToHeading,
   }), [scrollToHeading]);
 
+  const { frontmatter } = useMemo(() => {
+    return extractFrontmatter(currentDocument?.content || '');
+  }, [currentDocument?.content]);
+
   return (
     <div 
       className="flex-1 flex flex-col overflow-hidden"
       style={containerStyle}
     >
+      <FrontmatterBlock frontmatter={frontmatter} />
       <EditorContent editor={editor} />
     </div>
   );

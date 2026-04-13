@@ -47,7 +47,7 @@ All P0 issues have been resolved in previous iterations.
 
 ---
 
-### IT-002: Code Syntax Highlighting Integration
+### IT-002: Done
 **Status:** Done  
 **Priority:** P1  
 **Module:** Frontend  
@@ -77,19 +77,19 @@ All P0 issues have been resolved in previous iterations.
 ## P2 - Medium Priority
 
 ### IT-003: Frontmatter UI Component
-**Status:** Pending  
+**Status:** Done  
 **Priority:** P2  
 **Module:** Frontend  
 **FR Reference:** FR-020  
 
 **Task Details:**
-- [ ] Create `FrontmatterBlock.jsx` component
-- [ ] Detect frontmatter at document start (YAML `---` delimited)
-- [ ] Display as collapsible block with toggle
-- [ ] Apply syntax styling (key: value pairs)
-- [ ] Allow expand/collapse toggle
-- [ ] Parse and display metadata (title, tags, date, etc.)
-- [ ] Handle missing/invalid frontmatter gracefully
+- [x] Create `FrontmatterBlock.jsx` component
+- [x] Detect frontmatter at document start (YAML `---` delimited)
+- [x] Display as collapsible block with toggle
+- [x] Apply syntax styling (key: value pairs)
+- [x] Allow expand/collapse toggle
+- [x] Parse and display metadata (title, tags, date, etc.)
+- [x] Handle missing/invalid frontmatter gracefully
 
 **Files:**
 - NEW: `www/src/components/FrontmatterBlock.jsx`
