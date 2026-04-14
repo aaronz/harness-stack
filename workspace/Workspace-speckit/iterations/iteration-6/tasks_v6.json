@@ -732,7 +732,7 @@
       "priority": "P2",
       "title": "Paste Handling Polish",
       "description": "Improve rich text paste conversion for common formats. Test with various paste sources (Word, web, other editors). Ensure Markdown conversion fidelity.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Rich text from Word pastes correctly",
         "Web content pastes correctly",
@@ -801,7 +801,7 @@
       "priority": "P2",
       "title": "Preferences UI",
       "description": "Consider adding dedicated settings/preferences panel. If implementing, include all settings from PRD-09. Current uses toolbar buttons only.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "All PRD-09 settings accessible",
         "Preferences panel UI works correctly",

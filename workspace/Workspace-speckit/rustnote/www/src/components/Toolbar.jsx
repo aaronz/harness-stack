@@ -1,7 +1,7 @@
 import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
 
-export default function Toolbar({ onExportClick }) {
+export default function Toolbar({ onExportClick, onPreferencesClick }) {
   const { createNewDocument, openDocument, saveDocument, insertImage, isSaving, currentDocument } = useDocument();
   const { settings, toggleTheme, toggleFocusMode, toggleTypewriterMode, toggleOutline } = useSettings();
 
@@ -86,6 +86,20 @@ export default function Toolbar({ onExportClick }) {
         title="Export Document"
       >
         Export
+      </button>
+
+      <button
+        id="btn-preferences"
+        onClick={onPreferencesClick}
+        className="px-3 py-1.5 text-sm border rounded cursor-pointer transition-colors"
+        style={{
+          backgroundColor: 'var(--bg-primary)',
+          borderColor: 'var(--border-color)',
+          color: 'var(--text-primary)',
+        }}
+        title="Preferences"
+      >
+        ⚙️
       </button>
 
       <button

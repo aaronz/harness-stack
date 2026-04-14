@@ -10,6 +10,7 @@ import TipTapEditor from './components/TipTapEditor';
 import OutlinePanel from './components/OutlinePanel';
 import SearchPanel from './components/SearchPanel';
 import ExportModal from './components/ExportModal';
+import PreferencesModal from './components/PreferencesModal';
 import ExternalChangeModal from './components/ExternalChangeModal';
 import RecoveryModal from './components/RecoveryModal';
 import Toast from './components/Toast';
@@ -21,6 +22,7 @@ function AppContent() {
   const { createNewDocument, currentDocument, setCurrentDocument, saveDocument, openDocument, openWorkspace } = useDocument();
   const { isSearchVisible, showSearch, hideSearch, findNext, findPrev } = useSearch();
   const [isExportVisible, setIsExportVisible] = useState(false);
+  const [isPreferencesVisible, setIsPreferencesVisible] = useState(false);
   const [recoverySnapshots, setRecoverySnapshots] = useState([]);
   const [isRecoveryVisible, setIsRecoveryVisible] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
@@ -113,6 +115,14 @@ function AppContent() {
 
   const handleExportClose = () => {
     setIsExportVisible(false);
+  };
+
+  const handlePreferencesClick = () => {
+    setIsPreferencesVisible(true);
+  };
+
+  const handlePreferencesClose = () => {
+    setIsPreferencesVisible(false);
   };
 
   useEffect(() => {
@@ -236,9 +246,10 @@ function AppContent() {
       <div id="app" className="flex h-screen w-screen">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Toolbar onExportClick={handleExportClick} />
+          <Toolbar onExportClick={handleExportClick} onPreferencesClick={handlePreferencesClick} />
           <SearchPanel isVisible={isSearchVisible} onClose={hideSearch} />
           <ExportModal isVisible={isExportVisible} onClose={handleExportClose} />
+          <PreferencesModal isVisible={isPreferencesVisible} onClose={handlePreferencesClose} />
           <ExternalChangeModal
             isVisible={!!externalChange}
             fileName={externalChange?.fileName}

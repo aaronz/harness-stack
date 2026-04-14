@@ -307,7 +307,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-012: Paste Handling Polish
+### G-012: Done
 **Status:** Pending
 **Priority:** P2
 **Module:** Editor
