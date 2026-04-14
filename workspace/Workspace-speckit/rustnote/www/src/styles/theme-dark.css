@@ -22,6 +22,14 @@
     --search-input-focus: #4fc3f7;
     --search-btn-bg: #3c3c3c;
     --search-btn-hover: #4c4c4c;
+    /* Frontmatter block theme variables */
+    --frontmatter-error-bg: #3a3020;
+    --frontmatter-error-border: #6b5a00;
+    --frontmatter-error-text: #e8c84a;
+    --frontmatter-key-color: var(--accent-color);
+    --frontmatter-value-color: var(--text-primary);
+    --frontmatter-delimiter-color: var(--text-secondary);
+    --frontmatter-raw-color: var(--text-secondary);
 }
 
 [data-theme="dark"] #content code {

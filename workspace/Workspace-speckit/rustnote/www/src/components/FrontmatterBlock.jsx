@@ -56,127 +56,44 @@ export default function FrontmatterBlock({ frontmatter, onToggle }) {
   const isValid = isValidFrontmatter(frontmatter || '');
 
   const handleToggle = () => {
-    setIsCollapsed(!isCollapsed);
-    if (onToggle) onToggle(!isCollapsed);
+    const newCollapsed = !isCollapsed;
+    setIsCollapsed(newCollapsed);
+    if (onToggle) onToggle(newCollapsed);
   };
 
-  if (!frontmatter) return null;
+  if (!frontmatter || !frontmatter.trim()) return null;
 
   const lines = frontmatter.split('\n');
 
   return (
-    <div
-      className="frontmatter-block"
-      style={{
-        background: 'var(--bg-secondary)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '6px',
-        margin: '0 0 16px 0',
-        overflow: 'hidden',
-        fontFamily: 'var(--font-mono)',
-        fontSize: '13px',
-      }}
-    >
+    <div className="frontmatter-block">
       <div
         className="frontmatter-header"
         onClick={handleToggle}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '8px 12px',
-          cursor: 'pointer',
-          userSelect: 'none',
-          borderBottom: isCollapsed ? 'none' : '1px solid var(--border-color)',
-          background: 'var(--bg-hover)',
-        }}
       >
-        <span
-          className="frontmatter-toggle"
-          style={{
-            display: 'inline-block',
-            width: 0,
-            height: 0,
-            borderTop: '5px solid transparent',
-            borderBottom: '5px solid transparent',
-            borderLeft: '6px solid var(--text-secondary)',
-            marginRight: '8px',
-            transition: 'transform 0.15s ease',
-            transform: isCollapsed ? 'rotate(0deg)' : 'rotate(90deg)',
-          }}
-        />
-        <span
-          className="frontmatter-title"
-          style={{
-            fontWeight: 600,
-            color: 'var(--text-secondary)',
-            fontSize: '12px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-          }}
-        >
+        <span className={`frontmatter-toggle${isCollapsed ? '' : ' expanded'}`} />
+        <span className="frontmatter-title">
           Frontmatter
         </span>
         {metadata && (
-          <span
-            className="frontmatter-count"
-            style={{
-              marginLeft: '8px',
-              padding: '2px 6px',
-              background: 'var(--accent-color)',
-              color: 'white',
-              borderRadius: '10px',
-              fontSize: '10px',
-              fontWeight: 500,
-            }}
-          >
+          <span className="frontmatter-count">
             {Object.keys(metadata).length} fields
           </span>
         )}
         {!isValid && (
-          <span
-            className="frontmatter-invalid"
-            style={{
-              marginLeft: '8px',
-              padding: '2px 6px',
-              background: '#dc3545',
-              color: 'white',
-              borderRadius: '10px',
-              fontSize: '10px',
-              fontWeight: 500,
-            }}
-          >
+          <span className="frontmatter-invalid">
             Invalid
           </span>
         )}
       </div>
-      <div
-        className="frontmatter-body"
-        style={{
-          display: isCollapsed ? 'none' : 'block',
-          padding: '12px',
-        }}
-      >
+      <div className="frontmatter-body" style={{ display: isCollapsed ? 'none' : 'block' }}>
         {!isValid && (
-          <div
-            className="frontmatter-error"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              marginBottom: '8px',
-              padding: '8px',
-              background: '#fff3cd',
-              border: '1px solid #ffc107',
-              borderRadius: '4px',
-              color: '#856404',
-              fontSize: '12px',
-            }}
-          >
+          <div className="frontmatter-error">
             <span style={{ fontWeight: 'bold' }}>!</span>
             <span>Invalid frontmatter format</span>
           </div>
         )}
-        <div className="frontmatter-content" style={{ fontFamily: 'var(--font-mono)' }}>
+        <div className="frontmatter-content">
           {lines.map((line, index) => {
             const keyValueMatch = line.match(/^(\s*)([^:]+):(\s*)(.*)$/);
             if (keyValueMatch) {
@@ -185,27 +102,12 @@ export default function FrontmatterBlock({ frontmatter, onToggle }) {
                 <div
                   key={index}
                   className="frontmatter-line"
-                  style={{
-                    display: 'flex',
-                    marginBottom: '4px',
-                  }}
                 >
-                  <span
-                    className="frontmatter-key"
-                    style={{
-                      color: 'var(--accent-color)',
-                      fontWeight: 500,
-                    }}
-                  >
+                  <span className="frontmatter-key">
                     {leadingSpace}{key}:
                   </span>
-                  <span className="frontmatter-colon" style={{ marginRight: '4px' }}>:</span>
-                  <span
-                    className="frontmatter-value"
-                    style={{
-                      color: 'var(--text-primary)',
-                    }}
-                  >
+                  <span className="frontmatter-colon">:</span>
+                  <span className="frontmatter-value">
                     {value}
                   </span>
                 </div>
@@ -215,10 +117,6 @@ export default function FrontmatterBlock({ frontmatter, onToggle }) {
                 <div
                   key={index}
                   className="frontmatter-delimiter"
-                  style={{
-                    color: 'var(--text-secondary)',
-                    marginBottom: '4px',
-                  }}
                 >
                   {line}
                 </div>
@@ -228,10 +126,6 @@ export default function FrontmatterBlock({ frontmatter, onToggle }) {
                 <div
                   key={index}
                   className="frontmatter-raw"
-                  style={{
-                    color: 'var(--text-secondary)',
-                    fontFamily: 'var(--font-mono)',
-                  }}
                 >
                   {line}
                 </div>

@@ -1066,7 +1066,7 @@
       "priority": "P2",
       "title": "PreferencesModal \u2014 Full Coverage Verification",
       "description": "Verify all 10 settings controls in PreferencesModal work correctly (theme, font size, font family, line height, content width, focus mode, typewriter mode, outline, auto-save toggle, auto-save interval), fix integration issues, and verify keyboard accessibility.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "All 10 settings controls work correctly",
         "Changes persist across app restart",
@@ -1183,7 +1183,7 @@
       "priority": "P2",
       "title": "FrontmatterBlock \u2014 Visual Polish",
       "description": "Review and polish FrontmatterBlock.jsx: enhance with key-value display, check visual consistency with editor theme, verify rendering in both light and dark themes, and fix any visual inconsistencies.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "FrontmatterBlock renders with key-value display",
         "Styling consistent with editor theme",
