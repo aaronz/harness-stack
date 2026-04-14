@@ -18,6 +18,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
   const modalRef = useRef(null);
   const closeButtonRef = useRef(null);
   const previousActiveElement = useRef(null);
+  const hasChangesRef = useRef(false);
   
   const [localSettings, setLocalSettings] = useState({
     theme: 'light',
@@ -33,9 +34,16 @@ export default function PreferencesModal({ isVisible, onClose }) {
     contentWidth: 720,
   });
 
+  const handleChange = useCallback((key, value) => {
+    hasChangesRef.current = true;
+    setLocalSettings(prev => ({ ...prev, [key]: value }));
+    setSettings(prev => ({ ...prev, [key]: value }));
+  }, [setSettings]);
+
   useEffect(() => {
     if (isVisible) {
       previousActiveElement.current = document.activeElement;
+      hasChangesRef.current = false;
       setLocalSettings({
         theme: settings.theme,
         autoSave: settings.autoSave,
@@ -63,12 +71,17 @@ export default function PreferencesModal({ isVisible, onClose }) {
 
   const handleSave = useCallback(() => {
     setSettings(localSettings);
+    hasChangesRef.current = false;
     onClose();
   }, [localSettings, setSettings, onClose]);
 
   const handleClose = useCallback(() => {
+    if (hasChangesRef.current) {
+      setSettings(localSettings);
+      hasChangesRef.current = false;
+    }
     onClose();
-  }, [onClose]);
+  }, [localSettings, setSettings, onClose]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') {
@@ -147,7 +160,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
               <div className="flex gap-2">
                 <button
                   id="btn-theme-light"
-                  onClick={() => setLocalSettings(s => ({ ...s, theme: 'light' }))}
+                  onClick={() => handleChange('theme', 'light')}
                   className={`px-4 py-2 text-sm border rounded cursor-pointer transition-colors ${
                     localSettings.theme === 'light' ? 'ring-2' : ''
                   }`}
@@ -162,7 +175,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                 </button>
                 <button
                   id="btn-theme-dark"
-                  onClick={() => setLocalSettings(s => ({ ...s, theme: 'dark' }))}
+                  onClick={() => handleChange('theme', 'dark')}
                   className={`px-4 py-2 text-sm border rounded cursor-pointer transition-colors ${
                     localSettings.theme === 'dark' ? 'ring-2' : ''
                   }`}
@@ -189,7 +202,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
               <select
                 id="font-family-select"
                 value={localSettings.fontFamily}
-                onChange={(e) => setLocalSettings(s => ({ ...s, fontFamily: e.target.value }))}
+                onChange={(e) => handleChange('fontFamily', e.target.value)}
                 className="w-full px-3 py-2 text-sm border rounded cursor-pointer"
                 style={{
                   backgroundColor: 'var(--bg-primary)',
@@ -217,7 +230,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                 min={MIN_FONT_SIZE}
                 max={MAX_FONT_SIZE}
                 value={localSettings.fontSize}
-                onChange={(e) => setLocalSettings(s => ({ ...s, fontSize: parseInt(e.target.value, 10) }))}
+                onChange={(e) => handleChange('fontSize', parseInt(e.target.value, 10))}
                 className="w-full h-2 rounded-full appearance-none cursor-pointer"
                 style={{
                   backgroundColor: 'var(--bg-secondary)',
@@ -245,7 +258,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                 max={MAX_LINE_HEIGHT * 10}
                 step={1}
                 value={localSettings.lineHeight * 10}
-                onChange={(e) => setLocalSettings(s => ({ ...s, lineHeight: parseInt(e.target.value, 10) / 10 }))}
+                onChange={(e) => handleChange('lineHeight', parseInt(e.target.value, 10) / 10)}
                 className="w-full h-2 rounded-full appearance-none cursor-pointer"
                 style={{
                   backgroundColor: 'var(--bg-secondary)',
@@ -273,7 +286,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                 max={MAX_CONTENT_WIDTH}
                 step={10}
                 value={localSettings.contentWidth}
-                onChange={(e) => setLocalSettings(s => ({ ...s, contentWidth: parseInt(e.target.value, 10) }))}
+                onChange={(e) => handleChange('contentWidth', parseInt(e.target.value, 10))}
                 className="w-full h-2 rounded-full appearance-none cursor-pointer"
                 style={{
                   backgroundColor: 'var(--bg-secondary)',
@@ -306,7 +319,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                 min={MIN_TAB_SIZE}
                 max={MAX_TAB_SIZE}
                 value={localSettings.tabSize}
-                onChange={(e) => setLocalSettings(s => ({ ...s, tabSize: parseInt(e.target.value, 10) }))}
+                onChange={(e) => handleChange('tabSize', parseInt(e.target.value, 10))}
                 className="w-full h-2 rounded-full appearance-none cursor-pointer"
                 style={{
                   backgroundColor: 'var(--bg-secondary)',
@@ -325,7 +338,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                   id="focus-mode-toggle"
                   type="checkbox"
                   checked={localSettings.focusMode}
-                  onChange={(e) => setLocalSettings(s => ({ ...s, focusMode: e.target.checked }))}
+                  onChange={(e) => handleChange('focusMode', e.target.checked)}
                   className="w-4 h-4 rounded"
                   style={{ accentColor: 'var(--accent-color)' }}
                 />
@@ -341,7 +354,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                   id="typewriter-mode-toggle"
                   type="checkbox"
                   checked={localSettings.typewriterMode}
-                  onChange={(e) => setLocalSettings(s => ({ ...s, typewriterMode: e.target.checked }))}
+                  onChange={(e) => handleChange('typewriterMode', e.target.checked)}
                   className="w-4 h-4 rounded"
                   style={{ accentColor: 'var(--accent-color)' }}
                 />
@@ -357,7 +370,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                   id="outline-toggle"
                   type="checkbox"
                   checked={localSettings.outlineVisible}
-                  onChange={(e) => setLocalSettings(s => ({ ...s, outlineVisible: e.target.checked }))}
+                  onChange={(e) => handleChange('outlineVisible', e.target.checked)}
                   className="w-4 h-4 rounded"
                   style={{ accentColor: 'var(--accent-color)' }}
                 />
@@ -379,7 +392,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                   id="auto-save-toggle"
                   type="checkbox"
                   checked={localSettings.autoSave}
-                  onChange={(e) => setLocalSettings(s => ({ ...s, autoSave: e.target.checked }))}
+                  onChange={(e) => handleChange('autoSave', e.target.checked)}
                   className="w-4 h-4 rounded"
                   style={{ accentColor: 'var(--accent-color)' }}
                 />
@@ -403,7 +416,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                 min={10}
                 max={300}
                 value={autoSaveIntervalSeconds}
-                onChange={(e) => setLocalSettings(s => ({ ...s, autoSaveInterval: parseInt(e.target.value, 10) * 1000 }))}
+                onChange={(e) => handleChange('autoSaveInterval', parseInt(e.target.value, 10) * 1000)}
                 className="w-full h-2 rounded-full appearance-none cursor-pointer"
                 style={{
                   backgroundColor: 'var(--bg-secondary)',

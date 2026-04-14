@@ -1066,7 +1066,7 @@
       "priority": "P2",
       "title": "PreferencesModal \u2014 Full Coverage Verification",
       "description": "Verify all 10 settings controls in PreferencesModal work correctly (theme, font size, font family, line height, content width, focus mode, typewriter mode, outline, auto-save toggle, auto-save interval), fix integration issues, and verify keyboard accessibility.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "All 10 settings controls work correctly",
         "Changes persist across app restart",

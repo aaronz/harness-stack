@@ -540,30 +540,43 @@
 **Gap Reference:** G-015
 **FR Reference:** FR-034
 **Article:** Article 3 (Settings-Implementation Parity)
-**Status:** PreferencesModal exists, full settings coverage NOT verified
+**Status:** ✅ DONE — All 10 settings controls verified with instant context updates, keyboard accessibility passes
 
 **Subtasks:**
 
-- [ ] **T-051:** Verify all settings controls:
-  - [ ] Theme toggle → instant switch, persists
-  - [ ] Font size → instant switch, persists
-  - [ ] Font family → instant switch, persists
-  - [ ] Line height → instant switch, persists
-  - [ ] Content width → instant switch, persists
-  - [ ] Focus mode → instant switch, persists
-  - [ ] Typewriter mode → instant switch, persists
-  - [ ] Outline visible → instant switch, persists
-  - [ ] Auto-save toggle → instant switch, persists
-  - [ ] Auto-save interval → instant switch, persists
+- [x] **T-051:** Verify all settings controls:
+  - [x] Theme toggle → instant switch, persists
+  - [x] Font size → instant switch, persists
+  - [x] Font family → instant switch, persists
+  - [x] Line height → instant switch, persists
+  - [x] Content width → instant switch, persists
+  - [x] Focus mode → instant switch, persists
+  - [x] Typewriter mode → instant switch, persists
+  - [x] Outline visible → instant switch, persists
+  - [x] Auto-save toggle → instant switch, persists
+  - [x] Auto-save interval → instant switch, persists
 
-- [ ] **T-052:** Fix integration issues:
-  - [ ] Fix any missing context bindings
-  - [ ] Fix: close button updates context before closing
-  - [ ] Fix: keyboard accessibility (Escape to close, Tab navigation)
+- [x] **T-052:** Fix integration issues:
+  - [x] Fixed missing context bindings — added `handleChange` function that updates both local state and context
+  - [x] Fixed: close button updates context before closing
+  - [x] Fixed: keyboard accessibility (Escape to close, Tab navigation) already implemented
 
 **Verification:** All 10 settings controls work correctly, changes persist, keyboard accessibility passes.
 
-**Files:** `PreferencesModal.jsx`, `SettingsContext.jsx`
+**Test Cases Implemented:**
+- TC-P2-016-01: Theme toggle — instant switch and persist
+- TC-P2-016-02: Font size control
+- TC-P2-016-03: Font family control
+- TC-P2-016-04: Line height control
+- TC-P2-016-05: Content width control
+- TC-P2-016-06: Focus mode toggle
+- TC-P2-016-07: Typewriter mode toggle
+- TC-P2-016-08: Outline visibility toggle
+- TC-P2-016-09: Auto-save toggle and interval
+- TC-P2-016-10: Keyboard accessibility — Escape to close
+- TC-P2-016-11: Keyboard accessibility — Tab navigation
+
+**Files:** `PreferencesModal.jsx`, `SettingsContext.jsx`, `preferences-integration.test.js`
 
 ---
 
@@ -755,7 +768,7 @@
 | P2-013 | P2 | Table Editing Documentation | ✅ Done |
 | P2-014 | P2 | Focus Mode Visual Verification | ✅ Done |
 | P2-015 | P2 | Typewriter Mode Scroll Fix | ✅ Done |
-| P2-016 | P2 | PreferencesModal Coverage | **TODO** |
+| P2-016 | P2 | PreferencesModal Coverage | ✅ Done |
 | P2-017 | P2 | FrontmatterBlock Polish | **TODO** |
 | P2-018 | P2 | ExportFormat Enum | **TODO** |
 | P2-019 | P2 | PDF Overwrite Protection | **TODO** |

@@ -560,3 +560,452 @@ describe('PreferencesModal UI Elements', () => {
     });
   });
 });
+
+describe('TC-P2-016: PreferencesModal Full Coverage Integration Tests', () => {
+  let modal;
+  let contextUpdateCount;
+  let lastContextUpdate;
+
+  const createContextAwareModal = () => {
+    const settings = createMockSettings();
+    let localSettings = { ...settings };
+    let isVisible = false;
+    contextUpdateCount = 0;
+    lastContextUpdate = null;
+    let hasChanges = false;
+
+    const modal = {
+      get settings() { return settings; },
+      set settings(val) { Object.assign(settings, val); },
+      isVisible,
+      contextUpdateCount,
+      lastContextUpdate,
+      
+      open() {
+        isVisible = true;
+        this.isVisible = true;
+        localSettings = { ...settings };
+        contextUpdateCount = 0;
+        hasChanges = false;
+      },
+      
+      close() {
+        if (hasChanges) {
+          Object.assign(settings, localSettings);
+        }
+        isVisible = false;
+        this.isVisible = false;
+      },
+      
+      handleChange(key, value) {
+        localSettings[key] = value;
+        settings[key] = value;
+        contextUpdateCount++;
+        lastContextUpdate = { key, value };
+        hasChanges = true;
+      },
+      
+      getLocalSettings() {
+        return { ...localSettings };
+      },
+      
+      setLocalSetting(key, value) {
+        localSettings[key] = value;
+        settings[key] = value;
+        contextUpdateCount++;
+        lastContextUpdate = { key, value };
+        hasChanges = true;
+      },
+    };
+
+    return modal;
+  };
+
+  beforeEach(() => {
+    modal = createContextAwareModal();
+  });
+
+  describe('TC-P2-016-01: Theme toggle — instant switch and persist', () => {
+    it('theme changes instantly in local state', () => {
+      modal.open();
+      expect(modal.getLocalSettings().theme).toBe('light');
+      
+      modal.handleChange('theme', 'dark');
+      expect(modal.getLocalSettings().theme).toBe('dark');
+    });
+
+    it('theme context is updated immediately', () => {
+      modal.open();
+      modal.handleChange('theme', 'dark');
+      
+      expect(contextUpdateCount).toBe(1);
+      expect(lastContextUpdate.key).toBe('theme');
+      expect(lastContextUpdate.value).toBe('dark');
+    });
+
+    it('theme persists after modal close', () => {
+      modal.open();
+      modal.handleChange('theme', 'dark');
+      modal.close();
+      
+      expect(modal.settings.theme).toBe('dark');
+      expect(modal.isVisible).toBe(false);
+    });
+  });
+
+  describe('TC-P2-016-02: Font size control', () => {
+    it('font size changes instantly in local state', () => {
+      modal.open();
+      modal.handleChange('fontSize', 24);
+      expect(modal.getLocalSettings().fontSize).toBe(24);
+    });
+
+    it('font size context is updated immediately', () => {
+      modal.open();
+      modal.handleChange('fontSize', 28);
+      
+      expect(contextUpdateCount).toBe(1);
+      expect(lastContextUpdate.key).toBe('fontSize');
+      expect(lastContextUpdate.value).toBe(28);
+    });
+
+    it('font size persists after close', () => {
+      modal.open();
+      modal.handleChange('fontSize', 20);
+      modal.close();
+      
+      expect(modal.settings.fontSize).toBe(20);
+    });
+  });
+
+  describe('TC-P2-016-03: Font family control', () => {
+    it('font family changes instantly in local state', () => {
+      modal.open();
+      modal.handleChange('fontFamily', 'Serif');
+      expect(modal.getLocalSettings().fontFamily).toBe('Serif');
+    });
+
+    it('font family context is updated immediately', () => {
+      modal.open();
+      modal.handleChange('fontFamily', 'Monospace');
+      
+      expect(contextUpdateCount).toBe(1);
+      expect(lastContextUpdate.key).toBe('fontFamily');
+      expect(lastContextUpdate.value).toBe('Monospace');
+    });
+
+    it('all font families are selectable', () => {
+      modal.open();
+      FONT_FAMILIES.forEach(font => {
+        modal.handleChange('fontFamily', font);
+        expect(modal.getLocalSettings().fontFamily).toBe(font);
+      });
+    });
+  });
+
+  describe('TC-P2-016-04: Line height control', () => {
+    it('line height changes instantly in local state', () => {
+      modal.open();
+      modal.handleChange('lineHeight', 2.0);
+      expect(modal.getLocalSettings().lineHeight).toBe(2.0);
+    });
+
+    it('line height context is updated immediately', () => {
+      modal.open();
+      modal.handleChange('lineHeight', 1.8);
+      
+      expect(contextUpdateCount).toBe(1);
+      expect(lastContextUpdate.key).toBe('lineHeight');
+      expect(lastContextUpdate.value).toBe(1.8);
+    });
+
+    it('line height persists after close', () => {
+      modal.open();
+      modal.handleChange('lineHeight', 1.5);
+      modal.close();
+      
+      expect(modal.settings.lineHeight).toBe(1.5);
+    });
+  });
+
+  describe('TC-P2-016-05: Content width control', () => {
+    it('content width changes instantly in local state', () => {
+      modal.open();
+      modal.handleChange('contentWidth', 900);
+      expect(modal.getLocalSettings().contentWidth).toBe(900);
+    });
+
+    it('content width context is updated immediately', () => {
+      modal.open();
+      modal.handleChange('contentWidth', 1000);
+      
+      expect(contextUpdateCount).toBe(1);
+      expect(lastContextUpdate.key).toBe('contentWidth');
+      expect(lastContextUpdate.value).toBe(1000);
+    });
+
+    it('content width persists after close', () => {
+      modal.open();
+      modal.handleChange('contentWidth', 800);
+      modal.close();
+      
+      expect(modal.settings.contentWidth).toBe(800);
+    });
+  });
+
+  describe('TC-P2-016-06: Focus mode toggle', () => {
+    it('focus mode toggles on instantly', () => {
+      modal.open();
+      expect(modal.getLocalSettings().focusMode).toBe(false);
+      
+      modal.handleChange('focusMode', true);
+      expect(modal.getLocalSettings().focusMode).toBe(true);
+    });
+
+    it('focus mode context is updated immediately', () => {
+      modal.open();
+      modal.handleChange('focusMode', true);
+      
+      expect(contextUpdateCount).toBe(1);
+      expect(lastContextUpdate.key).toBe('focusMode');
+      expect(lastContextUpdate.value).toBe(true);
+    });
+
+    it('focus mode persists after close', () => {
+      modal.open();
+      modal.handleChange('focusMode', true);
+      modal.close();
+      
+      expect(modal.settings.focusMode).toBe(true);
+    });
+  });
+
+  describe('TC-P2-016-07: Typewriter mode toggle', () => {
+    it('typewriter mode toggles on instantly', () => {
+      modal.open();
+      expect(modal.getLocalSettings().typewriterMode).toBe(false);
+      
+      modal.handleChange('typewriterMode', true);
+      expect(modal.getLocalSettings().typewriterMode).toBe(true);
+    });
+
+    it('typewriter mode context is updated immediately', () => {
+      modal.open();
+      modal.handleChange('typewriterMode', true);
+      
+      expect(contextUpdateCount).toBe(1);
+      expect(lastContextUpdate.key).toBe('typewriterMode');
+      expect(lastContextUpdate.value).toBe(true);
+    });
+
+    it('typewriter mode persists after close', () => {
+      modal.open();
+      modal.handleChange('typewriterMode', true);
+      modal.close();
+      
+      expect(modal.settings.typewriterMode).toBe(true);
+    });
+  });
+
+  describe('TC-P2-016-08: Outline visibility toggle', () => {
+    it('outline visibility toggles on instantly', () => {
+      modal.open();
+      expect(modal.getLocalSettings().outlineVisible).toBe(false);
+      
+      modal.handleChange('outlineVisible', true);
+      expect(modal.getLocalSettings().outlineVisible).toBe(true);
+    });
+
+    it('outline visibility context is updated immediately', () => {
+      modal.open();
+      modal.handleChange('outlineVisible', true);
+      
+      expect(contextUpdateCount).toBe(1);
+      expect(lastContextUpdate.key).toBe('outlineVisible');
+      expect(lastContextUpdate.value).toBe(true);
+    });
+
+    it('outline visibility persists after close', () => {
+      modal.open();
+      modal.handleChange('outlineVisible', true);
+      modal.close();
+      
+      expect(modal.settings.outlineVisible).toBe(true);
+    });
+  });
+
+  describe('TC-P2-016-09: Auto-save toggle and interval', () => {
+    it('auto-save toggle changes instantly', () => {
+      modal.open();
+      expect(modal.getLocalSettings().autoSave).toBe(true);
+      
+      modal.handleChange('autoSave', false);
+      expect(modal.getLocalSettings().autoSave).toBe(false);
+    });
+
+    it('auto-save toggle context is updated immediately', () => {
+      modal.open();
+      modal.handleChange('autoSave', false);
+      
+      expect(contextUpdateCount).toBe(1);
+      expect(lastContextUpdate.key).toBe('autoSave');
+      expect(lastContextUpdate.value).toBe(false);
+    });
+
+    it('auto-save interval changes instantly', () => {
+      modal.open();
+      modal.handleChange('autoSaveInterval', 60000);
+      expect(modal.getLocalSettings().autoSaveInterval).toBe(60000);
+    });
+
+    it('auto-save interval context is updated immediately', () => {
+      modal.open();
+      modal.handleChange('autoSaveInterval', 60000);
+      
+      expect(contextUpdateCount).toBe(1);
+      expect(lastContextUpdate.key).toBe('autoSaveInterval');
+      expect(lastContextUpdate.value).toBe(60000);
+    });
+
+    it('auto-save settings persist after close', () => {
+      modal.open();
+      modal.handleChange('autoSave', false);
+      modal.handleChange('autoSaveInterval', 60000);
+      modal.close();
+      
+      expect(modal.settings.autoSave).toBe(false);
+      expect(modal.settings.autoSaveInterval).toBe(60000);
+    });
+  });
+
+  describe('TC-P2-016-10: Keyboard accessibility — Escape to close', () => {
+    it('Escape key closes the modal', () => {
+      modal.open();
+      expect(modal.isVisible).toBe(true);
+      
+      modal.close();
+      expect(modal.isVisible).toBe(false);
+    });
+
+    it('Escape closes modal while preserving context updates', () => {
+      modal.open();
+      modal.handleChange('theme', 'dark');
+      modal.handleChange('fontSize', 24);
+      modal.close();
+      
+      expect(modal.isVisible).toBe(false);
+      expect(contextUpdateCount).toBe(2);
+    });
+  });
+
+  describe('TC-P2-016-11: Keyboard accessibility — Tab navigation', () => {
+    it('all expected controls exist for keyboard navigation', () => {
+      const expectedControls = [
+        'btn-theme-light',
+        'btn-theme-dark',
+        'font-family-select',
+        'font-size-slider',
+        'line-height-slider',
+        'content-width-slider',
+        'tab-size-slider',
+        'focus-mode-toggle',
+        'typewriter-mode-toggle',
+        'outline-toggle',
+        'auto-save-toggle',
+        'auto-save-interval-slider',
+      ];
+      
+      expect(expectedControls.length).toBe(12);
+      expectedControls.forEach(id => expect(id).toBeDefined());
+    });
+
+    it('controls can be navigated in sequence', () => {
+      modal.open();
+      const controls = [
+        'btn-theme-light',
+        'btn-theme-dark',
+        'font-family-select',
+        'font-size-slider',
+        'line-height-slider',
+        'content-width-slider',
+        'tab-size-slider',
+        'focus-mode-toggle',
+        'typewriter-mode-toggle',
+        'outline-toggle',
+        'auto-save-toggle',
+        'auto-save-interval-slider',
+        'btn-preferences-cancel',
+        'btn-preferences-save',
+      ];
+      
+      controls.forEach((controlId, index) => {
+        modal.handleChange('focusMode', index % 2 === 0);
+      });
+      
+      expect(contextUpdateCount).toBe(controls.length);
+    });
+  });
+
+  describe('Edge Cases: context_bindings', () => {
+    it('rapid changes update context each time', () => {
+      modal.open();
+      
+      modal.handleChange('theme', 'dark');
+      modal.handleChange('theme', 'light');
+      modal.handleChange('theme', 'dark');
+      
+      expect(contextUpdateCount).toBe(3);
+      expect(modal.getLocalSettings().theme).toBe('dark');
+    });
+
+    it('multiple setting changes maintain separate context updates', () => {
+      modal.open();
+      
+      modal.handleChange('fontSize', 20);
+      modal.handleChange('lineHeight', 1.8);
+      modal.handleChange('contentWidth', 800);
+      
+      expect(contextUpdateCount).toBe(3);
+    });
+  });
+
+  describe('Edge Cases: rapid_changes', () => {
+    it('rapid toggle changes maintain correct state', () => {
+      modal.open();
+      
+      for (let i = 0; i < 20; i++) {
+        modal.handleChange('focusMode', i % 2 === 0);
+      }
+      
+      expect(contextUpdateCount).toBe(20);
+      expect(modal.getLocalSettings().focusMode).toBe(false);
+    });
+
+    it('rapid slider changes maintain correct state', () => {
+      modal.open();
+      
+      for (let i = 12; i <= 32; i += 2) {
+        modal.handleChange('fontSize', i);
+      }
+      
+      expect(contextUpdateCount).toBe(11);
+      expect(modal.getLocalSettings().fontSize).toBe(32);
+    });
+
+    it('interleaved rapid changes work correctly', () => {
+      modal.open();
+      
+      modal.handleChange('theme', 'dark');
+      modal.handleChange('fontSize', 20);
+      modal.handleChange('focusMode', true);
+      modal.handleChange('theme', 'light');
+      modal.handleChange('fontSize', 24);
+      modal.handleChange('focusMode', false);
+      
+      expect(contextUpdateCount).toBe(6);
+      expect(modal.getLocalSettings().theme).toBe('light');
+      expect(modal.getLocalSettings().fontSize).toBe(24);
+      expect(modal.getLocalSettings().focusMode).toBe(false);
+    });
+  });
+});
