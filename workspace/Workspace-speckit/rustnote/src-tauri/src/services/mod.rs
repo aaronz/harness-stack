@@ -4,14 +4,22 @@ use uuid::Uuid;
 pub mod autosave;
 pub mod document;
 pub mod editor;
+pub mod export;
 pub mod file_watcher;
+pub mod recovery;
 pub mod settings;
+pub mod workspace;
 
 pub use autosave::{compute_content_hash, AutosaveConfig, AutosaveService};
 pub use document::DocumentService;
 pub use editor::EditorService;
+pub use export::{ExportResult, ExportService, ExportServiceError, ExportServiceTrait};
 pub use file_watcher::FileWatcherService;
+pub use recovery::{RecoveryResult, RecoveryService, RecoveryServiceError, RecoveryServiceTrait};
 pub use settings::SettingsService;
+pub use workspace::{
+    WorkspaceResult, WorkspaceService, WorkspaceServiceError, WorkspaceServiceTrait,
+};
 
 pub type DocumentResult<T> = Result<T, DocumentServiceError>;
 

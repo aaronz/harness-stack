@@ -841,7 +841,7 @@
       "priority": "P2",
       "title": "Service Interface Verification",
       "description": "Verify service trait implementations match PRD-10 specification. Check DocumentService, EditorService, WorkspaceService, ExportService, RecoveryService.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "All service traits match PRD-10 signatures",
         "DocumentService interface correct",

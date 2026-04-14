@@ -320,7 +320,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-013: Preferences UI
+### G-013: Done
 **Status:** Pending
 **Priority:** P2
 **Module:** Frontend
