@@ -277,7 +277,7 @@
       "priority": "P1",
       "title": "HTML Export Linked-Assets Mode",
       "description": "Implement 'linked-assets mode' for HTML export. In linked mode, keep assets as external references. In inline mode, embed assets as base64 data URIs. Add UI toggle in ExportModal.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Linked mode keeps assets as external references",
         "Inline mode embeds assets as base64 data URIs",

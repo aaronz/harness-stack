@@ -82,15 +82,20 @@ export default function ExportModal({ isVisible, onClose }) {
 
       if (selectedFormat === EXPORT_FORMATS.HTML_STANDALONE) {
         setProgress(30);
-        await invoke('export_to_html', { markdown, outputPath });
+        const inlineOptions = {
+          mode: { type: 'Inline' },
+          embed_css: true,
+        };
+        await invoke('export_to_html', { markdown, outputPath, options: inlineOptions });
         setProgress(100);
         success('HTML exported successfully');
       } else if (selectedFormat === EXPORT_FORMATS.HTML_LINKED) {
         setProgress(30);
-        const html = await invoke('get_print_html', { markdown });
-        // Write the HTML to file
-        const fs = await import('@tauri-apps/plugin-fs');
-        await fs.writeTextFile(outputPath, html);
+        const linkedOptions = {
+          mode: { type: 'Linked', value: { assets_dir: 'assets' } },
+          embed_css: true,
+        };
+        await invoke('export_to_html', { markdown, outputPath, options: linkedOptions });
         setProgress(100);
         success('HTML exported successfully');
       } else if (selectedFormat.startsWith('pdf_')) {

@@ -74,7 +74,7 @@ pub async fn export_to_html(
     Ok(())
 }
 
-fn process_images_linked(html: &str, assets_dir: &Path) -> Result<String, CommandError> {
+pub fn process_images_linked(html: &str, assets_dir: &Path) -> Result<String, CommandError> {
     let mut result = html.to_string();
     let mut img_index = 0;
 
@@ -112,7 +112,7 @@ fn process_images_linked(html: &str, assets_dir: &Path) -> Result<String, Comman
     Ok(result)
 }
 
-fn process_images_inline(html: &str) -> Result<String, CommandError> {
+pub fn process_images_inline(html: &str) -> Result<String, CommandError> {
     let mut result = html.to_string();
     let mut offset = 0;
 
@@ -138,7 +138,7 @@ fn process_images_inline(html: &str) -> Result<String, CommandError> {
     Ok(result)
 }
 
-fn guess_mime_type(path: &str) -> &'static str {
+pub fn guess_mime_type(path: &str) -> &'static str {
     let ext = Path::new(path)
         .extension()
         .and_then(|e| e.to_str())

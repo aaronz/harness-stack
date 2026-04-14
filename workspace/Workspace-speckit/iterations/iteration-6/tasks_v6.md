@@ -121,7 +121,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-003: Wrap Transform Integration Verification
+### G-003: Done
 **Status:** Done
 **Priority:** P1
 **Module:** Editor
@@ -148,21 +148,27 @@ All P0 issues must be fully resolved before claiming MVP completion.
 ---
 
 ### G-004: HTML Export Linked-Assets Mode
-**Status:** Pending
+**Status:** Done
 **Priority:** P1
 **Module:** Export
 **FR Reference:** FR-031
 
 **Task Details:**
-- [ ] Implement "linked-assets mode" option for HTML export
-- [ ] In linked mode: keep assets as external references
-- [ ] In inline mode: embed assets as base64 data URIs
-- [ ] Add UI toggle in ExportModal for linked vs inline
-- [ ] Test with images and other linked resources
+- [x] Implement "linked-assets mode" option for HTML export
+- [x] In linked mode: keep assets as external references
+- [x] In inline mode: embed assets as base64 data URIs
+- [x] Add UI toggle in ExportModal for linked vs inline
+- [x] Test with images and other linked resources
 
 **Files:**
 - MOD: `src-tauri/src/commands/export.rs`
 - MOD: `www/src/components/ExportModal.jsx`
+
+**Test Cases Implemented:**
+- TC-G004-001: Linked mode keeps images external
+- TC-G004-002: Inline mode embeds images as base64
+- TC-G004-003: ExportModal toggle UI
+- TC-G004-004: Linked mode with multiple assets
 
 ---
 

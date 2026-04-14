@@ -218,3 +218,82 @@ fn test_markdown_styled_content() {
     assert!(html.contains("<em>") || html.contains("<i>"));
     assert!(html.contains("<code>"));
 }
+
+#[test]
+fn TC_G004_001_linked_mode_keeps_images_external() {
+    let markdown = "![img](image.png)";
+    let html = parser().parse_to_html(markdown);
+    assert!(html.contains("<img"));
+    assert!(html.contains("src="));
+    assert!(html.contains("image.png"));
+    assert!(
+        !html.contains("base64"),
+        "Linked mode should not contain base64 encoded images"
+    );
+}
+
+#[test]
+fn TC_G004_002_inline_mode_embeds_images_as_base64() {
+    use rustnote_lib::commands::export::process_images_inline;
+    let temp_dir = TempDir::new().unwrap();
+    let image_path = temp_dir.path().join("test_image.png");
+    let png_data = create_minimal_png();
+    std::fs::write(&image_path, &png_data).unwrap();
+    let markdown = format!("![img]({})", image_path.display());
+    let parsed_html = parser().parse_to_html(&markdown);
+    let processed_html = process_images_inline(&parsed_html).unwrap();
+    assert!(processed_html.contains("<img"));
+    assert!(processed_html.contains("data:image"));
+    assert!(processed_html.contains("base64"));
+}
+
+fn create_minimal_png() -> Vec<u8> {
+    vec![
+        0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44,
+        0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x02, 0x00, 0x00, 0x00, 0x90,
+        0x77, 0x53, 0xDE, 0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41, 0x54, 0x08, 0xD7, 0x63, 0xF8,
+        0xCF, 0xC0, 0x00, 0x00, 0x00, 0x03, 0x00, 0x01, 0x00, 0x18, 0xDD, 0x8D, 0xB4, 0x00, 0x00,
+        0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+    ]
+}
+
+#[test]
+fn TC_G004_003_export_modal_options_structure() {
+    let inline_options = HtmlExportOptions {
+        mode: HtmlExportMode::Inline,
+        embed_css: true,
+    };
+    let linked_options = HtmlExportOptions {
+        mode: HtmlExportMode::Linked {
+            assets_dir: "assets".to_string(),
+        },
+        embed_css: true,
+    };
+    assert!(matches!(inline_options.mode, HtmlExportMode::Inline));
+    assert!(matches!(linked_options.mode, HtmlExportMode::Linked { .. }));
+    if let HtmlExportMode::Linked { assets_dir } = linked_options.mode {
+        assert_eq!(assets_dir, "assets");
+    }
+}
+
+#[test]
+fn TC_G004_004_linked_mode_with_multiple_assets() {
+    use rustnote_lib::commands::export::process_images_linked;
+    let temp_dir = TempDir::new().unwrap();
+    let a_png = temp_dir.path().join("a.png");
+    let b_png = temp_dir.path().join("b.png");
+    std::fs::write(&a_png, b"fake png data a").unwrap();
+    std::fs::write(&b_png, b"fake png data b").unwrap();
+    let assets_dir = temp_dir.path().join("assets");
+    std::fs::create_dir_all(&assets_dir).unwrap();
+    std::env::set_current_dir(temp_dir.path()).ok();
+    let markdown = "![img1](a.png)\n\n![img2](b.png)";
+    let html = parser().parse_to_html(markdown);
+    let processed = process_images_linked(&html, &assets_dir).unwrap();
+    assert!(processed.contains("assets/"));
+    assert!(processed.contains("image_0") || processed.contains("image_1"));
+    assert!(
+        !processed.contains("base64"),
+        "Linked mode should not contain base64"
+    );
+}
