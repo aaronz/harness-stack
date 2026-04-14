@@ -92,3 +92,93 @@ pub fn resolve_relative_path(doc_dir: &Path, image_ref: &str) -> PathBuf {
 
     components.iter().collect()
 }
+
+/// Calculate the relative path from a document's directory to an image path.
+/// 
+/// This function takes:
+/// - `doc_path`: The path to the document (can be absolute or just a filename)
+/// - `image_path`: The absolute path to the image
+/// 
+/// Returns the relative path that should be used in Markdown syntax.
+/// 
+/// Examples:
+/// - Document at `/workspace/project/notes/chapter.md`, image at `/workspace/project/assets/diagram.png`
+///   Returns: `../assets/diagram.png`
+/// - Document at `/workspace/project/notes/sub/chapter.md`, image at `/workspace/project/assets/img.png`
+///   Returns: `../../assets/img.png`
+/// - Document and image in same directory
+///   Returns: just the filename
+pub fn calculate_relative_path(doc_path: &Path, image_path: &Path) -> String {
+    let doc_dir = doc_path.parent().unwrap_or(Path::new("."));
+    let doc_dir_str = doc_dir.to_string_lossy();
+    let img_str = image_path.to_string_lossy();
+    
+    let doc_parts: Vec<&str> = doc_dir_str.split(|c| c == '/' || c == '\\').filter(|s| !s.is_empty()).collect();
+    let img_parts: Vec<&str> = img_str.split(|c| c == '/' || c == '\\').filter(|s| !s.is_empty()).collect();
+    
+    let common_len = doc_parts.iter()
+        .zip(img_parts.iter())
+        .take_while(|(a, b)| *a == *b)
+        .count();
+    
+    let up_count = doc_parts.len() - common_len;
+    
+    let mut relative = String::new();
+    
+    for _ in 0..up_count {
+        relative.push_str("../");
+    }
+    
+    for (i, part) in img_parts[common_len..].iter().enumerate() {
+        if i > 0 || (!relative.is_empty() && !relative.ends_with('/')) {
+            relative.push('/');
+        }
+        relative.push_str(part);
+    }
+    
+    if relative.is_empty() {
+        relative.push('.');
+    }
+    
+    relative
+}
+
+/// Format a path for use in Markdown, handling special characters.
+/// Uses forward slashes for cross-platform compatibility.
+pub fn format_markdown_path(path: &str) -> String {
+    // Replace backslashes with forward slashes for cross-platform
+    let normalized = path.replace('\\', "/");
+    
+    // URL-encode spaces and other special characters that might cause issues
+    let mut result = String::new();
+    for c in normalized.chars() {
+        match c {
+            ' ' => result.push_str("%20"),
+            '#' => result.push_str("%23"),
+            '%' => result.push_str("%25"),
+            '&' => result.push_str("%26"),
+            '?' => result.push_str("%3F"),
+            '\'' => result.push_str("%27"),
+            '"' => result.push_str("%22"),
+            '<' => result.push_str("%3C"),
+            '>' => result.push_str("%3E"),
+            '[' => result.push_str("%5B"),
+            ']' => result.push_str("%5D"),
+            '^' => result.push_str("%5E"),
+            '`' => result.push_str("%60"),
+            '{' => result.push_str("%7B"),
+            '|' => result.push_str("%7C"),
+            '}' => result.push_str("%7D"),
+            // For non-ASCII characters, use percent encoding
+            c if c.is_ascii() => result.push(c),
+            c => {
+                // URL-encode non-ASCII characters
+                for byte in c.to_string().as_bytes() {
+                    result.push_str(&format!("%{:02X}", byte));
+                }
+            }
+        }
+    }
+    
+    result
+}

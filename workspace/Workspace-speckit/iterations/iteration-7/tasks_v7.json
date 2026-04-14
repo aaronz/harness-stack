@@ -595,7 +595,7 @@
       "priority": "P1",
       "title": "Image Relative Path Handling \u2014 Edge Cases for Subdirectories",
       "description": "Audit image path calculation, add subdirectory test cases, fix path calculation, add comprehensive tests.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "cargo test image_path passes all subdirectory tests",
         "Manual test: insert image in subdirectory document \u2192 correct relative path"

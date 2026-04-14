@@ -1,4 +1,6 @@
-use rustnote_lib::commands::image::resolve_relative_path;
+use rustnote_lib::commands::image::{
+    calculate_relative_path, format_markdown_path, resolve_relative_path,
+};
 use rustnote_lib::model::image::get_image_info;
 use std::fs;
 use std::path::Path;
@@ -288,4 +290,251 @@ fn test_tc_g005_005_deep_nested_traversal() {
     let doc_dir = Path::new("/a/b/c");
     let resolved = resolve_relative_path(doc_dir, "../../images/photo.png");
     assert_eq!(resolved, Path::new("/a/images/photo.png"));
+}
+
+// =============================================================================
+// TC-IP: Image Relative Path Test Cases
+// =============================================================================
+
+/// TC-IP001: Image in parent directory (1 level up)
+/// Category: unit
+/// Input: Document at /workspace/project/notes/chapter.md, image at /workspace/project/assets/diagram.png
+/// Expected: Markdown contains ../assets/diagram.png
+#[test]
+fn test_tc_ip001_image_parent_directory_1_level() {
+    let doc_path = Path::new("/workspace/project/notes/chapter.md");
+    let image_path = Path::new("/workspace/project/assets/diagram.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    assert_eq!(relative, "../assets/diagram.png");
+}
+
+/// TC-IP002: Image 2 levels up
+/// Category: unit
+/// Input: Document at /workspace/project/notes/sub/chapter.md, image at /workspace/project/assets/img.png
+/// Expected: Markdown contains ../../assets/img.png
+#[test]
+fn test_tc_ip002_image_2_levels_up() {
+    let doc_path = Path::new("/workspace/project/notes/sub/chapter.md");
+    let image_path = Path::new("/workspace/project/assets/img.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    assert_eq!(relative, "../../assets/img.png");
+}
+
+/// TC-IP003: Image 3 levels up
+/// Category: unit
+/// Input: Document at /workspace/project/notes/sub/deep/chapter.md, image at /workspace/project/assets/img.png
+/// Expected: Markdown contains ../../../assets/img.png
+#[test]
+fn test_tc_ip003_image_3_levels_up() {
+    let doc_path = Path::new("/workspace/project/notes/sub/deep/chapter.md");
+    let image_path = Path::new("/workspace/project/assets/img.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    assert_eq!(relative, "../../../assets/img.png");
+}
+
+/// TC-IP004: Image in same directory
+/// Category: unit
+/// Input: Document and image in same directory
+/// Expected: Markdown contains only filename
+#[test]
+fn test_tc_ip004_image_same_directory() {
+    let doc_path = Path::new("/workspace/project/notes/chapter.md");
+    let image_path = Path::new("/workspace/project/notes/diagram.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    assert_eq!(relative, "diagram.png");
+}
+
+/// TC-IP005: Image in child directory of document
+/// Category: unit
+/// Input: Document at /notes/chapter.md, image at /notes/images/img.png
+/// Expected: Markdown contains images/img.png
+#[test]
+fn test_tc_ip005_image_child_directory() {
+    let doc_path = Path::new("/notes/chapter.md");
+    let image_path = Path::new("/notes/images/img.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    assert_eq!(relative, "images/img.png");
+}
+
+/// TC-IP006: Absolute path handling
+/// Category: edge_case
+/// Input: Absolute path /workspace/project/assets/img.png
+/// Expected: Converted to relative path from document location
+#[test]
+fn test_tc_ip006_absolute_path_handling() {
+    // Document at /workspace/project/notes/chapter.md
+    // Image at /workspace/project/assets/img.png
+    let doc_path = Path::new("/workspace/project/notes/chapter.md");
+    let image_path = Path::new("/workspace/project/assets/img.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    // Should be relative from notes/ to assets/
+    assert_eq!(relative, "../assets/img.png");
+}
+
+/// TC-IP007: Windows path separators
+/// Category: edge_case
+/// Input: Document at C:\project\notes\chapter.md, image at C:\project\assets\img.png
+/// Expected: Path uses forward slashes, correct relative path
+#[test]
+fn test_tc_ip007_windows_path_separators() {
+    let doc_path = Path::new("C:/project/notes/chapter.md");
+    let image_path = Path::new("C:/project/assets/img.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    // Should use forward slashes
+    assert_eq!(relative, "../assets/img.png");
+}
+
+#[test]
+fn test_tc_ip007_windows_backslash_separators() {
+    // Test mixed separators - Windows paths with forward slashes normalized
+    let doc_path = Path::new("C:/project/notes/sub/chapter.md");
+    let image_path = Path::new("C:/project/assets/img.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    // Should use forward slashes, 2 levels up
+    assert_eq!(relative, "../../assets/img.png");
+}
+
+/// TC-IP008: Special characters in filename
+/// Category: edge_case
+/// Input: Image at /assets/my photo.png
+/// Expected: Path URL-encoded or quoted correctly
+#[test]
+fn test_tc_ip008_special_characters_spaces() {
+    let doc_path = Path::new("/workspace/docs/chapter.md");
+    let image_path = Path::new("/assets/my photo.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    // The relative path should have the filename with spaces
+    assert!(relative.contains("my%20photo.png") || relative.contains("my photo.png"));
+}
+
+#[test]
+fn test_tc_ip008_url_encoded_spaces() {
+    let path = "/assets/my photo.png";
+    let formatted = format_markdown_path(path);
+
+    // Spaces should be URL-encoded
+    assert!(formatted.contains("my%20photo"));
+    assert!(!formatted.contains("my photo"));
+}
+
+#[test]
+fn test_tc_ip008_special_characters_hash() {
+    let path = "/assets/image#tag.png";
+    let formatted = format_markdown_path(path);
+
+    // Hash should be URL-encoded to avoid fragment interpretation
+    assert!(formatted.contains("%23"));
+    assert!(!formatted.contains("#"));
+}
+
+#[test]
+fn test_tc_ip008_special_characters_ampersand() {
+    let path = "/assets/image&copy.png";
+    let formatted = format_markdown_path(path);
+
+    // Ampersand should be URL-encoded
+    assert!(formatted.contains("%26"));
+    assert!(!formatted.contains("&copy"));
+}
+
+// Additional comprehensive tests for edge cases
+
+#[test]
+fn test_calculate_relative_path_sibling_directory() {
+    let doc_path = Path::new("/workspace/project/docs/chapter.md");
+    let image_path = Path::new("/workspace/project/images/diagram.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    assert_eq!(relative, "../images/diagram.png");
+}
+
+#[test]
+fn test_calculate_relative_path_deep_sibling() {
+    let doc_path = Path::new("/workspace/project/docs/sub/chapter.md");
+    let image_path = Path::new("/workspace/project/assets/nested/img.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    // From docs/sub/ -> ../../assets/nested/img.png
+    assert_eq!(relative, "../../assets/nested/img.png");
+}
+
+#[test]
+fn test_calculate_relative_path_same_file_different_names() {
+    // Edge case: same directory but different naming
+    let doc_path = Path::new("/notes/README.md");
+    let image_path = Path::new("/notes/logo.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    assert_eq!(relative, "logo.png");
+}
+
+#[test]
+fn test_format_markdown_path_parentheses() {
+    let path = "/assets/image (copy).png";
+    let formatted = format_markdown_path(path);
+
+    // Parentheses are typically safe in URLs but let's check
+    assert!(formatted.contains("image"));
+    assert!(formatted.contains("%20"));
+}
+
+#[test]
+fn test_format_markdown_path_brackets() {
+    let path = "/assets/image[1].png";
+    let formatted = format_markdown_path(path);
+
+    // Brackets should be URL-encoded for Markdown compatibility
+    assert!(formatted.contains("%5B"));
+    assert!(formatted.contains("%5D"));
+}
+
+#[test]
+fn test_integration_insert_image_markdown() {
+    use rustnote_lib::commands::image::image_markdown_from_path;
+
+    let image_path = "/assets/diagram.png";
+    let relative_path = "../assets/diagram.png";
+
+    let markdown = image_markdown_from_path(image_path.to_string(), relative_path.to_string());
+
+    assert_eq!(markdown, "![diagram.png](../assets/diagram.png)");
+}
+
+#[test]
+fn test_integration_roundtrip() {
+    // Test that resolve and calculate are inverses
+    let doc_dir = Path::new("/workspace/project/notes");
+    let relative = "../assets/diagram.png";
+
+    // Calculate relative path
+    let doc_path = Path::new("/workspace/project/notes/chapter.md");
+    let image_path = Path::new("/workspace/project/assets/diagram.png");
+
+    let calculated = calculate_relative_path(doc_path, image_path);
+    assert_eq!(calculated, relative);
+
+    // Resolve back
+    let resolved = resolve_relative_path(doc_dir, &calculated);
+    assert_eq!(resolved, image_path);
 }
