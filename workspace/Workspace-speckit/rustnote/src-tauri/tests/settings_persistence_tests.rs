@@ -131,7 +131,6 @@ fn tc_g003_003_settings_crash_recovery() {
         font_family: "Courier".to_string(),
         font_size: 16,
         line_height: 1.8,
-        tab_size: 4,
         content_width: 900,
         recent_files: vec!["file1.md".to_string(), "file2.md".to_string()],
     };
@@ -374,7 +373,6 @@ fn settings_persist_editor_settings() {
         font_family: "SF Mono".to_string(),
         font_size: 20,
         line_height: 2.0,
-        tab_size: 8,
         content_width: 1000,
         recent_files: vec![],
     };
@@ -389,7 +387,6 @@ fn settings_persist_editor_settings() {
     assert_eq!(read.font_family, "SF Mono");
     assert_eq!(read.font_size, 20);
     assert_eq!(read.line_height, 2.0);
-    assert_eq!(read.tab_size, 8);
     assert_eq!(read.content_width, 1000);
 }
 

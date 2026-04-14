@@ -76,12 +76,11 @@ fn test_settings_default() {
     let settings = Settings::default();
     assert_eq!(settings.theme, Theme::Light);
     assert!(settings.auto_save);
-    assert_eq!(settings.auto_save_interval, 30000);
+    assert_eq!(settings.auto_save_interval, 10000);
     assert!(!settings.focus_mode);
     assert!(!settings.typewriter_mode);
     assert!(!settings.outline_visible);
     assert_eq!(settings.font_size, 16);
-    assert_eq!(settings.tab_size, 4);
 }
 
 #[test]
@@ -98,7 +97,6 @@ fn test_editor_settings_default() {
     assert_eq!(settings.font_family, "System");
     assert_eq!(settings.font_size, 16);
     assert_eq!(settings.line_height, 1.6);
-    assert_eq!(settings.tab_size, 4);
 }
 
 #[test]
@@ -107,13 +105,11 @@ fn test_editor_settings_custom() {
         font_family: "Menlo".to_string(),
         font_size: 14,
         line_height: 1.8,
-        tab_size: 2,
         content_width: 800,
         ..Settings::default()
     };
     assert_eq!(settings.font_family, "Menlo");
     assert_eq!(settings.font_size, 14);
-    assert_eq!(settings.tab_size, 2);
 }
 
 #[test]

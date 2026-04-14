@@ -797,7 +797,7 @@
       "priority": "P1",
       "title": "Settings Schema Final Verification Against PRD-09",
       "description": "Read PRD-09 specifications, audit settings implementation, fix discrepancies, update schema tests.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "cargo test settings_schema passes",
         "Implementation matches PRD-09 exactly",
