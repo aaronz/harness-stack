@@ -1246,7 +1246,7 @@
       "priority": "P2",
       "title": "Export \u2014 Define ExportFormat Enum",
       "description": "Define ExportFormat enum (HTML, PDF; future: DOCX, EPUB) in model/export.rs, ensure trait supports format-specific options, add factory pattern for format selection, and update export service to use ExportFormat.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "ExportFormat enum exists with HTML and PDF variants",
         "Export service uses factory pattern for format selection",

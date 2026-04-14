@@ -1,8 +1,9 @@
-use crate::model::export::{HtmlExportOptions, PdfExportOptions};
+use crate::model::export::{ExportFormat, HtmlExportOptions, PdfExportOptions};
 use crate::parser::syntax::SyntaxHighlighter;
 use crate::parser::MarkdownParser;
 use base64::Engine;
 use printpdf::*;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::BufWriter;
 use std::path::Path;
@@ -14,6 +15,7 @@ pub enum ExportServiceError {
     Io(String),
     Parse(String),
     Pdf(String),
+    UnsupportedFormat(String),
 }
 
 impl std::error::Error for ExportServiceError {}
@@ -24,6 +26,7 @@ impl std::fmt::Display for ExportServiceError {
             ExportServiceError::Io(s) => write!(f, "IO error: {}", s),
             ExportServiceError::Parse(s) => write!(f, "Parse error: {}", s),
             ExportServiceError::Pdf(s) => write!(f, "PDF error: {}", s),
+            ExportServiceError::UnsupportedFormat(s) => write!(f, "Unsupported format: {}", s),
         }
     }
 }
@@ -31,6 +34,34 @@ impl std::fmt::Display for ExportServiceError {
 impl From<std::io::Error> for ExportServiceError {
     fn from(e: std::io::Error) -> Self {
         ExportServiceError::Io(e.to_string())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ExportOptions {
+    Html(HtmlExportOptions),
+    Pdf(PdfExportOptions),
+}
+
+impl Default for ExportOptions {
+    fn default() -> Self {
+        ExportOptions::Html(HtmlExportOptions::default())
+    }
+}
+
+impl ExportOptions {
+    pub fn for_format(format: ExportFormat) -> ExportOptions {
+        match format {
+            ExportFormat::Html => ExportOptions::Html(HtmlExportOptions::default()),
+            ExportFormat::Pdf => ExportOptions::Pdf(PdfExportOptions::default()),
+        }
+    }
+
+    pub fn format(&self) -> ExportFormat {
+        match self {
+            ExportOptions::Html(_) => ExportFormat::Html,
+            ExportOptions::Pdf(_) => ExportFormat::Pdf,
+        }
     }
 }
 
@@ -49,6 +80,39 @@ pub trait ExportServiceTrait: Send + Sync {
         options: PdfExportOptions,
     ) -> ExportResult<()>;
     fn get_print_html(&self, markdown: &str) -> String;
+
+    fn export_with_format(
+        &self,
+        markdown: &str,
+        output_path: &str,
+        format: ExportFormat,
+        options: ExportOptions,
+    ) -> ExportResult<()> {
+        match format {
+            ExportFormat::Html => {
+                if let ExportOptions::Html(html_options) = options {
+                    self.export_to_html(markdown, output_path, html_options)
+                } else {
+                    self.export_to_html(markdown, output_path, HtmlExportOptions::default())
+                }
+            }
+            ExportFormat::Pdf => {
+                if let ExportOptions::Pdf(pdf_options) = options {
+                    self.export_to_pdf_with_options(markdown, output_path, pdf_options)
+                } else {
+                    self.export_to_pdf_with_options(
+                        markdown,
+                        output_path,
+                        PdfExportOptions::default(),
+                    )
+                }
+            }
+        }
+    }
+
+    fn get_supported_formats(&self) -> Vec<ExportFormat> {
+        ExportFormat::supported_formats().to_vec()
+    }
 }
 
 pub struct ExportService;

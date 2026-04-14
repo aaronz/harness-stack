@@ -1,5 +1,56 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "type", content = "value")]
+pub enum ExportFormat {
+    Html,
+    Pdf,
+}
+
+impl ExportFormat {
+    pub fn supported_formats() -> &'static [ExportFormat] {
+        &[ExportFormat::Html, ExportFormat::Pdf]
+    }
+
+    pub fn is_supported(&self) -> bool {
+        matches!(self, ExportFormat::Html | ExportFormat::Pdf)
+    }
+
+    pub fn extension(&self) -> &'static str {
+        match self {
+            ExportFormat::Html => "html",
+            ExportFormat::Pdf => "pdf",
+        }
+    }
+
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            ExportFormat::Html => "HTML",
+            ExportFormat::Pdf => "PDF",
+        }
+    }
+
+    pub fn from_extension(ext: &str) -> Option<ExportFormat> {
+        match ext.to_lowercase().as_str() {
+            "html" | "htm" => Some(ExportFormat::Html),
+            "pdf" => Some(ExportFormat::Pdf),
+            _ => None,
+        }
+    }
+}
+
+impl Default for ExportFormat {
+    fn default() -> Self {
+        ExportFormat::Html
+    }
+}
+
+impl std::fmt::Display for ExportFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.display_name())
+    }
+}
+
 pub type AssetMode = HtmlExportMode;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -21,12 +72,9 @@ impl HtmlExportMode {
     }
 }
 
-/// Options for HTML export
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HtmlExportOptions {
-    /// Export mode (linked vs inline assets)
     pub mode: HtmlExportMode,
-    /// Whether to embed CSS inline (true) or link to external file (false)
     pub embed_css: bool,
 }
 
@@ -39,7 +87,6 @@ impl Default for HtmlExportOptions {
     }
 }
 
-/// Options for PDF export
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PdfExportOptions {
     pub page_size: PdfPageSize,
@@ -57,7 +104,6 @@ impl Default for PdfExportOptions {
     }
 }
 
-/// Page size for PDF export
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "value")]
 pub enum PdfPageSize {
@@ -68,7 +114,6 @@ pub enum PdfPageSize {
 }
 
 impl PdfPageSize {
-    /// Returns (width_mm, height_mm) for the page size
     pub fn dimensions(&self) -> (f32, f32) {
         match self {
             PdfPageSize::A4 => (210.0, 297.0),
@@ -82,7 +127,6 @@ impl PdfPageSize {
     }
 }
 
-/// Margins for PDF export
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PdfMargins {
     pub top_mm: f32,
@@ -103,7 +147,6 @@ impl Default for PdfMargins {
 }
 
 impl PdfMargins {
-    /// Returns (top, right, bottom, left) in the same order
     pub fn as_tuple(&self) -> (f32, f32, f32, f32) {
         (self.top_mm, self.right_mm, self.bottom_mm, self.left_mm)
     }
