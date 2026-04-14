@@ -100,6 +100,7 @@ pub fn resolve_relative_path(doc_dir: &Path, image_ref: &str) -> PathBuf {
 /// - `image_path`: The absolute path to the image
 /// 
 /// Returns the relative path that should be used in Markdown syntax.
+/// Uses std::path::Path for correct .. navigation and cross-platform path handling.
 /// 
 /// Examples:
 /// - Document at `/workspace/project/notes/chapter.md`, image at `/workspace/project/assets/diagram.png`
@@ -110,18 +111,65 @@ pub fn resolve_relative_path(doc_dir: &Path, image_ref: &str) -> PathBuf {
 ///   Returns: just the filename
 pub fn calculate_relative_path(doc_path: &Path, image_path: &Path) -> String {
     let doc_dir = doc_path.parent().unwrap_or(Path::new("."));
-    let doc_dir_str = doc_dir.to_string_lossy();
-    let img_str = image_path.to_string_lossy();
+    let normalized_doc_dir = normalize_path(doc_dir);
+    let normalized_img_path = normalize_path(image_path);
     
-    let doc_parts: Vec<&str> = doc_dir_str.split(|c| c == '/' || c == '\\').filter(|s| !s.is_empty()).collect();
-    let img_parts: Vec<&str> = img_str.split(|c| c == '/' || c == '\\').filter(|s| !s.is_empty()).collect();
+    if let Ok(relative) = normalized_img_path.strip_prefix(&normalized_doc_dir) {
+        let relative_str = relative.to_string_lossy();
+        if relative_str.is_empty() {
+            ".".to_string()
+        } else {
+            relative_str.to_string()
+        }
+    } else {
+        calculate_relative_path_components(&normalized_doc_dir, &normalized_img_path)
+    }
+}
+
+fn normalize_path(path: &Path) -> PathBuf {
+    let mut components = Vec::new();
+    
+    for component in path.components() {
+        match component {
+            std::path::Component::ParentDir => {
+                if let Some(last) = components.last() {
+                    if !matches!(last, std::path::Component::Prefix(_) | std::path::Component::RootDir) {
+                        components.pop();
+                    }
+                }
+            }
+            std::path::Component::Normal(_) | std::path::Component::CurDir => {
+                components.push(component);
+            }
+            _ => {
+                components.push(component);
+            }
+        }
+    }
+    
+    components.iter().collect()
+}
+
+fn calculate_relative_path_components(doc_dir: &Path, image_path: &Path) -> String {
+    let doc_dir_str = doc_dir.to_string_lossy();
+    let img_path_str = image_path.to_string_lossy();
+    
+    let doc_parts: Vec<&str> = doc_dir_str
+        .split(|c| c == '/')
+        .filter(|s| !s.is_empty())
+        .collect();
+    
+    let img_parts: Vec<&str> = img_path_str
+        .split(|c| c == '/')
+        .filter(|s| !s.is_empty())
+        .collect();
     
     let common_len = doc_parts.iter()
         .zip(img_parts.iter())
         .take_while(|(a, b)| *a == *b)
         .count();
     
-    let up_count = doc_parts.len() - common_len;
+    let up_count = doc_parts.len().saturating_sub(common_len);
     
     let mut relative = String::new();
     

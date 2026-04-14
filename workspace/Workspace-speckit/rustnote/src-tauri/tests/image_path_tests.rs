@@ -293,15 +293,17 @@ fn test_tc_g005_005_deep_nested_traversal() {
 }
 
 // =============================================================================
-// TC-IP: Image Relative Path Test Cases
+// TC-P1-007: Image Relative Path - Subdirectory Edge Cases
+// These test cases cover all combinations of subdirectory navigation
+// for image paths in Markdown documents.
 // =============================================================================
 
-/// TC-IP001: Image in parent directory (1 level up)
-/// Category: unit
-/// Input: Document at /workspace/project/notes/chapter.md, image at /workspace/project/assets/diagram.png
-/// Expected: Markdown contains ../assets/diagram.png
+/// TC-P1-007-01: Image in sibling directory
+/// Category: edge_case
+/// Input: /workspace/project/notes/chapter.md, image: /workspace/project/assets/diagram.png
+/// Expected: Relative path: ../assets/diagram.png
 #[test]
-fn test_tc_ip001_image_parent_directory_1_level() {
+fn test_tc_p1_007_01_image_in_sibling_directory() {
     let doc_path = Path::new("/workspace/project/notes/chapter.md");
     let image_path = Path::new("/workspace/project/assets/diagram.png");
 
@@ -310,12 +312,26 @@ fn test_tc_ip001_image_parent_directory_1_level() {
     assert_eq!(relative, "../assets/diagram.png");
 }
 
-/// TC-IP002: Image 2 levels up
-/// Category: unit
-/// Input: Document at /workspace/project/notes/sub/chapter.md, image at /workspace/project/assets/img.png
-/// Expected: Markdown contains ../../assets/img.png
+/// TC-P1-007-02: Image in parent directory
+/// Category: edge_case
+/// Input: /workspace/project/notes/ch.md, image: /workspace/project/img.png
+/// Expected: Relative path: ../img.png
 #[test]
-fn test_tc_ip002_image_2_levels_up() {
+fn test_tc_p1_007_02_image_in_parent_directory() {
+    let doc_path = Path::new("/workspace/project/notes/ch.md");
+    let image_path = Path::new("/workspace/project/img.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    assert_eq!(relative, "../img.png");
+}
+
+/// TC-P1-007-03: 2-level nesting relative path
+/// Category: edge_case
+/// Input: /workspace/project/notes/sub/chapter.md, image: /workspace/project/assets/img.png
+/// Expected: Relative path: ../../assets/img.png
+#[test]
+fn test_tc_p1_007_03_2_level_nesting() {
     let doc_path = Path::new("/workspace/project/notes/sub/chapter.md");
     let image_path = Path::new("/workspace/project/assets/img.png");
 
@@ -324,13 +340,13 @@ fn test_tc_ip002_image_2_levels_up() {
     assert_eq!(relative, "../../assets/img.png");
 }
 
-/// TC-IP003: Image 3 levels up
-/// Category: unit
-/// Input: Document at /workspace/project/notes/sub/deep/chapter.md, image at /workspace/project/assets/img.png
-/// Expected: Markdown contains ../../../assets/img.png
+/// TC-P1-007-04: 3-level nesting relative path
+/// Category: edge_case
+/// Input: /workspace/project/a/b/c/doc.md, image: /workspace/project/assets/img.png
+/// Expected: Relative path: ../../../assets/img.png
 #[test]
-fn test_tc_ip003_image_3_levels_up() {
-    let doc_path = Path::new("/workspace/project/notes/sub/deep/chapter.md");
+fn test_tc_p1_007_04_3_level_nesting() {
+    let doc_path = Path::new("/workspace/project/a/b/c/doc.md");
     let image_path = Path::new("/workspace/project/assets/img.png");
 
     let relative = calculate_relative_path(doc_path, image_path);
@@ -338,49 +354,48 @@ fn test_tc_ip003_image_3_levels_up() {
     assert_eq!(relative, "../../../assets/img.png");
 }
 
-/// TC-IP004: Image in same directory
+/// TC-P1-007-05: Image in same directory
 /// Category: unit
-/// Input: Document and image in same directory
-/// Expected: Markdown contains only filename
+/// Input: /workspace/project/notes/ch.md, image: /workspace/project/notes/pic.png
+/// Expected: Relative path: pic.png
 #[test]
-fn test_tc_ip004_image_same_directory() {
-    let doc_path = Path::new("/workspace/project/notes/chapter.md");
-    let image_path = Path::new("/workspace/project/notes/diagram.png");
+fn test_tc_p1_007_05_image_in_same_directory() {
+    let doc_path = Path::new("/workspace/project/notes/ch.md");
+    let image_path = Path::new("/workspace/project/notes/pic.png");
 
     let relative = calculate_relative_path(doc_path, image_path);
 
-    assert_eq!(relative, "diagram.png");
+    assert_eq!(relative, "pic.png");
 }
 
-/// TC-IP005: Image in child directory of document
-/// Category: unit
-/// Input: Document at /notes/chapter.md, image at /notes/images/img.png
-/// Expected: Markdown contains images/img.png
-#[test]
-fn test_tc_ip005_image_child_directory() {
-    let doc_path = Path::new("/notes/chapter.md");
-    let image_path = Path::new("/notes/images/img.png");
-
-    let relative = calculate_relative_path(doc_path, image_path);
-
-    assert_eq!(relative, "images/img.png");
-}
-
-/// TC-IP006: Absolute path handling
+/// TC-P1-007-06: Image in child directory
 /// Category: edge_case
-/// Input: Absolute path /workspace/project/assets/img.png
-/// Expected: Converted to relative path from document location
+/// Input: /workspace/project/notes/ch.md, image: /workspace/project/notes/images/pic.png
+/// Expected: Relative path: images/pic.png
 #[test]
-fn test_tc_ip006_absolute_path_handling() {
-    // Document at /workspace/project/notes/chapter.md
-    // Image at /workspace/project/assets/img.png
-    let doc_path = Path::new("/workspace/project/notes/chapter.md");
-    let image_path = Path::new("/workspace/project/assets/img.png");
+fn test_tc_p1_007_06_image_in_child_directory() {
+    let doc_path = Path::new("/workspace/project/notes/ch.md");
+    let image_path = Path::new("/workspace/project/notes/images/pic.png");
 
     let relative = calculate_relative_path(doc_path, image_path);
 
-    // Should be relative from notes/ to assets/
-    assert_eq!(relative, "../assets/img.png");
+    assert_eq!(relative, "images/pic.png");
+}
+
+/// TC-P1-007-07: Absolute path handling
+/// Category: edge_case
+/// Input: Image path: /absolute/path/to/image.png
+/// Expected: Converted to relative path or error returned
+#[test]
+fn test_tc_p1_007_07_absolute_path_handling() {
+    let doc_path = Path::new("/workspace/project/notes/chapter.md");
+    let image_path = Path::new("/absolute/path/to/image.png");
+
+    let relative = calculate_relative_path(doc_path, image_path);
+
+    // Absolute path in different tree should produce relative path with .. navigation
+    // The function should handle this gracefully
+    assert!(relative.starts_with("../") || relative.starts_with(".."));
 }
 
 /// TC-IP007: Windows path separators

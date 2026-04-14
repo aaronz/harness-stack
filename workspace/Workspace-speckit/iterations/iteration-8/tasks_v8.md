@@ -745,7 +745,7 @@
 | P0-004 | P0 | Paste Rich-Text Conversion | **TODO** |
 | P1-005 | P1 | Wrap Transform — TipTap Integration | **TODO** |
 | P1-006 | P1 | HTML Linked-Assets Mode | ✅ Done |
-| P1-007 | P1 | Image Path Subdirectory Edge Cases | **TODO** |
+| P1-007 | P1 | Image Path Subdirectory Edge Cases | **DONE** |
 | P1-008 | P1 | GFM Parser Verification | **TODO** |
 | P1-009 | P1 | Settings Schema — recent_folders | **TODO** |
 | P1-010 | P1 | Editor.jsx Deprecation Notice | **TODO** |

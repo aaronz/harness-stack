@@ -482,7 +482,7 @@
       "priority": "P1",
       "title": "HTML Export \u2014 Linked-Assets Mode",
       "description": "Add AssetMode enum (Inline, Linked) to ExportOptions, implement linked-assets export pipeline (extract images, copy to _assets/, rewrite URLs), add UI toggle in ExportModal, and add tests for linked-assets mode.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "cargo test html_export passes",
         "ExportModal has working Inline/Linked toggle",
@@ -547,7 +547,7 @@
       "priority": "P1",
       "title": "Image Relative Path \u2014 Subdirectory Edge Cases",
       "description": "Audit commands/image.rs for path calculation logic, add subdirectory test cases (sibling dirs, parent dirs, 2-level, 3-level nesting), fix path calculation using std::path::Path, and add comprehensive image path tests.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "cargo test image_path passes all subdirectory tests",
         "Relative path calculation correct for all nesting levels",
