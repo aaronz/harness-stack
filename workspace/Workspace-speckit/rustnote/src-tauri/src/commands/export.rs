@@ -313,16 +313,14 @@ pub async fn export_to_pdf_native(
             i = table_end;
             
             let mut table_y = y_position;
-            let mut table_lines_rendered = 0usize;
             
             for table_line in &table_lines {
                 if !table_line.trim().starts_with('|') {
                     continue;
                 }
-                table_lines_rendered += 1;
             }
             
-            let required_height = table_lines_rendered as f32 * line_height * 1.5 + 20.0;
+            let required_height = table_lines.iter().filter(|l| l.trim().starts_with('|')).count() as f32 * line_height * 1.5 + 20.0;
             if table_y < bottom_mm + required_height {
                 let (new_page, new_layer) = doc.add_page(Mm(page_width), Mm(page_height), "");
                 current_layer = doc.get_page(new_page).get_layer(new_layer);
@@ -330,41 +328,28 @@ pub async fn export_to_pdf_native(
                 page_count += 1;
             }
             
-            table_y -= 10.0;
-            
-            let col_count = table_lines[0].split('|').filter(|s| !s.trim().is_empty()).count();
-            if col_count > 0 {
-                let col_width = content_width / col_count as f32;
-                let row_height = line_height * 1.5;
-                
-                for tl in &table_lines {
-                    if !tl.trim().starts_with('|') {
-                        continue;
-                    }
-                    
-                    let cells: Vec<&str> = tl.split('|').filter(|s| !s.trim().is_empty()).collect();
-                    let mut x_pos = left_mm;
-                    
-                    for cell in cells {
-                        let cell_text = strip_html_tags(cell).trim().to_string();
-                        if table_y < bottom_mm + row_height {
-                            break;
-                        }
-                        current_layer.use_text(cell_text, 10.0, Mm(x_pos), Mm(table_y), &font);
-                        x_pos += col_width;
-                    }
-                    
-                    table_y -= row_height;
-                }
-            }
+            table_y = render_table_with_borders(
+                &table_lines,
+                &current_layer,
+                &font,
+                &font_bold,
+                left_mm,
+                content_width,
+                table_y,
+                bottom_mm,
+                line_height,
+            );
             
             y_position = table_y;
             continue;
         }
 
         if line.starts_with("<blockquote") {
+            let nesting_depth = line.matches("<blockquote").count();
+            let indent_mm = (nesting_depth as f32) * 15.0;
+            
             let quote_text = strip_html_tags(line);
-            let wrapped = wrap_text(&quote_text, ((content_width * 10.0) / (font_size * 0.6)) as usize);
+            let wrapped = wrap_text(&quote_text, ((content_width * 10.0 - indent_mm * 10.0) / (font_size * 0.6)) as usize);
             
             let required_height = wrapped.len() as f32 * line_height + font_size * 0.3;
             if y_position < bottom_mm + required_height {
@@ -374,9 +359,24 @@ pub async fn export_to_pdf_native(
                 page_count += 1;
             }
 
+            let blockquote_line_height = wrapped.len() as f32 * line_height + font_size * 0.3;
+            current_layer.set_outline_color(Color::Rgb(Rgb::new(0.6, 0.6, 0.6, None)));
+            current_layer.set_outline_thickness(2.0);
+            let line_y_start = y_position;
+            let line_y_end = y_position - blockquote_line_height;
+            let border_x = left_mm + indent_mm - 3.0;
+            let line = Line {
+                points: vec![
+                    (Point::new(Mm(border_x), Mm(line_y_start)), false),
+                    (Point::new(Mm(border_x), Mm(line_y_end)), false)
+                ],
+                is_closed: false,
+            };
+            current_layer.add_line(line);
+
             y_position -= font_size * 0.3;
             for chunk in wrapped {
-                current_layer.use_text(chunk, font_size, Mm(left_mm + 10.0), Mm(y_position), &font);
+                current_layer.use_text(chunk, font_size, Mm(left_mm + indent_mm), Mm(y_position), &font);
                 y_position -= line_height;
             }
 
@@ -386,6 +386,17 @@ pub async fn export_to_pdf_native(
 
         if line.starts_with("<li") || line.starts_with("<ul") || line.starts_with("<ol") {
             let item_text = strip_html_tags(line);
+            
+            let checkbox_symbol = if line.contains("type=\"checkbox\"") {
+                if line.contains("checked") {
+                    "[☑]" 
+                } else {
+                    "[☐]"
+                }
+            } else {
+                "•"
+            };
+            
             let wrapped = wrap_text(&item_text, ((content_width * 10.0) / (font_size * 0.6)) as usize);
             
             let required_height = wrapped.len() as f32 * line_height;
@@ -397,7 +408,7 @@ pub async fn export_to_pdf_native(
             }
 
             for chunk in wrapped {
-                current_layer.use_text(format!("  • {}", chunk), font_size, Mm(left_mm), Mm(y_position), &font);
+                current_layer.use_text(format!("  {} {}", checkbox_symbol, chunk), font_size, Mm(left_mm), Mm(y_position), &font);
                 y_position -= line_height;
             }
 
@@ -498,6 +509,104 @@ fn find_table_end(lines: &[&str], start: usize) -> usize {
         }
     }
     lines.len()
+}
+
+/// Renders a table with borders in the PDF
+fn render_table_with_borders(
+    table_lines: &[&str],
+    layer: &PdfLayerReference,
+    font: &IndirectFontRef,
+    font_bold: &IndirectFontRef,
+    left_mm: f32,
+    content_width: f32,
+    y_position: f32,
+    bottom_mm: f32,
+    line_height: f32,
+) -> f32 {
+    if table_lines.is_empty() {
+        return y_position;
+    }
+
+    let col_count = table_lines[0].split('|').filter(|s| !s.trim().is_empty()).count();
+    if col_count == 0 {
+        return y_position;
+    }
+
+    let col_width = content_width / col_count as f32;
+    let row_height = line_height * 1.5;
+    let border_thickness = 0.5;
+
+    // Set border color to light gray
+    layer.set_outline_color(Color::Rgb(Rgb::new(0.8, 0.8, 0.8, None)));
+    layer.set_outline_thickness(border_thickness);
+
+    let mut table_y = y_position;
+    table_y -= 10.0; // Top padding
+
+    for (row_idx, table_line) in table_lines.iter().enumerate() {
+        if !table_line.trim().starts_with('|') {
+            continue;
+        }
+
+        let cells: Vec<&str> = table_line.split('|').filter(|s| !s.trim().is_empty()).collect();
+        let mut x_pos = left_mm;
+
+        // Draw top border for first row
+        if row_idx == 0 {
+            let rect = Rect::new(Mm(left_mm), Mm(table_y), Mm(left_mm + content_width), Mm(table_y - row_height));
+            layer.add_rect(rect);
+        }
+
+        // Draw cell borders and text
+        for (cell_idx, cell) in cells.iter().enumerate() {
+            let cell_text = strip_html_tags(cell).trim().to_string();
+            
+            // Draw cell border (vertical lines between cells)
+            let cell_x2 = x_pos + col_width;
+            
+            // Draw left border of cell (or outer border for first cell)
+            let left_border_x = if cell_idx == 0 { left_mm } else { x_pos };
+            let rect = Rect::new(
+                Mm(left_border_x), 
+                Mm(table_y), 
+                Mm(left_border_x + 0.1), 
+                Mm(table_y - row_height)
+            );
+            layer.add_rect(rect);
+
+            // Draw bottom border of row
+            let rect_bottom = Rect::new(
+                Mm(left_mm), 
+                Mm(table_y - row_height), 
+                Mm(left_mm + content_width), 
+                Mm(table_y - row_height - 0.1)
+            );
+            layer.add_rect(rect_bottom);
+
+            // Use bold font for header row
+            let cell_font = if row_idx == 0 { &font_bold } else { &font };
+            
+            // Draw cell text with padding
+            let text_x = x_pos + 2.0;
+            let text_y = table_y - row_height + 4.0;
+            layer.use_text(cell_text, 10.0, Mm(text_x), Mm(text_y), cell_font);
+
+            x_pos += col_width;
+        }
+
+        table_y -= row_height;
+    }
+
+    // Draw outer border (right side)
+    let rect_right = Rect::new(
+        Mm(left_mm + content_width - 0.1), 
+        Mm(y_position), 
+        Mm(left_mm + content_width), 
+        Mm(table_y)
+    );
+    layer.add_rect(rect_right);
+
+    table_y
 }
 
 fn strip_html_tags(html: &str) -> String {

@@ -330,3 +330,159 @@ fn test_html_entities_in_content() {
     assert!(html.contains("&lt;"));
     assert!(html.contains("&amp;"));
 }
+
+#[test]
+fn TC_G002_001_PDF_table_rendering_with_borders() {
+    let markdown = "| Header 1 | Header 2 |\n|---------|---------|\n| Cell 1  | Cell 2  |";
+    let html = parser().parse_to_html(markdown);
+
+    assert!(html.contains("<table>"), "Should contain table element");
+    assert!(
+        html.contains("<th>") || html.contains("<td>"),
+        "Should contain table cells"
+    );
+    assert!(html.contains("Header 1"), "Should contain header text");
+    assert!(html.contains("Cell 1"), "Should contain cell text");
+}
+
+#[test]
+fn TC_G002_002_PDF_code_block_syntax_highlighting() {
+    let markdown = r#"```rust
+fn main() {
+    println!("Hello");
+}
+```"#;
+    let html = parser().parse_to_html(markdown);
+
+    assert!(html.contains("<pre"), "Should contain pre element");
+    assert!(
+        html.contains("class="),
+        "Should contain class for syntax highlighting"
+    );
+    assert!(
+        html.contains("rust") || html.contains("language-rust"),
+        "Should contain language info"
+    );
+    assert!(html.contains("fn main"), "Should preserve code content");
+}
+
+#[test]
+fn TC_G002_003_PDF_image_sizing_and_positioning() {
+    let markdown = r#"![alt text](image.png){width=400 height=300}"#;
+    let html = parser().parse_to_html(markdown);
+
+    assert!(html.contains("<img"), "Should contain img element");
+    assert!(html.contains("src="), "Should contain src attribute");
+    assert!(html.contains("alt="), "Should contain alt attribute");
+    assert!(html.contains("alt text"), "Should contain alt text");
+}
+
+#[test]
+fn TC_G002_004_PDF_nested_blockquote_rendering() {
+    let markdown = "> Level 1\n>> Level 2\n>>> Level 3";
+    let html = parser().parse_to_html(markdown);
+
+    assert!(
+        html.contains("<blockquote"),
+        "Should contain blockquote elements"
+    );
+    let blockquote_count = html.matches("<blockquote").count();
+    assert_eq!(blockquote_count, 3, "Should have 3 nested blockquotes");
+}
+
+#[test]
+fn TC_G002_005_PDF_task_list_rendering() {
+    let markdown = "- [x] Completed task\n- [ ] Pending task\n- [ ] Another pending";
+    let html = parser().parse_to_html(markdown);
+
+    assert!(html.contains("<input"), "Should contain input element");
+    assert!(
+        html.contains("type=\"checkbox\""),
+        "Should contain checkbox type"
+    );
+    assert!(
+        html.contains("checked"),
+        "Should mark completed task as checked"
+    );
+}
+
+#[test]
+fn TC_G002_006_PDF_multipage_pagination() {
+    let mut markdown = String::from("# Title\n\n");
+    for i in 0..60 {
+        markdown.push_str(&format!("## Section {}\n\n", i));
+        markdown.push_str(
+            "This is a paragraph with enough text to fill a significant portion of the line. ",
+        );
+        markdown.push_str(
+            "It continues to ensure we have substantial content for testing pagination.\n\n",
+        );
+    }
+
+    let html = parser().parse_to_html(&markdown);
+
+    assert!(html.contains("<h1"), "Should contain h1");
+    for i in 0..60 {
+        assert!(
+            html.contains(&format!("Section {}", i)),
+            "Should contain section {}",
+            i
+        );
+    }
+}
+
+#[test]
+fn TC_G002_007_PDF_complex_document_layout() {
+    let markdown = r#"# Complex Document
+
+## Code Block
+
+```rust
+fn main() {
+    println!("Hello, World!");
+}
+```
+
+## Table
+
+| Column 1 | Column 2 |
+|----------|----------|
+| Data 1   | Data 2   |
+
+## Image
+
+![description](example.png)
+
+## Blockquote
+
+> This is a quote
+>> Nested quote
+
+## Task List
+
+- [x] Done task
+- [ ] Pending task
+
+## List
+
+- Item 1
+- Item 2
+
+---
+"#;
+
+    let html = parser().parse_to_html(markdown);
+
+    assert!(html.contains("<h1"), "Should contain h1");
+    assert!(html.contains("<h2"), "Should contain h2");
+    assert!(html.contains("<pre"), "Should contain code block");
+    assert!(html.contains("<table>"), "Should contain table");
+    assert!(html.contains("<img"), "Should contain image");
+    assert!(html.contains("<blockquote"), "Should contain blockquote");
+    assert!(
+        html.contains("<input"),
+        "Should contain task list checkboxes"
+    );
+    assert!(html.contains("<ul>"), "Should contain list");
+    assert!(html.contains("<hr"), "Should contain horizontal rule");
+}

@@ -107,7 +107,7 @@
       "priority": "P0",
       "title": "Verify and Fix PDF Export Quality",
       "description": "Test current PDF export with complex Markdown (tables, code blocks, images, nested blockquotes, task lists) and fix any rendering quality issues.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "All complex Markdown structures render correctly in PDF",
         "Code blocks have syntax highlighting",

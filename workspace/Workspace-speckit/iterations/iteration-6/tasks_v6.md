@@ -14,7 +14,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-001: Complete Cursor Mapping Bidirectional Conversion
+### G-001: Done
 **Status:** Done
 **Priority:** P0 (Blocking)
 **Module:** Editor (Rust Backend)
