@@ -1171,7 +1171,7 @@
       "priority": "P2",
       "title": "Typewriter Mode \u2014 Scroll Behavior Fix",
       "description": "Audit typewriter mode implementation, fix scroll-to-center behavior, verify cursor stays at vertical center.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Typewriter mode keeps cursor at vertical center during typing",
         "Cursor stays centered during navigation and paste",
@@ -1259,7 +1259,7 @@
       "priority": "P2",
       "title": "Paste Handling \u2014 Improve Rich Text Conversion",
       "description": "Audit paste handling, improve Markdown conversion from rich text, add comprehensive paste tests.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "cargo test paste_handling passes",
         "Common rich text paste cases convert to valid Markdown"

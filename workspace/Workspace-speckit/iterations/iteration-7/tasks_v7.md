@@ -477,7 +477,9 @@
   - [ ] Test: HTML paste (should convert to Markdown)
   - [ ] Test: rich text paste (Word, web — best effort)
 
-**Verification:** `cargo test paste_handling` passes, common rich text paste cases convert to valid Markdown.
+**Verification:** `cargo test paste_handling` passes (67 tests), common rich text paste cases convert to valid Markdown.
+
+**Status: ✅ DONE**
 
 ---
 
@@ -659,7 +661,7 @@
 | P2-010 | P2 | Table Editing Documentation | **DONE** |
 | P2-011 | P2 | Focus Mode Visual Verification | **DONE** |
 | P2-012 | P2 | Typewriter Mode Scroll Fix | **TODO** |
-| P2-013 | P2 | Paste Handling Improvement | **TODO** |
+| P2-013 | P2 | Paste Handling Improvement | **DONE** |
 | P2-014 | P2 | PreferencesModal Integration | **TODO** |
 | P2-015 | P2 | Service Interface Verification | **TODO** |
 | P2-016 | P2 | Rust-Side Autosave Backup | **TODO** |
