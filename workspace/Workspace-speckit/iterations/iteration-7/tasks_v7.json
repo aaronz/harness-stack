@@ -395,7 +395,7 @@
       "priority": "P1",
       "title": "Verify and Fix Wrap Transform End-to-End Integration",
       "description": "Audit Transform::Wrap in Rust, trace TipTap integration, add integration tests, verify wrap works from UI to Rust and back.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "cargo test wrap passes",
         "Manual TipTap test: select text \u2192 apply bold wrap \u2192 text wrapped with **"
