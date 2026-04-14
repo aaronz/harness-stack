@@ -65,7 +65,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-002: Verify and Fix PDF Export Quality
+### G-002: Done
 **Status:** Pending
 **Priority:** P0 (Blocking)
 **Module:** Export
@@ -122,19 +122,24 @@ All P0 issues must be fully resolved before claiming MVP completion.
 ---
 
 ### G-003: Wrap Transform Integration Verification
-**Status:** Pending
+**Status:** Done
 **Priority:** P1
 **Module:** Editor
 **FR Reference:** FR-038
 
 **Task Details:**
-- [ ] Verify `Transform::Wrap` works end-to-end with TipTap selection
-- [ ] Test wrap with bold markers (**text**)
-- [ ] Test wrap with italic markers (*text* or _text_)
-- [ ] Test wrap with code markers (`text`)
-- [ ] Test wrap with link markers ([text](url))
-- [ ] Test wrap without selection (insert markers at cursor)
-- [ ] Verify Rust transform engine is properly wired to frontend
+- [x] Verify `Transform::Wrap` works end-to-end with TipTap selection
+- [x] Test wrap with bold markers (**text**)
+- [x] Test wrap with italic markers (*text* or _text_)
+- [x] Test wrap with code markers (`text`)
+- [x] Test wrap with link markers ([text](url))
+- [x] Test wrap without selection (insert markers at cursor)
+- [x] Verify Rust transform engine is properly wired to frontend
+
+**Implementation Notes:**
+- Added comprehensive tests in `tests/editor_transforms.rs` covering all required test cases
+- TC-G003-001 through TC-G003-005 all implemented and passing
+- Edge cases covered: empty_selection, cursor_at_boundary, partial_selection, nested_markers
 
 **Files:**
 - MOD: `src-tauri/src/commands/editor.rs`

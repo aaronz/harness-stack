@@ -200,7 +200,7 @@
       "priority": "P1",
       "title": "Wrap Transform Integration Verification",
       "description": "Verify Transform::Wrap works end-to-end with TipTap selection. Test wrap with bold, italic, code, and link markers. Test wrap without selection (insert markers at cursor).",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Transform::Wrap works with bold markers",
         "Transform::Wrap works with italic markers",

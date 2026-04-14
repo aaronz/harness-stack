@@ -342,8 +342,13 @@ fn test_tc_g001_011_wrap_nested_markers() {
     assert!(result.content.contains("****"));
 }
 
+// G-003 Wrap Transform Integration Tests
+
 #[test]
-fn test_tc_g008_001_wrap_bold() {
+fn test_tc_g003_001_wrap_selection_bold() {
+    // TC-G003-001: Wrap selection with bold markers
+    // Input: Select 'selection' -> apply wrap with **
+    // Expected: Result: **selection**
     let content = "text with selection here";
     let selection_start = 10;
     let cursor_offset = 19;
@@ -361,7 +366,10 @@ fn test_tc_g008_001_wrap_bold() {
 }
 
 #[test]
-fn test_tc_g008_002_wrap_italic() {
+fn test_tc_g003_002_wrap_selection_italic() {
+    // TC-G003-002: Wrap selection with italic markers
+    // Input: Select 'selection' -> apply wrap with *
+    // Expected: Result: *selection*
     let content = "text with selection here";
     let selection_start = 10;
     let cursor_offset = 19;
@@ -379,7 +387,110 @@ fn test_tc_g008_002_wrap_italic() {
 }
 
 #[test]
-fn test_tc_g008_007_wrap_partial_selection() {
+fn test_tc_g003_003_wrap_selection_code() {
+    // TC-G003-003: Wrap selection with code markers
+    // Input: Select 'code' -> apply wrap with `
+    // Expected: Result: `code`
+    let content = "text with code here";
+    let selection_start = 10;
+    let cursor_offset = 14;
+    let result = engine().apply(
+        &Transform::Wrap {
+            before: "`".to_string(),
+            after: "`".to_string(),
+        },
+        content,
+        cursor_offset,
+        Some(selection_start),
+    );
+    assert_eq!(result.content, "text with `code` here");
+    assert_eq!(result.cursor_offset, 16);
+}
+
+#[test]
+fn test_tc_g003_004_wrap_selection_link() {
+    // TC-G003-004: Wrap selection with link markers
+    // Input: Select 'link text' -> apply wrap with [ and ](url)
+    // Expected: Result: [link text](url) inserted
+    let content = "text with link text here";
+    let selection_start = 10;
+    let cursor_offset = 19;
+    let result = engine().apply(
+        &Transform::Wrap {
+            before: "[".to_string(),
+            after: "](url)".to_string(),
+        },
+        content,
+        cursor_offset,
+        Some(selection_start),
+    );
+    assert_eq!(result.content, "text with [link text](url) here");
+    // cursor at end of inserted markers + selected text
+    // 10 (before) + 1 ([) + 9 (link text) + 6 (](url)) = 26
+    assert_eq!(result.cursor_offset, 26);
+}
+
+#[test]
+fn test_tc_g003_005_wrap_no_selection() {
+    // TC-G003-005: Wrap without selection at cursor
+    // Input: Cursor at position in 'hello world' -> apply ** wrap
+    // Expected: Result: **| (cursor between markers)
+    let content = "hello world";
+    let cursor_offset = 5;
+    let result = engine().apply(
+        &Transform::Wrap {
+            before: "**".to_string(),
+            after: "**".to_string(),
+        },
+        content,
+        cursor_offset,
+        None,
+    );
+    assert_eq!(result.content, "hello** world");
+    assert_eq!(result.cursor_offset, 7); // cursor after **
+}
+
+#[test]
+fn test_tc_g003_edge_case_empty_selection() {
+    // Edge case: empty_selection - selection_start equals cursor_offset
+    let content = "text";
+    let selection_start = 4;
+    let cursor_offset = 4;
+    let result = engine().apply(
+        &Transform::Wrap {
+            before: "**".to_string(),
+            after: "**".to_string(),
+        },
+        content,
+        cursor_offset,
+        Some(selection_start),
+    );
+    // When selection is empty, behaves like no selection - just inserts markers at cursor
+    assert_eq!(result.content, "text**");
+    assert_eq!(result.cursor_offset, 6);
+}
+
+#[test]
+fn test_tc_g003_edge_case_cursor_at_boundary() {
+    // Edge case: cursor_at_boundary - cursor at start of content
+    let content = "text";
+    let cursor_offset = 0;
+    let result = engine().apply(
+        &Transform::Wrap {
+            before: "**".to_string(),
+            after: "**".to_string(),
+        },
+        content,
+        cursor_offset,
+        None,
+    );
+    assert_eq!(result.content, "**text");
+    assert_eq!(result.cursor_offset, 2);
+}
+
+#[test]
+fn test_tc_g003_wrap_partial_selection() {
+    // Partial selection - selection_start < cursor_offset but not full word
     let content = "text with selection here";
     let selection_start = 10;
     let cursor_offset = 18;
@@ -397,24 +508,8 @@ fn test_tc_g008_007_wrap_partial_selection() {
 }
 
 #[test]
-fn test_tc_g008_003_wrap_no_selection() {
-    let content = "text";
-    let cursor_offset = 4;
-    let result = engine().apply(
-        &Transform::Wrap {
-            before: "**".to_string(),
-            after: "**".to_string(),
-        },
-        content,
-        cursor_offset,
-        None,
-    );
-    assert_eq!(result.content, "text**");
-    assert_eq!(result.cursor_offset, 6);
-}
-
-#[test]
-fn test_tc_g008_004_wrap_strikethrough() {
+fn test_tc_g003_wrap_strikethrough() {
+    // Additional marker type: strikethrough
     let content = "text with selection here";
     let selection_start = 10;
     let cursor_offset = 19;
@@ -432,25 +527,8 @@ fn test_tc_g008_004_wrap_strikethrough() {
 }
 
 #[test]
-fn test_tc_g008_005_wrap_code() {
-    let content = "text with selection here";
-    let selection_start = 10;
-    let cursor_offset = 19;
-    let result = engine().apply(
-        &Transform::Wrap {
-            before: "`".to_string(),
-            after: "`".to_string(),
-        },
-        content,
-        cursor_offset,
-        Some(selection_start),
-    );
-    assert_eq!(result.content, "text with `selection` here");
-    assert_eq!(result.cursor_offset, 21);
-}
-
-#[test]
-fn test_tc_g008_006_wrap_already_wrapped() {
+fn test_tc_g003_wrap_already_wrapped() {
+    // Already wrapped - wrapping already wrapped content
     let content = "text with **selection** here";
     let selection_start = 10;
     let cursor_offset = 22;
@@ -465,4 +543,25 @@ fn test_tc_g008_006_wrap_already_wrapped() {
     );
     assert_eq!(result.content, "text with ****selection**** here");
     assert_eq!(result.cursor_offset, 26);
+}
+
+#[test]
+fn test_tc_g003_wrap_nested_markers() {
+    // Nested markers - wrapping already bold text doubles the markers
+    let content = "**already bold**";
+    let selection_start = 0;
+    let cursor_offset = 16;
+    let result = engine().apply(
+        &Transform::Wrap {
+            before: "**".to_string(),
+            after: "**".to_string(),
+        },
+        content,
+        cursor_offset,
+        Some(selection_start),
+    );
+    // Wrapping adds ** before and ** after the selected content
+    assert_eq!(result.content, "****already bold****");
+    // cursor at end: 0 + 2 + 16 + 2 = 20
+    assert_eq!(result.cursor_offset, 20);
 }
