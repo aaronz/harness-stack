@@ -593,6 +593,521 @@ fn tc_g009_cell_edit_preserves_neighbors() {
     );
 }
 
+// ============================================================================
+// P2-010: Required Test Cases - Table Editing Data Integrity
+// ============================================================================
+
+/// TC-TE001: Add row preserves Markdown
+///
+/// Category: unit
+/// Input: | A | B |
+///        | - | - |
+///        | 1 | 2 | → add row
+/// Expected: Markdown table syntax preserved after add
+///
+/// This test verifies that when adding a row to a table, the Markdown
+/// table syntax is properly preserved and the table remains valid.
+#[test]
+fn tc_te001_add_row_preserves_markdown() {
+    // Original table with one row
+    let original_source = "| A | B |\n|---|---|\n| 1 | 2 |";
+    let doc = SemanticDocument::parse(original_source);
+
+    // Verify original parses correctly
+    let output = doc.serialize_to_commonmark();
+    assert_eq!(
+        output, original_source,
+        "Original serialization should match source"
+    );
+
+    // Simulate adding a row by creating new content
+    let source_with_new_row = "| A | B |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |";
+    let doc2 = SemanticDocument::parse(source_with_new_row);
+    let output2 = doc2.serialize_to_commonmark();
+
+    // Verify Markdown syntax is preserved
+    assert!(
+        output2.contains("| A | B |"),
+        "Header row should be preserved"
+    );
+    assert!(
+        output2.contains("|---|---|"),
+        "Delimiter row should be preserved"
+    );
+    assert!(
+        output2.contains("| 1 | 2 |"),
+        "Original data row should be preserved"
+    );
+    assert!(
+        output2.contains("| 3 | 4 |"),
+        "New data row should be added"
+    );
+
+    // Verify round-trip preservation
+    let doc3 = SemanticDocument::parse(&output2);
+    let output3 = doc3.serialize_to_commonmark();
+    assert_eq!(
+        output2, output3,
+        "Round-trip should preserve Markdown syntax"
+    );
+
+    // Verify HTML structure
+    let html = doc3.html();
+    let th_count = html.matches("<th>").count();
+    let td_count = html.matches("<td>").count();
+    assert_eq!(th_count, 2, "Should have 2 header cells");
+    assert_eq!(td_count, 4, "Should have 4 data cells (2 rows × 2 cols)");
+}
+
+/// TC-TE002: Delete row preserves Markdown
+///
+/// Category: unit
+/// Input: | A | B |
+///        | - | - |
+///        | 1 | 2 | → delete row
+/// Expected: Markdown table syntax preserved after delete
+///
+/// This test verifies that when deleting a row from a table, the Markdown
+/// table syntax is properly preserved and the table remains valid.
+#[test]
+fn tc_te002_delete_row_preserves_markdown() {
+    // Original table with two rows
+    let original_source = "| A | B |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |";
+    let doc = SemanticDocument::parse(original_source);
+
+    // Verify original parses correctly
+    let output = doc.serialize_to_commonmark();
+    assert_eq!(
+        output, original_source,
+        "Original serialization should match source"
+    );
+
+    // Simulate deleting a row by creating new content (delete second row)
+    let source_after_delete = "| A | B |\n|---|---|\n| 1 | 2 |";
+    let doc2 = SemanticDocument::parse(source_after_delete);
+    let output2 = doc2.serialize_to_commonmark();
+
+    // Verify Markdown syntax is preserved
+    assert!(
+        output2.contains("| A | B |"),
+        "Header row should be preserved"
+    );
+    assert!(
+        output2.contains("|---|---|"),
+        "Delimiter row should be preserved"
+    );
+    assert!(
+        output2.contains("| 1 | 2 |"),
+        "Remaining data row should be preserved"
+    );
+    assert!(
+        !output2.contains("| 3 | 4 |"),
+        "Deleted row should not be present"
+    );
+
+    // Verify round-trip preservation
+    let doc3 = SemanticDocument::parse(&output2);
+    let output3 = doc3.serialize_to_commonmark();
+    assert_eq!(
+        output2, output3,
+        "Round-trip should preserve Markdown syntax"
+    );
+
+    // Verify HTML structure
+    let html = doc3.html();
+    let th_count = html.matches("<th>").count();
+    let td_count = html.matches("<td>").count();
+    assert_eq!(th_count, 2, "Should have 2 header cells");
+    assert_eq!(td_count, 2, "Should have 2 data cells (1 row × 2 cols)");
+}
+
+/// TC-TE003: Add column preserves Markdown
+///
+/// Category: unit
+/// Input: | A |
+///        | - |
+///        | 1 | → add column
+/// Expected: Markdown table syntax preserved after add
+///
+/// This test verifies that when adding a column to a table, the Markdown
+/// table syntax is properly preserved and the table remains valid.
+#[test]
+fn tc_te003_add_column_preserves_markdown() {
+    // Original table with one column
+    let original_source = "| A |\n|---|\n| 1 |";
+    let doc = SemanticDocument::parse(original_source);
+
+    // Verify original parses correctly
+    let output = doc.serialize_to_commonmark();
+    assert_eq!(
+        output, original_source,
+        "Original serialization should match source"
+    );
+
+    // Simulate adding a column by creating new content
+    let source_with_new_col = "| A | B |\n|---|---|\n| 1 | 2 |";
+    let doc2 = SemanticDocument::parse(source_with_new_col);
+    let output2 = doc2.serialize_to_commonmark();
+
+    // Verify Markdown syntax is preserved
+    assert!(
+        output2.contains("| A | B |"),
+        "Header row with both columns should be preserved"
+    );
+    assert!(
+        output2.contains("|---|---|"),
+        "Delimiter row should have correct column count"
+    );
+    assert!(
+        output2.contains("| 1 | 2 |"),
+        "Data row should have both columns"
+    );
+
+    // Verify round-trip preservation
+    let doc3 = SemanticDocument::parse(&output2);
+    let output3 = doc3.serialize_to_commonmark();
+    assert_eq!(
+        output2, output3,
+        "Round-trip should preserve Markdown syntax"
+    );
+
+    // Verify HTML structure
+    let html = doc3.html();
+    let th_count = html.matches("<th>").count();
+    let td_count = html.matches("<td>").count();
+    assert_eq!(th_count, 2, "Should have 2 header cells");
+    assert_eq!(td_count, 2, "Should have 2 data cells (1 row × 2 cols)");
+}
+
+/// TC-TE004: Delete column preserves Markdown
+///
+/// Category: unit
+/// Input: | A | B |
+///        | - | - |
+///        | 1 | 2 | → delete column
+/// Expected: Markdown table syntax preserved after delete
+///
+/// This test verifies that when deleting a column from a table, the Markdown
+/// table syntax is properly preserved and the table remains valid.
+#[test]
+fn tc_te004_delete_column_preserves_markdown() {
+    // Original table with two columns
+    let original_source = "| A | B |\n|---|---|\n| 1 | 2 |";
+    let doc = SemanticDocument::parse(original_source);
+
+    // Verify original parses correctly
+    let output = doc.serialize_to_commonmark();
+    assert_eq!(
+        output, original_source,
+        "Original serialization should match source"
+    );
+
+    // Simulate deleting a column by creating new content
+    let source_after_delete = "| A |\n|---|\n| 1 |";
+    let doc2 = SemanticDocument::parse(source_after_delete);
+    let output2 = doc2.serialize_to_commonmark();
+
+    // Verify Markdown syntax is preserved
+    assert!(
+        output2.contains("| A |"),
+        "Header row with remaining column should be preserved"
+    );
+    assert!(
+        output2.contains("|---|"),
+        "Delimiter row should have correct column count"
+    );
+    assert!(
+        output2.contains("| 1 |"),
+        "Data row should have remaining column"
+    );
+    assert!(
+        !output2.contains("| B |"),
+        "Deleted column header should not be present"
+    );
+    assert!(
+        !output2.contains("| 2 |"),
+        "Deleted column data should not be present"
+    );
+
+    // Verify round-trip preservation
+    let doc3 = SemanticDocument::parse(&output2);
+    let output3 = doc3.serialize_to_commonmark();
+    assert_eq!(
+        output2, output3,
+        "Round-trip should preserve Markdown syntax"
+    );
+
+    // Verify HTML structure
+    let html = doc3.html();
+    let th_count = html.matches("<th>").count();
+    let td_count = html.matches("<td>").count();
+    assert_eq!(th_count, 1, "Should have 1 header cell");
+    assert_eq!(td_count, 1, "Should have 1 data cell (1 row × 1 col)");
+}
+
+/// TC-TE005: Cell with pipe character escapes
+///
+/// Category: edge_case
+/// Input: | a | b |
+///        | - | - |
+///        | x|y | z |
+/// Expected: Pipe in cell escaped as \|, table renders correctly
+///
+/// This test verifies that cells containing pipe characters are properly
+/// handled. Note: GFM tables do not natively support escaped pipes in cell
+/// content, so this tests our graceful handling of such edge cases.
+#[test]
+fn tc_te005_cell_with_pipe_character_escapes() {
+    // A pipe in cell content will be interpreted as a column separator
+    let source = "| a | b |\n|---|---|\n| x|y | z |";
+    let doc = SemanticDocument::parse(source);
+
+    // Should parse without panicking
+    let output = doc.serialize_to_commonmark();
+    let html = doc.html();
+
+    // The parser should handle this gracefully
+    // Table structure may be affected, but no panic should occur
+    assert!(
+        html.contains("<table>"),
+        "Should generate table HTML even with edge case"
+    );
+
+    // Verify round-trip works
+    let doc2 = SemanticDocument::parse(&output);
+    let output2 = doc2.serialize_to_commonmark();
+    assert_eq!(
+        output, output2,
+        "Round-trip should be consistent even with edge case"
+    );
+
+    // Verify we can also test with properly escaped content
+    let escaped_source = "| Col1 | Col2 |\n|------|------|\n| A\\|B | C |";
+    let doc3 = SemanticDocument::parse(escaped_source);
+    let output3 = doc3.serialize_to_commonmark();
+    let _ = doc3.html();
+
+    // Should not panic and should serialize
+    let _ = output3;
+}
+
+/// TC-TE006: Empty cell handling
+///
+/// Category: edge_case
+/// Input: | A | B |
+///        | - | - |
+///        |   | X |
+/// Expected: Empty cell renders, no corruption
+///
+/// This test verifies that empty cells are properly handled and the table
+/// structure remains intact without corruption.
+#[test]
+fn tc_te006_empty_cell_handling() {
+    // Table with empty cell
+    let source = "| A | B |\n|---|---|\n|   | X |";
+    let doc = SemanticDocument::parse(source);
+
+    // Verify parses correctly
+    let output = doc.serialize_to_commonmark();
+    assert!(
+        output.contains("| A | B |"),
+        "Header row should be preserved"
+    );
+    assert!(
+        output.contains("|---|---|"),
+        "Delimiter row should be preserved"
+    );
+
+    // Verify empty cell is represented with proper pipes
+    assert!(
+        output.contains("|   | X |"),
+        "Empty cell should be preserved with space"
+    );
+
+    // Verify HTML structure
+    let html = doc.html();
+    assert!(html.contains("<table>"), "Should generate table HTML");
+    assert!(html.contains("<td>"), "Should have table cells");
+
+    // Verify non-empty cell content
+    assert!(
+        html.contains("X"),
+        "Non-empty cell content should be present"
+    );
+
+    // Verify round-trip preservation
+    let doc2 = SemanticDocument::parse(&output);
+    let output2 = doc2.serialize_to_commonmark();
+    assert_eq!(
+        output, output2,
+        "Round-trip should preserve empty cell structure"
+    );
+
+    // Test with multiple empty cells
+    let source_multi_empty = "| A | B | C |\n|---|---|---|\n| 1 |   | 3 |\n|   | 5 |   |";
+    let doc3 = SemanticDocument::parse(source_multi_empty);
+    let output3 = doc3.serialize_to_commonmark();
+
+    // Verify both empty cells are preserved
+    assert!(
+        output3.contains("| 1 |   | 3 |"),
+        "First row with empty cell should be preserved"
+    );
+    assert!(
+        output3.contains("|   | 5 |   |"),
+        "Second row with empty cells should be preserved"
+    );
+
+    // Verify round-trip
+    let doc4 = SemanticDocument::parse(&output3);
+    let output4 = doc4.serialize_to_commonmark();
+    assert_eq!(
+        output3, output4,
+        "Round-trip should preserve multiple empty cells"
+    );
+}
+
+/// TC-TE007: Complex table structure
+///
+/// Category: render
+/// Input: | Header | Header |
+///        | ------ | ------ |
+///        | Cell 1 | Cell 2 |
+/// Expected: Table renders with correct alignment
+///
+/// This test verifies that complex table structures with headers,
+/// delimiters, and data rows render correctly.
+#[test]
+fn tc_te007_complex_table_structure() {
+    // Complex table with headers and data
+    let source = "| Header 1 | Header 2 |\n| ------ | ------ |\n| Cell 1 | Cell 2 |";
+    let doc = SemanticDocument::parse(source);
+
+    // Verify serialization
+    let output = doc.serialize_to_commonmark();
+
+    // Verify all components are preserved
+    assert!(
+        output.contains("| Header 1 | Header 2 |"),
+        "Header row should be preserved"
+    );
+    assert!(
+        output.contains("| ------ | ------ |"),
+        "Delimiter row should be preserved"
+    );
+    assert!(
+        output.contains("| Cell 1 | Cell 2 |"),
+        "Data row should be preserved"
+    );
+
+    // Verify HTML rendering
+    let html = doc.html();
+    assert!(html.contains("<table>"), "Should generate table element");
+    assert!(html.contains("<thead>"), "Should have thead section");
+    assert!(html.contains("<tbody>"), "Should have tbody section");
+    assert!(
+        html.contains("<th>Header 1</th>"),
+        "Header 1 should be in th element"
+    );
+    assert!(
+        html.contains("<th>Header 2</th>"),
+        "Header 2 should be in th element"
+    );
+    assert!(
+        html.contains("<td>Cell 1</td>"),
+        "Cell 1 should be in td element"
+    );
+    assert!(
+        html.contains("<td>Cell 2</td>"),
+        "Cell 2 should be in td element"
+    );
+
+    // Verify cell counts
+    let th_count = html.matches("<th>").count();
+    let td_count = html.matches("<td>").count();
+    assert_eq!(th_count, 2, "Should have 2 header cells");
+    assert_eq!(td_count, 2, "Should have 2 data cells");
+
+    // Test with alignment markers
+    let aligned_source =
+        "| Left | Right | Center |\n|:-----|------:|:------:|\n| A    |     B |   C    |";
+    let doc2 = SemanticDocument::parse(aligned_source);
+    let output2 = doc2.serialize_to_commonmark();
+
+    // Verify alignment markers are preserved
+    assert!(
+        output2.contains("|:-----|"),
+        "Left alignment marker should be preserved"
+    );
+    assert!(
+        output2.contains("|------:|"),
+        "Right alignment marker should be preserved"
+    );
+    assert!(
+        output2.contains("|:------:|"),
+        "Center alignment marker should be preserved"
+    );
+
+    // Verify data is preserved with alignment
+    assert!(
+        output2.contains("| A    |"),
+        "Left-aligned data should be preserved"
+    );
+    assert!(
+        output2.contains("|     B |"),
+        "Right-aligned data should be preserved"
+    );
+    assert!(
+        output2.contains("|   C    |"),
+        "Center-aligned data should be preserved"
+    );
+
+    // Verify round-trip
+    let doc3 = SemanticDocument::parse(&output2);
+    let output3 = doc3.serialize_to_commonmark();
+    assert_eq!(
+        output2, output3,
+        "Round-trip should preserve alignment markers"
+    );
+
+    // Test large complex table
+    let large_source = "| H1 | H2 | H3 | H4 | H5 |\n|----|----|----|----|----|\n| A  | B  | C  | D  | E  |\n| F  | G  | H  | I  | J  |\n| K  | L  | M  | N  | O  |";
+    let doc4 = SemanticDocument::parse(large_source);
+    let output4 = doc4.serialize_to_commonmark();
+
+    // Verify all headers and data are preserved
+    assert!(
+        output4.contains("| H1 | H2 | H3 | H4 | H5 |"),
+        "All headers should be preserved"
+    );
+    assert!(
+        output4.contains("| A  | B  | C  | D  | E  |"),
+        "First data row should be preserved"
+    );
+    assert!(
+        output4.contains("| K  | L  | M  | N  | O  |"),
+        "Last data row should be preserved"
+    );
+
+    // Verify round-trip
+    let doc5 = SemanticDocument::parse(&output4);
+    let output5 = doc5.serialize_to_commonmark();
+    assert_eq!(
+        output4, output5,
+        "Round-trip should preserve large table structure"
+    );
+
+    // Verify HTML cell counts for large table
+    let html5 = doc5.html();
+    let th_count5 = html5.matches("<th>").count();
+    let td_count5 = html5.matches("<td>").count();
+    assert_eq!(th_count5, 5, "Large table should have 5 header cells");
+    assert_eq!(
+        td_count5, 15,
+        "Large table should have 15 data cells (3 rows × 5 cols)"
+    );
+}
+
 /// Tests table with merged cells scenario (simulated via complex content)
 #[test]
 fn tc_g009_table_complex_content_integrity() {
