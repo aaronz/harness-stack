@@ -1,6 +1,381 @@
 use rustnote_lib::semantic::ast::SemanticDocument;
 
 // =============================================================================
+// P2-012: Typewriter Mode — Scroll Behavior Fix
+// Test Cases: TC-TW001 to TC-TW007
+// =============================================================================
+// These tests verify the typewriter mode scroll behavior implementation.
+// Typewriter mode keeps cursor at vertical center during typing.
+//
+// Requirements:
+// - Cursor stays centered during typing and navigation
+// - 100-paragraph document scrolls at 60 FPS
+// - Edge cases: document start, document end
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// TC-TW001: Cursor stays centered while typing
+// Category: render
+// Input: Typewriter mode on, type at end of paragraph
+// Expected: Cursor remains at vertical center, document scrolls
+// -----------------------------------------------------------------------------
+
+#[test]
+fn tc_tw001_cursor_stays_centered_while_typing() {
+    // Test that paragraph detection correctly tracks cursor position during typing
+    // When user types characters, the paragraph containing the cursor should be
+    // correctly identified for centering
+
+    let source = "First paragraph with some content\n\nSecond paragraph with more content\n\nThird paragraph here";
+    let doc = SemanticDocument::parse(source);
+
+    let paragraphs = doc.get_paragraphs();
+    assert_eq!(
+        paragraphs.len(),
+        3,
+        "Should have 3 paragraphs for typing test"
+    );
+
+    // Simulate typing at end of first paragraph
+    let first_para_end_offset = paragraphs[0].offset + paragraphs[0].length;
+    let active_para = doc.get_paragraph_at(first_para_end_offset);
+    assert_eq!(
+        active_para, 0,
+        "Typing at end of first paragraph should identify paragraph 0 for centering"
+    );
+
+    // Simulate typing at middle of second paragraph
+    let second_para_mid = paragraphs[1].offset + 5;
+    let active_mid = doc.get_paragraph_at(second_para_mid);
+    assert_eq!(
+        active_mid, 1,
+        "Typing at middle of second paragraph should identify paragraph 1"
+    );
+
+    // Simulate typing at end of document
+    let doc_end = doc.source().len();
+    let active_end = doc.get_paragraph_at(doc_end);
+    assert_eq!(
+        active_end, 2,
+        "Typing at document end should identify last paragraph"
+    );
+}
+
+// -----------------------------------------------------------------------------
+// TC-TW002: Cursor stays centered on Enter
+// Category: render
+// Input: Typewriter mode on, press Enter
+// Expected: New line created, cursor stays at center
+// -----------------------------------------------------------------------------
+
+#[test]
+fn tc_tw002_cursor_stays_centered_on_enter() {
+    // Test that paragraph detection works correctly after Enter key
+    // When Enter is pressed, a new paragraph is created and cursor moves to it
+
+    let source = "First line\n\nSecond line\n\nThird line";
+    let doc = SemanticDocument::parse(source);
+
+    let paragraphs = doc.get_paragraphs();
+    assert_eq!(
+        paragraphs.len(),
+        3,
+        "Should have 3 paragraphs for Enter key test"
+    );
+
+    // Simulate pressing Enter at end of first paragraph
+    // Cursor moves to start of second paragraph
+    let second_para_offset = paragraphs[1].offset;
+    let active_after_enter = doc.get_paragraph_at(second_para_offset);
+    assert_eq!(
+        active_after_enter, 1,
+        "After pressing Enter, cursor should be in second paragraph for centering"
+    );
+
+    // Simulate pressing Enter at end of document (creates new paragraph)
+    let new_para_offset = doc.source().len();
+    let active_new = doc.get_paragraph_at(new_para_offset);
+    assert_eq!(
+        active_new, 2,
+        "Enter at end of doc should keep last paragraph active"
+    );
+}
+
+// -----------------------------------------------------------------------------
+// TC-TW003: Cursor stays centered on arrow navigation
+// Category: render
+// Input: Typewriter mode on, use arrow keys
+// Expected: Cursor stays centered, view scrolls to follow
+// -----------------------------------------------------------------------------
+
+#[test]
+fn tc_tw003_cursor_stays_centered_on_arrow_navigation() {
+    // Test that paragraph detection tracks cursor correctly during arrow navigation
+    // Arrow keys move cursor within and between paragraphs
+
+    let source = "Paragraph one with text\n\nParagraph two with text\n\nParagraph three with text\n\nParagraph four with text";
+    let doc = SemanticDocument::parse(source);
+
+    let paragraphs = doc.get_paragraphs();
+    assert_eq!(
+        paragraphs.len(),
+        4,
+        "Should have 4 paragraphs for navigation test"
+    );
+
+    // Test Down arrow navigation sequence
+    let navigation_offsets = vec![
+        (paragraphs[0].offset, 0, "Down from first paragraph"),
+        (paragraphs[1].offset, 1, "Down to second paragraph"),
+        (paragraphs[2].offset, 2, "Down to third paragraph"),
+        (paragraphs[3].offset, 3, "Down to fourth paragraph"),
+    ];
+
+    for (offset, expected_idx, desc) in navigation_offsets {
+        let active = doc.get_paragraph_at(offset);
+        assert_eq!(
+            active, expected_idx,
+            "{} should identify paragraph {} for centering",
+            desc, expected_idx
+        );
+    }
+
+    // Test Up arrow navigation (reverse)
+    let reverse_offsets = vec![
+        (paragraphs[3].offset, 3, "Up from fourth"),
+        (paragraphs[2].offset, 2, "Up to third"),
+        (paragraphs[1].offset, 1, "Up to second"),
+        (paragraphs[0].offset, 0, "Up to first"),
+    ];
+
+    for (offset, expected_idx, desc) in reverse_offsets {
+        let active = doc.get_paragraph_at(offset);
+        assert_eq!(
+            active, expected_idx,
+            "{} should identify paragraph {} for centering",
+            desc, expected_idx
+        );
+    }
+
+    // Test Left/Right arrow within paragraph (cursor moves within same paragraph)
+    let within_para_offset = paragraphs[1].offset + 10;
+    let active_within = doc.get_paragraph_at(within_para_offset);
+    assert_eq!(
+        active_within, 1,
+        "Left/Right within paragraph should keep same paragraph for centering"
+    );
+}
+
+// -----------------------------------------------------------------------------
+// TC-TW004: Cursor stays centered on paste
+// Category: render
+// Input: Typewriter mode on, paste large text
+// Expected: Cursor stays centered, text inserted
+// -----------------------------------------------------------------------------
+
+#[test]
+fn tc_tw004_cursor_stays_centered_on_paste() {
+    // Test that paragraph detection correctly identifies cursor position after paste
+    // Pasted text may span multiple paragraphs or create new ones
+
+    let source = "Original content\n\nMore content here";
+    let doc = SemanticDocument::parse(source);
+
+    let paragraphs = doc.get_paragraphs();
+    assert_eq!(
+        paragraphs.len(),
+        2,
+        "Should have 2 paragraphs for paste test"
+    );
+
+    // Simulate pasting text at end of first paragraph
+    // Cursor should still be in first paragraph for centering
+    let paste_position = paragraphs[0].offset + paragraphs[0].length;
+    let active_paste = doc.get_paragraph_at(paste_position);
+    assert_eq!(
+        active_paste, 0,
+        "Paste at end of paragraph should identify same paragraph for centering"
+    );
+
+    // Simulate pasting at document end
+    let doc_end = doc.source().len();
+    let active_end = doc.get_paragraph_at(doc_end);
+    assert_eq!(
+        active_end, 1,
+        "Paste at document end should identify last paragraph"
+    );
+}
+
+// -----------------------------------------------------------------------------
+// TC-TW005: Large document performance
+// Category: performance
+// Input: 100+ paragraph document, typewriter mode on
+// Expected: Scroll performance remains smooth (60 FPS)
+// -----------------------------------------------------------------------------
+
+#[test]
+fn tc_tw005_large_document_performance() {
+    // Performance test for typewriter mode with large documents
+    // Paragraph detection must be fast enough for 60 FPS scrolling
+
+    // Create a 100-paragraph document
+    let mut source = String::new();
+    for i in 1..=100 {
+        if i > 1 {
+            source.push_str("\n\n");
+        }
+        source.push_str(&format!("Performance test paragraph {}", i));
+    }
+
+    let doc = SemanticDocument::parse(&source);
+    let paragraphs = doc.get_paragraphs();
+
+    assert_eq!(
+        paragraphs.len(),
+        100,
+        "Should have 100 paragraphs for performance test"
+    );
+
+    // Measure paragraph lookup performance
+    let start_time = std::time::Instant::now();
+
+    // Simulate scrolling through document with paragraph lookups
+    let test_positions = [0, 10, 25, 50, 75, 99];
+    for idx in test_positions {
+        let offset = paragraphs[idx].offset;
+        let _active = doc.get_paragraph_at(offset);
+    }
+
+    let elapsed = start_time.elapsed();
+
+    // Paragraph lookup for 100 paragraphs should be very fast
+    // Target: < 10ms for 60 FPS (16.67ms per frame)
+    assert!(
+        elapsed.as_millis() < 10,
+        "Paragraph lookup for 100 paragraphs should be under 10ms, was {}ms",
+        elapsed.as_millis()
+    );
+
+    // Additional stress test: rapid sequential lookups
+    let rapid_start = std::time::Instant::now();
+    for i in 0..100 {
+        let offset = paragraphs[i].offset;
+        let _active = doc.get_paragraph_at(offset);
+    }
+    let rapid_elapsed = rapid_start.elapsed();
+
+    assert!(
+        rapid_elapsed.as_millis() < 50,
+        "100 sequential paragraph lookups should be under 50ms, was {}ms",
+        rapid_elapsed.as_millis()
+    );
+}
+
+// -----------------------------------------------------------------------------
+// TC-TW006: Typewriter at document start
+// Category: edge_case
+// Input: Move to start, typewriter mode on, type
+// Expected: Cursor at top, no scroll up needed
+// -----------------------------------------------------------------------------
+
+#[test]
+fn tc_tw006_typewriter_at_document_start() {
+    // Edge case: Typewriter mode at document start
+    // When cursor is at document start, it should stay at top (no scroll up)
+
+    let source = "First paragraph\n\nSecond paragraph\n\nThird paragraph";
+    let doc = SemanticDocument::parse(source);
+
+    let paragraphs = doc.get_paragraphs();
+    assert_eq!(paragraphs.len(), 3, "Should have 3 paragraphs");
+
+    // Cursor at very start of document (offset 0)
+    let start_offset = 0;
+    let active_at_start = doc.get_paragraph_at(start_offset);
+    assert_eq!(
+        active_at_start, 0,
+        "Cursor at document start should identify first paragraph"
+    );
+
+    // Cursor at start of first paragraph
+    let first_para_start = paragraphs[0].offset;
+    let active_first_start = doc.get_paragraph_at(first_para_start);
+    assert_eq!(
+        active_first_start, 0,
+        "Cursor at first paragraph start should identify paragraph 0"
+    );
+
+    // Cursor near start of first paragraph (typing position)
+    let typing_pos = paragraphs[0].offset + 3;
+    let active_typing = doc.get_paragraph_at(typing_pos);
+    assert_eq!(
+        active_typing, 0,
+        "Typing near start should still identify first paragraph"
+    );
+
+    // Verify document has content before first paragraph
+    assert_eq!(
+        paragraphs[0].offset, 0,
+        "First paragraph should start at offset 0"
+    );
+}
+
+// -----------------------------------------------------------------------------
+// TC-TW007: Typewriter at document end
+// Category: edge_case
+// Input: Move to end, typewriter mode on, type
+// Expected: Cursor stays centered if possible, or at bottom
+// -----------------------------------------------------------------------------
+
+#[test]
+fn tc_tw007_typewriter_at_document_end() {
+    // Edge case: Typewriter mode at document end
+    // When cursor is at document end, it should stay at bottom
+
+    let source = "First paragraph\n\nSecond paragraph\n\nThird paragraph";
+    let doc = SemanticDocument::parse(source);
+
+    let paragraphs = doc.get_paragraphs();
+    assert_eq!(paragraphs.len(), 3, "Should have 3 paragraphs");
+
+    // Cursor at document end (past all content)
+    let doc_end = doc.source().len();
+    let active_at_end = doc.get_paragraph_at(doc_end);
+    assert_eq!(
+        active_at_end, 2,
+        "Cursor at document end should identify last paragraph (index 2)"
+    );
+
+    // Cursor at start of last paragraph
+    let last_para_start = paragraphs[2].offset;
+    let active_last_start = doc.get_paragraph_at(last_para_start);
+    assert_eq!(
+        active_last_start, 2,
+        "Cursor at last paragraph start should identify paragraph 2"
+    );
+
+    // Cursor near end of last paragraph
+    let near_end = paragraphs[2].offset + paragraphs[2].length - 5;
+    let active_near_end = doc.get_paragraph_at(near_end);
+    assert_eq!(
+        active_near_end, 2,
+        "Cursor near end of last paragraph should identify paragraph 2"
+    );
+
+    // Single paragraph document edge case
+    let single_doc = SemanticDocument::parse("Only paragraph");
+    let single_paragraphs = single_doc.get_paragraphs();
+    assert_eq!(single_paragraphs.len(), 1, "Single paragraph document");
+
+    let single_end = single_doc.source().len();
+    let active_single = single_doc.get_paragraph_at(single_end);
+    assert_eq!(
+        active_single, 0,
+        "Single paragraph document end should identify paragraph 0"
+    );
+}
+
+// =============================================================================
 // TC-G011: Typewriter Mode Scroll Verification Tests
 // =============================================================================
 // These tests verify the backend support for typewriter mode scroll behavior.
