@@ -1,21 +1,147 @@
+/// Configuration options for HTML to Markdown conversion
+#[derive(Debug, Clone)]
+pub struct PasteOptions {
+    /// Preserve whitespace in output
+    pub preserve_whitespace: bool,
+    /// Strip image tags from output
+    pub strip_images: bool,
+    /// Convert tables from Excel/spreadsheet data
+    pub convert_tables: bool,
+}
+
+impl Default for PasteOptions {
+    fn default() -> Self {
+        Self {
+            preserve_whitespace: false,
+            strip_images: false,
+            convert_tables: true,
+        }
+    }
+}
+
 pub struct HtmlToMarkdownConverter {
-    preserve_whitespace: bool,
-    strip_images: bool,
+    options: PasteOptions,
 }
 
 impl HtmlToMarkdownConverter {
     pub fn new() -> Self {
         Self {
-            preserve_whitespace: false,
-            strip_images: false,
+            options: PasteOptions::default(),
         }
     }
 
-    pub fn with_options(preserve_whitespace: bool, strip_images: bool) -> Self {
-        Self {
-            preserve_whitespace,
-            strip_images,
+    pub fn with_options(options: PasteOptions) -> Self {
+        Self { options }
+    }
+
+    /// Check if text appears to be tab-separated table data (Excel-style)
+    fn looks_like_excel_table(text: &str) -> bool {
+        let lines: Vec<&str> = text.lines().collect();
+        if lines.len() < 2 {
+            return false;
         }
+
+        // Check if multiple lines contain tabs and have consistent column counts
+        let first_line_tabs = lines[0].matches('\t').count();
+        if first_line_tabs == 0 {
+            return false;
+        }
+
+        lines.iter().all(|line| {
+            let tab_count = line.matches('\t').count();
+            // Allow 1-2 extra columns for header rows
+            tab_count >= first_line_tabs.saturating_sub(1) && tab_count <= first_line_tabs + 1
+        })
+    }
+
+    /// Convert tab-separated table data to Markdown table format
+    fn convert_excel_table(&self, text: &str) -> String {
+        let lines: Vec<&str> = text.lines().collect();
+        if lines.is_empty() {
+            return String::new();
+        }
+
+        let mut result = String::new();
+
+        for (idx, line) in lines.iter().enumerate() {
+            let cells: Vec<&str> = line.split('\t').collect();
+
+            if cells.is_empty() {
+                continue;
+            }
+
+            // Format as Markdown table row
+            result.push('|');
+            for cell in &cells {
+                result.push(' ');
+                result.push_str(cell.trim());
+                result.push_str(" |");
+            }
+            result.push('\n');
+
+            // Add separator row after header (first line)
+            if idx == 0 {
+                result.push('|');
+                for _ in 0..cells.len() {
+                    result.push_str("---|");
+                }
+                result.push('\n');
+            }
+        }
+
+        result.trim().to_string()
+    }
+
+    /// Extract href attribute from an anchor tag
+    fn extract_href(&self, bytes: &[u8], start: usize) -> Option<String> {
+        let mut i = start;
+        let len = bytes.len();
+
+        // Look for href="
+        while i < len - 6 {
+            if &bytes[i..i + 5] == b"href=" {
+                i += 5;
+                let quote = bytes[i];
+                if quote == b'"' || quote == b'\'' {
+                    i += 1;
+                    let href_start = i;
+                    while i < len && bytes[i] != quote {
+                        i += 1;
+                    }
+                    return std::str::from_utf8(&bytes[href_start..i])
+                        .map(|s| s.to_string())
+                        .ok();
+                }
+            }
+            i += 1;
+        }
+        None
+    }
+
+    /// Extract src attribute from a tag
+    fn extract_src(&self, bytes: &[u8], start: usize) -> Option<String> {
+        let mut i = start;
+        let len = bytes.len();
+
+        // Look for src="
+        while i < len - 5 {
+            if &bytes[i..i + 4] == b"src=" {
+                i += 4;
+                let quote = bytes[i];
+                if quote == b'"' || quote == b'\'' {
+                    i += 1;
+                    let src_start = i;
+                    while i < len && bytes[i] != quote {
+                        i += 1;
+                    }
+                    return std::str::from_utf8(&bytes[src_start..i])
+                        .map(|s| s.to_string())
+                        .ok();
+                }
+            }
+            i += 1;
+        }
+        None
     }
 
     pub fn convert(&self, html: &str) -> String {
@@ -23,10 +149,16 @@ impl HtmlToMarkdownConverter {
             return String::new();
         }
 
+        // Check for Excel/tab-separated table data first
+        if self.options.convert_tables && Self::looks_like_excel_table(html) {
+            return self.convert_excel_table(html);
+        }
+
         let mut result = String::new();
         let mut in_code_block = false;
         let mut code_block_lang = String::new();
         let mut list_stack: Vec<char> = Vec::new();
+        let mut current_href: Option<String> = None;
 
         let bytes = html.as_bytes();
         let len = bytes.len();
@@ -47,7 +179,11 @@ impl HtmlToMarkdownConverter {
                     continue;
                 }
                 if remaining_len >= 4 && &bytes[i..i + 4] == b"</a>" {
-                    result.push_str("](url)");
+                    if let Some(href) = current_href.take() {
+                        result.push_str(&format!("]({})", href));
+                    } else {
+                        result.push_str("]()");
+                    }
                     i += 4;
                     continue;
                 }
@@ -253,7 +389,7 @@ impl HtmlToMarkdownConverter {
                     i += 3;
                     continue;
                 }
-                if remaining_len >= 4 && &bytes[i..i + 4] == b"<em>" {
+                if remaining_len >= 5 && &bytes[i..i + 4] == b"<em>" {
                     result.push('*');
                     i += 4;
                     continue;
@@ -274,6 +410,28 @@ impl HtmlToMarkdownConverter {
                     }
                     continue;
                 }
+                if remaining_len >= 9 && &bytes[i..i + 8] == b"<b class" {
+                    result.push_str("**");
+                    i += 8;
+                    while i < len && bytes[i] != b'>' {
+                        i += 1;
+                    }
+                    if i < len {
+                        i += 1;
+                    }
+                    continue;
+                }
+                if remaining_len >= 7 && &bytes[i..i + 6] == b"<b " {
+                    result.push_str("**");
+                    i += 6;
+                    while i < len && bytes[i] != b'>' {
+                        i += 1;
+                    }
+                    if i < len {
+                        i += 1;
+                    }
+                    continue;
+                }
                 if remaining_len >= 8 && &bytes[i..i + 7] == b"<i style" {
                     result.push('*');
                     i += 7;
@@ -285,7 +443,31 @@ impl HtmlToMarkdownConverter {
                     }
                     continue;
                 }
+                if remaining_len >= 9 && &bytes[i..i + 8] == b"<i class" {
+                    result.push('*');
+                    i += 8;
+                    while i < len && bytes[i] != b'>' {
+                        i += 1;
+                    }
+                    if i < len {
+                        i += 1;
+                    }
+                    continue;
+                }
+                if remaining_len >= 7 && &bytes[i..i + 6] == b"<i " {
+                    result.push('*');
+                    i += 6;
+                    while i < len && bytes[i] != b'>' {
+                        i += 1;
+                    }
+                    if i < len {
+                        i += 1;
+                    }
+                    continue;
+                }
                 if remaining_len >= 4 && &bytes[i..i + 3] == b"<a " {
+                    // Extract href before consuming the opening tag
+                    current_href = self.extract_href(bytes, i + 3);
                     i += 3;
                     while i < len && bytes[i] != b'>' {
                         i += 1;
@@ -495,6 +677,24 @@ impl HtmlToMarkdownConverter {
                     }
                     continue;
                 }
+                // Handle img tags
+                if remaining_len >= 4 && &bytes[i..i + 3] == b"<im" {
+                    if remaining_len >= 5 && (bytes[i + 3] == b'g' || bytes[i + 3] == b' ') {
+                        if !self.options.strip_images {
+                            // Try to extract alt text for markdown image
+                            let alt = self.extract_href(bytes, i).unwrap_or_default();
+                            result.push_str(&format!("![{}]()", alt));
+                        }
+                        i += 3;
+                        while i < len && bytes[i] != b'>' {
+                            i += 1;
+                        }
+                        if i < len {
+                            i += 1;
+                        }
+                        continue;
+                    }
+                }
 
                 i += 1;
                 continue;
@@ -548,6 +748,35 @@ impl HtmlToMarkdownConverter {
         }
 
         cleaned.trim().to_string()
+    }
+
+    /// Handle unknown format by falling back to plain text
+    /// This ensures no crash on unrecognized clipboard formats
+    pub fn convert_unknown(&self, content: &str) -> String {
+        // If content appears to be plain text (no HTML-like tags), return as-is
+        let is_likely_html = content.starts_with('<')
+            || content.contains("</")
+            || content.contains("/>")
+            || content.contains("< ");
+
+        if is_likely_html {
+            // Try to convert as HTML
+            self.convert(content)
+        } else {
+            // Return as plain text, stripping any accidental HTML artifacts
+            let mut result = String::new();
+            let mut in_tag = false;
+            for ch in content.chars() {
+                if ch == '<' {
+                    in_tag = true;
+                } else if ch == '>' {
+                    in_tag = false;
+                } else if !in_tag {
+                    result.push(ch);
+                }
+            }
+            result.trim().to_string()
+        }
     }
 
     pub fn convert_word_html(&self, html: &str) -> String {
