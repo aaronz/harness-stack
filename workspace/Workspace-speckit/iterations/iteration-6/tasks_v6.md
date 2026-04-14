@@ -267,7 +267,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-009: Table Editing Constraints
+### G-009: Done
 **Status:** Pending
 **Priority:** P2
 **Module:** Editor

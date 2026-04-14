@@ -578,7 +578,7 @@
       "priority": "P2",
       "title": "Table Editing Constraints",
       "description": "Document table editing constraints per PRD note. Add tests for data integrity during table editing. Ensure TipTap default behavior is constrained but safe.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Table editing constraints documented",
         "Data integrity tests pass",
@@ -623,7 +623,7 @@
       "priority": "P2",
       "title": "Focus Mode Visual Verification",
       "description": "Verify CSS-based focus mode properly dims non-current paragraphs. Test with various document lengths. Fix visual issues if found.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "CSS-based focus mode dims non-current paragraphs",
         "Works with various document lengths",
