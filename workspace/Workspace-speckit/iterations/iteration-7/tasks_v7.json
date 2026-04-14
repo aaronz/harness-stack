@@ -900,7 +900,7 @@
       "priority": "P1",
       "title": "Deprecate Editor.jsx \u2014 Mark Legacy Component",
       "description": "Add deprecation notice to Editor.jsx, update all imports to use TipTapEditor.jsx, update documentation.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Editor.jsx has deprecation notice",
         "No code imports Editor.jsx (only TipTapEditor)",

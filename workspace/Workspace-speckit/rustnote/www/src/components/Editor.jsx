@@ -1,4 +1,6 @@
 /**
+ * @deprecated Use TipTapEditor.jsx instead
+ * 
  * DEPRECATED LEGACY EDITOR COMPONENT
  * 
  * This component (Editor.jsx) is the LEGACY/plaintext editor that was used before TipTapEditor.jsx was implemented.

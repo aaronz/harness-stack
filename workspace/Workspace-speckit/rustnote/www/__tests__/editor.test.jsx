@@ -445,8 +445,6 @@ describe('Editor Component Relationship (G-008)', () => {
 });
 
 describe('Editor Core Functions Unit Tests', () => {
-  beforeEach(() => {
-  
   describe('escapeHtml', () => {
     it('escapes HTML special characters', () => {
       mockCreateElement.mockReturnValue({

@@ -339,28 +339,29 @@
 
 **Gap Reference:** G-009
 **FR Reference:** FR-008
+**Status:** ✅ DONE
 
 **Subtasks:**
 
-- [ ] **T-037:** Audit Editor.jsx usage:
-  - [ ] Search codebase for all imports of `Editor.jsx`
-  - [ ] List all files that import it
-  - [ ] Verify feature parity: `TipTapEditor.jsx` must support all `Editor.jsx` features
+- [x] **T-037:** Audit Editor.jsx usage:
+  - [x] Search codebase for all imports of `Editor.jsx`
+  - [x] List all files that import it
+  - [x] Verify feature parity: `TipTapEditor.jsx` must support all `Editor.jsx` features
 
-- [ ] **T-038:** Add deprecation notice:
-  - [ ] Edit `www/src/components/Editor.jsx`
-  - [ ] Add JSDoc deprecation notice at top: `/** @deprecated Use TipTapEditor.jsx instead */`
-  - [ ] Add comment explaining: will be removed in post-MVP release
+- [x] **T-038:** Add deprecation notice:
+  - [x] Edit `www/src/components/Editor.jsx`
+  - [x] Add JSDoc deprecation notice at top: `/** @deprecated Use TipTapEditor.jsx instead */`
+  - [x] Add comment explaining: will be removed in post-MVP release
 
-- [ ] **T-039:** Update all imports:
-  - [ ] Update `www/src/App.jsx` to use `TipTapEditor.jsx`
-  - [ ] Update any barrel export / index files
-  - [ ] Remove `Editor.jsx` from default export if present
+- [x] **T-039:** Update all imports:
+  - [x] Update `www/src/App.jsx` to use `TipTapEditor.jsx`
+  - [x] Update any barrel export / index files
+  - [x] Remove `Editor.jsx` from default export if present
 
-- [ ] **T-040:** Update documentation:
-  - [ ] Update `SPEC.md` architecture section to reflect single-editor strategy
-  - [ ] Update `docs/architecture.md` to remove Editor.jsx references
-  - [ ] Document TipTapEditor as the sole active editor
+- [x] **T-040:** Update documentation:
+  - [x] Update `SPEC.md` architecture section to reflect single-editor strategy
+  - [x] Update `docs/architecture.md` to remove Editor.jsx references
+  - [x] Document TipTapEditor as the sole active editor
 
 **Verification:** `Editor.jsx` has deprecation notice, no code imports Editor.jsx (only TipTapEditor), `SPEC.md` and `docs/architecture.md` updated.
 
@@ -654,7 +655,7 @@
 | P1-006 | P1 | Image Path Edge Cases | **TODO** |
 | P1-007 | P1 | GFM Parser Verification | **TODO** |
 | P1-008 | P1 | Settings Schema Verification | **TODO** |
-| P1-009 | P1 | Editor.jsx Deprecation | **TODO** |
+| P1-009 | P1 | Editor.jsx Deprecation | **DONE** |
 | P2-010 | P2 | Table Editing Documentation | **TODO** |
 | P2-011 | P2 | Focus Mode Visual Verification | **TODO** |
 | P2-012 | P2 | Typewriter Mode Scroll Fix | **TODO** |
