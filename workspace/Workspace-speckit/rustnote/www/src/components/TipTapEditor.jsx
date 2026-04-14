@@ -749,6 +749,75 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
     saveDocument
   );
 
+  // Integration trace: Ctrl+B → IPC → editor_apply_transform → Transform::Wrap → Markdown source
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleKeyDown = async (e) => {
+      const mdSource = editor.getText();
+      const { from, to } = editor.state.selection;
+      const hasSelection = from !== to;
+
+      let before = '';
+      let after = '';
+
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'b') {
+          e.preventDefault();
+          before = '**';
+          after = '**';
+        } else if (e.key === 'i') {
+          e.preventDefault();
+          before = '*';
+          after = '*';
+        } else if (e.key === 'e' && e.shiftKey) {
+          e.preventDefault();
+          before = '~~';
+          after = '~~';
+        }
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Backquote') {
+        e.preventDefault();
+        before = '`';
+        after = '`';
+      }
+
+      if (!before) return;
+
+      try {
+        const result = await invoke('editor_apply_transform', {
+          transform: { wrap: { before, after } },
+          content: mdSource,
+          cursorOffset: to,
+          selectionStart: hasSelection ? from : null,
+        });
+
+        if (result.content !== mdSource) {
+          isInternalUpdateRef.current = true;
+          try {
+            const parsed = marked(result.content);
+            editor.commands.setContent(parsed);
+          } finally {
+            setTimeout(() => {
+              isInternalUpdateRef.current = false;
+            }, 100);
+          }
+        }
+      } catch (err) {
+        console.debug('Wrap transform IPC failed, falling back to TipTap native:', err);
+      }
+    };
+
+    const editorDom = editor.view.dom;
+    if (editorDom) {
+      editorDom.addEventListener('keydown', handleKeyDown);
+      return () => {
+        editorDom.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [editor]);
+
   useEffect(() => {
     if (!editor) return;
     const element = editor.view.dom;

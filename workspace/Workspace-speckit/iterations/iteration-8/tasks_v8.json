@@ -21,7 +21,7 @@
       "test_cases": [
         {
           "id": "TC-P0-001-01",
-          "name": "Cold start benchmark \u2014 empty document",
+          "name": "Cold start benchmark — empty document",
           "category": "performance",
           "description": "Measure cold start time with empty document",
           "input": "src-tauri/benches/cold_start.rs",
@@ -29,7 +29,7 @@
         },
         {
           "id": "TC-P0-001-02",
-          "name": "Cold start benchmark \u2014 1MB document",
+          "name": "Cold start benchmark — 1MB document",
           "category": "performance",
           "description": "Measure cold start time with 1MB document",
           "input": "src-tauri/benches/cold_start.rs",
@@ -53,7 +53,7 @@
         },
         {
           "id": "TC-P0-001-05",
-          "name": "NFR PDF export \u2014 10-page document",
+          "name": "NFR PDF export — 10-page document",
           "category": "performance",
           "description": "Measure PDF export time for 10-page document",
           "input": "src-tauri/benches/nfr_thresholds.rs",
@@ -91,7 +91,7 @@
     {
       "id": "P0-002",
       "priority": "P0",
-      "title": "Bidirectional Cursor Mapping \u2014 TipTap End-to-End Verification",
+      "title": "Bidirectional Cursor Mapping — TipTap End-to-End Verification",
       "description": "Audit CursorMapping implementation in src-tauri/src/semantic/position.rs, add edge case unit tests, fix dom_to_source() edge cases (nested structures, empty nodes, multi-byte UTF-8, code span boundaries), and create end-to-end TipTap round-trip test with 10 complex Markdown documents.",
       "status": "done",
       "test_criteria": [
@@ -143,7 +143,7 @@
           "name": "Cursor in multi-byte UTF-8 (CJK)",
           "category": "edge_case",
           "description": "Verify cursor mapping handles multi-byte UTF-8 characters",
-          "input": "\u65e5\u672c\u8a9e \u6807\u9898 \u4e2d\u6587",
+          "input": "日本語 标题 中文",
           "expected_behavior": "CJK character positions map correctly (not byte-offset confusion)"
         },
         {
@@ -156,7 +156,7 @@
         },
         {
           "id": "TC-P0-002-07",
-          "name": "Round-trip convergence \u2014 all positions",
+          "name": "Round-trip convergence — all positions",
           "category": "integration",
           "description": "Verify X' == X for all source positions across complex documents",
           "input": "10 complex Markdown documents (headings + lists + code + tables + blockquotes + images)",
@@ -191,13 +191,13 @@
         ],
         "browser_features": []
       },
-      "impl_notes": "Rust unit tests exist in src-tauri/tests/cursor_mapping_tests.rs. TipTap integration NOT verified. Need end-to-end test in www/ or integration test that exercises TipTapEditor.jsx \u2192 IPC \u2192 Rust \u2192 dom_to_source().",
+      "impl_notes": "Rust unit tests exist in src-tauri/tests/cursor_mapping_tests.rs. TipTap integration NOT verified. Need end-to-end test in www/ or integration test that exercises TipTapEditor.jsx → IPC → Rust → dom_to_source().",
       "dependencies": []
     },
     {
       "id": "P0-003",
       "priority": "P0",
-      "title": "PDF Export Quality \u2014 Visual Verification & Fix",
+      "title": "PDF Export Quality — Visual Verification & Fix",
       "description": "Create PDF test Markdown fixtures covering tables, code blocks, images, and nested structures. Generate PDFs using current printpdf pipeline, inspect visually, document issues, fix rendering problems, and add automated PDF quality checks.",
       "status": "done",
       "test_criteria": [
@@ -214,7 +214,7 @@
       "test_cases": [
         {
           "id": "TC-P0-003-01",
-          "name": "PDF export \u2014 GFM table with borders",
+          "name": "PDF export — GFM table with borders",
           "category": "render",
           "description": "Verify GFM table renders with borders and cell alignment in PDF",
           "input": "src-tauri/tests/samples/pdf_tables.md",
@@ -222,7 +222,7 @@
         },
         {
           "id": "TC-P0-003-02",
-          "name": "PDF export \u2014 multi-language code blocks",
+          "name": "PDF export — multi-language code blocks",
           "category": "render",
           "description": "Verify code blocks with syntax highlighting render in PDF",
           "input": "src-tauri/tests/samples/pdf_code.md",
@@ -230,7 +230,7 @@
         },
         {
           "id": "TC-P0-003-03",
-          "name": "PDF export \u2014 images at various sizes",
+          "name": "PDF export — images at various sizes",
           "category": "render",
           "description": "Verify images at various sizes and positions render in PDF",
           "input": "src-tauri/tests/samples/pdf_images.md",
@@ -238,7 +238,7 @@
         },
         {
           "id": "TC-P0-003-04",
-          "name": "PDF export \u2014 nested structures",
+          "name": "PDF export — nested structures",
           "category": "render",
           "description": "Verify nested blockquotes, lists, code render correctly in PDF",
           "input": "src-tauri/tests/samples/pdf_nested.md",
@@ -270,7 +270,7 @@
         },
         {
           "id": "TC-P0-003-08",
-          "name": "PDF export performance \u2014 NFR-006",
+          "name": "PDF export performance — NFR-006",
           "category": "performance",
           "description": "Verify PDF export completes in < 5s for 10-page document",
           "input": "10-page Markdown document",
@@ -301,9 +301,9 @@
     {
       "id": "P0-004",
       "priority": "P0",
-      "title": "Paste Rich-Text Conversion \u2014 Complete TurndownService Rules",
-      "description": "Audit paste handling in src-tauri/src/semantic/paste.rs and TipTapEditor.jsx, expand TurndownService rules for HTML\u2192Markdown (bold, italic, links, lists, tables, images, code blocks), add Word/Excel clipboard format detection, and add comprehensive paste tests.",
-      "status": "in_progress",
+      "title": "Paste Rich-Text Conversion — Complete TurndownService Rules",
+      "description": "Audit paste handling in src-tauri/src/semantic/paste.rs and TipTapEditor.jsx, expand TurndownService rules for HTML→Markdown (bold, italic, links, lists, tables, images, code blocks), add Word/Excel clipboard format detection, and add comprehensive paste tests.",
+      "status": "done",
       "test_criteria": [
         "cargo test paste_handling passes",
         "Common rich text paste cases convert to valid Markdown",
@@ -337,7 +337,7 @@
           "category": "unit",
           "description": "Verify HTML from web browser converts to Markdown",
           "input": "HTML clipboard with <b>, <i>, <a href>, <ul>, <li>",
-          "expected_behavior": "Bold \u2192 **, italic \u2192 _, links \u2192 [text](url), lists \u2192 - item"
+          "expected_behavior": "Bold → **, italic → _, links → [text](url), lists → - item"
         },
         {
           "id": "TC-P0-004-04",
@@ -397,12 +397,12 @@
     {
       "id": "P1-005",
       "priority": "P1",
-      "title": "Wrap Transform \u2014 TipTap Selection Integration",
-      "description": "Audit Transform::Wrap in src-tauri/src/editor/transforms.rs, trace TipTap integration path (TipTapEditor.jsx \u2192 IPC \u2192 editor_apply_transform \u2192 result), identify missing integration points, and add wrap transform integration tests.",
-      "status": "todo",
+      "title": "Wrap Transform — TipTap Selection Integration",
+      "description": "Audit Transform::Wrap in src-tauri/src/editor/transforms.rs, trace TipTap integration path (TipTapEditor.jsx → IPC → editor_apply_transform → result), identify missing integration points, and add wrap transform integration tests.",
+      "status": "done",
       "test_criteria": [
         "cargo test wrap passes",
-        "Manual TipTap test: select text \u2192 apply bold wrap \u2192 text wrapped with **",
+        "Manual TipTap test: select text → apply bold wrap → text wrapped with **",
         "Wrap with selection spanning multiple paragraphs works",
         "Double-bold and unwrap (empty before/after) work correctly"
       ],
@@ -429,7 +429,7 @@
         },
         {
           "id": "TC-P1-005-03",
-          "name": "Wrap with existing formatting \u2014 double-bold",
+          "name": "Wrap with existing formatting — double-bold",
           "category": "edge_case",
           "description": "Apply bold wrap to already-bold text",
           "input": "Editor content: '**already** bold'",
@@ -474,13 +474,13 @@
         ],
         "browser_features": []
       },
-      "impl_notes": "Rust Transform::Wrap implemented. TipTap integration NOT wired. Need to trace: TipTapEditor.jsx keyboard shortcut/menu \u2192 IPC command \u2192 editor_apply_transform \u2192 update TipTap state.",
+      "impl_notes": "Rust Transform::Wrap implemented. TipTap integration NOT wired. Need to trace: TipTapEditor.jsx keyboard shortcut/menu → IPC command → editor_apply_transform → update TipTap state.",
       "dependencies": []
     },
     {
       "id": "P1-006",
       "priority": "P1",
-      "title": "HTML Export \u2014 Linked-Assets Mode",
+      "title": "HTML Export — Linked-Assets Mode",
       "description": "Add AssetMode enum (Inline, Linked) to ExportOptions, implement linked-assets export pipeline (extract images, copy to _assets/, rewrite URLs), add UI toggle in ExportModal, and add tests for linked-assets mode.",
       "status": "todo",
       "test_criteria": [
@@ -496,7 +496,7 @@
       "test_cases": [
         {
           "id": "TC-P1-006-01",
-          "name": "HTML export \u2014 linked assets mode",
+          "name": "HTML export — linked assets mode",
           "category": "integration",
           "description": "Export HTML with linked-assets mode",
           "input": "Markdown with images: ![img](assets/pic.png)",
@@ -504,7 +504,7 @@
         },
         {
           "id": "TC-P1-006-02",
-          "name": "HTML export \u2014 inline mode (baseline)",
+          "name": "HTML export — inline mode (baseline)",
           "category": "unit",
           "description": "Export HTML with inline assets mode (base64)",
           "input": "Markdown with images",
@@ -512,7 +512,7 @@
         },
         {
           "id": "TC-P1-006-03",
-          "name": "HTML export \u2014 missing image graceful handling",
+          "name": "HTML export — missing image graceful handling",
           "category": "edge_case",
           "description": "Handle missing referenced images",
           "input": "Markdown references image that doesn't exist",
@@ -520,7 +520,7 @@
         },
         {
           "id": "TC-P1-006-04",
-          "name": "ExportModal UI toggle \u2014 linked vs inline",
+          "name": "ExportModal UI toggle — linked vs inline",
           "category": "integration",
           "description": "Verify UI toggle switches between asset modes",
           "input": "ExportModal render with asset_mode dropdown",
@@ -545,7 +545,7 @@
     {
       "id": "P1-007",
       "priority": "P1",
-      "title": "Image Relative Path \u2014 Subdirectory Edge Cases",
+      "title": "Image Relative Path — Subdirectory Edge Cases",
       "description": "Audit commands/image.rs for path calculation logic, add subdirectory test cases (sibling dirs, parent dirs, 2-level, 3-level nesting), fix path calculation using std::path::Path, and add comprehensive image path tests.",
       "status": "todo",
       "test_criteria": [
@@ -633,7 +633,7 @@
     {
       "id": "P1-008",
       "priority": "P1",
-      "title": "tree-sitter GFM Parsing \u2014 Verification",
+      "title": "tree-sitter GFM Parsing — Verification",
       "description": "Create GFM test fixtures (tables, task lists, strikethrough, autolinks), verify tree-sitter correctly parses GFM extensions, define clear parsing strategy (tree-sitter for structural, comrak for GFM rendering), and add GFM parser tests.",
       "status": "todo",
       "test_criteria": [
@@ -689,7 +689,7 @@
         },
         {
           "id": "TC-P1-008-06",
-          "name": "Parser strategy \u2014 no conflicts",
+          "name": "Parser strategy — no conflicts",
           "category": "integration",
           "description": "Verify tree-sitter structural and comrak GFM rendering don't conflict",
           "input": "GFM table + task list + strikethrough",
@@ -709,13 +709,13 @@
         ],
         "browser_features": []
       },
-      "impl_notes": "tree-sitter-markdown loaded. GFM extensions NOT verified. comrak has native GFM support \u2014 may be preferred for GFM rendering over tree-sitter. Need to clarify parser roles and update docs/parsing-strategy.md.",
+      "impl_notes": "tree-sitter-markdown loaded. GFM extensions NOT verified. comrak has native GFM support — may be preferred for GFM rendering over tree-sitter. Need to clarify parser roles and update docs/parsing-strategy.md.",
       "dependencies": []
     },
     {
       "id": "P1-009",
       "priority": "P1",
-      "title": "Settings Schema \u2014 Add recent_folders",
+      "title": "Settings Schema — Add recent_folders",
       "description": "Add recent_folders: Vec<String> field to Rust Settings model, update persistence in services/settings.rs, add recent folders UI in PreferencesModal, wire to IPC read/write settings, and add tests.",
       "status": "todo",
       "test_criteria": [
@@ -755,7 +755,7 @@
         },
         {
           "id": "TC-P1-009-04",
-          "name": "Settings schema \u2014 12 fields",
+          "name": "Settings schema — 12 fields",
           "category": "unit",
           "description": "Verify Settings has all 12 fields including recent_folders",
           "input": "Settings schema inspection",
@@ -777,7 +777,7 @@
     {
       "id": "P1-010",
       "priority": "P1",
-      "title": "Editor.jsx \u2014 Deprecation Notice",
+      "title": "Editor.jsx — Deprecation Notice",
       "description": "Add JSDoc @deprecated notice and removal timeline comment to Editor.jsx, verify no remaining imports reference Editor.jsx, and update architecture documentation to reflect single-editor strategy.",
       "status": "todo",
       "test_criteria": [
@@ -829,7 +829,7 @@
     {
       "id": "P1-011",
       "priority": "P1",
-      "title": "i18n Architecture \u2014 Install i18next",
+      "title": "i18n Architecture — Install i18next",
       "description": "Install i18next, react-i18next, i18next-browser-languagedetector packages, configure i18next with language detection and resource loading, externalize all UI strings to locales/en.json, and prioritize Toolbar, Sidebar, PreferencesModal, ExportModal.",
       "status": "todo",
       "test_criteria": [
@@ -910,7 +910,7 @@
     {
       "id": "P1-012",
       "priority": "P1",
-      "title": "LinkPopover \u2014 URL Validation",
+      "title": "LinkPopover — URL Validation",
       "description": "Add URL validation in LinkPopover.jsx: block javascript:, data:, vbscript: dangerous protocols, allow http, https, mailto, validate before invoking Tauri commands, show error for invalid URLs, and add URL validation tests.",
       "status": "todo",
       "test_criteria": [
@@ -990,7 +990,7 @@
     {
       "id": "P2-015",
       "priority": "P2",
-      "title": "Typewriter Mode \u2014 Scroll Behavior",
+      "title": "Typewriter Mode — Scroll Behavior",
       "description": "Audit typewriter mode scroll implementation in TipTapEditor.jsx, test scroll-to-center behavior during typing/navigation/paste, fix scroll calculation issues, and verify 60 FPS scrolling on 100+ paragraph documents.",
       "status": "todo",
       "test_criteria": [
@@ -1005,7 +1005,7 @@
       "test_cases": [
         {
           "id": "TC-P2-015-01",
-          "name": "Type at end of paragraph \u2014 cursor stays centered",
+          "name": "Type at end of paragraph — cursor stays centered",
           "category": "render",
           "description": "Type text at end of paragraph, cursor should stay at vertical center",
           "input": "Enable typewriter mode, type at end of paragraph",
@@ -1013,7 +1013,7 @@
         },
         {
           "id": "TC-P2-015-02",
-          "name": "Press Enter \u2014 cursor stays centered",
+          "name": "Press Enter — cursor stays centered",
           "category": "render",
           "description": "Press Enter (new line), cursor should stay at vertical center",
           "input": "Enable typewriter mode, press Enter",
@@ -1021,7 +1021,7 @@
         },
         {
           "id": "TC-P2-015-03",
-          "name": "Arrow key navigation \u2014 cursor stays centered",
+          "name": "Arrow key navigation — cursor stays centered",
           "category": "render",
           "description": "Navigate with arrow keys, cursor should stay at vertical center",
           "input": "Enable typewriter mode, use arrow keys",
@@ -1029,7 +1029,7 @@
         },
         {
           "id": "TC-P2-015-04",
-          "name": "Paste text \u2014 cursor stays centered",
+          "name": "Paste text — cursor stays centered",
           "category": "render",
           "description": "Paste text, cursor should stay at vertical center",
           "input": "Enable typewriter mode, paste text",
@@ -1037,7 +1037,7 @@
         },
         {
           "id": "TC-P2-015-05",
-          "name": "Large document \u2014 100+ paragraphs performance",
+          "name": "Large document — 100+ paragraphs performance",
           "category": "performance",
           "description": "Test scrolling performance on large document",
           "input": "100+ paragraph document, enable typewriter mode",
@@ -1059,7 +1059,7 @@
     {
       "id": "P2-016",
       "priority": "P2",
-      "title": "PreferencesModal \u2014 Full Coverage Verification",
+      "title": "PreferencesModal — Full Coverage Verification",
       "description": "Verify all 10 settings controls in PreferencesModal work correctly (theme, font size, font family, line height, content width, focus mode, typewriter mode, outline, auto-save toggle, auto-save interval), fix integration issues, and verify keyboard accessibility.",
       "status": "todo",
       "test_criteria": [
@@ -1074,7 +1074,7 @@
       "test_cases": [
         {
           "id": "TC-P2-016-01",
-          "name": "Theme toggle \u2014 instant switch and persist",
+          "name": "Theme toggle — instant switch and persist",
           "category": "integration",
           "description": "Verify theme toggle changes theme instantly and persists",
           "input": "Toggle theme in PreferencesModal",
@@ -1146,7 +1146,7 @@
         },
         {
           "id": "TC-P2-016-10",
-          "name": "Keyboard accessibility \u2014 Escape to close",
+          "name": "Keyboard accessibility — Escape to close",
           "category": "integration",
           "description": "Verify Escape key closes PreferencesModal",
           "input": "Press Escape while PreferencesModal is open",
@@ -1154,7 +1154,7 @@
         },
         {
           "id": "TC-P2-016-11",
-          "name": "Keyboard accessibility \u2014 Tab navigation",
+          "name": "Keyboard accessibility — Tab navigation",
           "category": "integration",
           "description": "Verify Tab key navigates through all controls",
           "input": "Press Tab repeatedly in PreferencesModal",
@@ -1176,7 +1176,7 @@
     {
       "id": "P2-017",
       "priority": "P2",
-      "title": "FrontmatterBlock \u2014 Visual Polish",
+      "title": "FrontmatterBlock — Visual Polish",
       "description": "Review and polish FrontmatterBlock.jsx: enhance with key-value display, check visual consistency with editor theme, verify rendering in both light and dark themes, and fix any visual inconsistencies.",
       "status": "todo",
       "test_criteria": [
@@ -1239,7 +1239,7 @@
     {
       "id": "P2-018",
       "priority": "P2",
-      "title": "Export \u2014 Define ExportFormat Enum",
+      "title": "Export — Define ExportFormat Enum",
       "description": "Define ExportFormat enum (HTML, PDF; future: DOCX, EPUB) in model/export.rs, ensure trait supports format-specific options, add factory pattern for format selection, and update export service to use ExportFormat.",
       "status": "todo",
       "test_criteria": [
@@ -1262,7 +1262,7 @@
         },
         {
           "id": "TC-P2-018-02",
-          "name": "Factory pattern \u2014 HTML export",
+          "name": "Factory pattern — HTML export",
           "category": "unit",
           "description": "Verify factory pattern dispatches to HTML export",
           "input": "ExportFormat::HTML",
@@ -1270,7 +1270,7 @@
         },
         {
           "id": "TC-P2-018-03",
-          "name": "Factory pattern \u2014 PDF export",
+          "name": "Factory pattern — PDF export",
           "category": "unit",
           "description": "Verify factory pattern dispatches to PDF export",
           "input": "ExportFormat::PDF",
@@ -1299,13 +1299,13 @@
     {
       "id": "P2-019",
       "priority": "P2",
-      "title": "PDF Export \u2014 Overwrite Protection",
-      "description": "Verify export commands check for existing files, verify atomic write (temp\u2192final) pattern, add user confirmation prompt before overwrite if missing, and test overwrite protection.",
+      "title": "PDF Export — Overwrite Protection",
+      "description": "Verify export commands check for existing files, verify atomic write (temp→final) pattern, add user confirmation prompt before overwrite if missing, and test overwrite protection.",
       "status": "todo",
       "test_criteria": [
         "Export prompts user before overwriting existing files",
-        "User confirms \u2192 file overwritten",
-        "User cancels \u2192 file unchanged"
+        "User confirms → file overwritten",
+        "User cancels → file unchanged"
       ],
       "test_commands": [
         "grep -n 'overwrite\\|exists\\|confirm' src-tauri/src/commands/export.rs",
@@ -1314,7 +1314,7 @@
       "test_cases": [
         {
           "id": "TC-P2-019-01",
-          "name": "Export to existing file \u2014 prompt user",
+          "name": "Export to existing file — prompt user",
           "category": "integration",
           "description": "Export to path that already exists should prompt user",
           "input": "Export PDF to /existing/path/output.pdf",
@@ -1322,7 +1322,7 @@
         },
         {
           "id": "TC-P2-019-02",
-          "name": "User confirms overwrite \u2014 file replaced",
+          "name": "User confirms overwrite — file replaced",
           "category": "integration",
           "description": "User confirms overwrite, file should be replaced",
           "input": "User clicks 'Overwrite' in confirmation dialog",
@@ -1330,7 +1330,7 @@
         },
         {
           "id": "TC-P2-019-03",
-          "name": "User cancels overwrite \u2014 file unchanged",
+          "name": "User cancels overwrite — file unchanged",
           "category": "integration",
           "description": "User cancels overwrite, original file should be unchanged",
           "input": "User clicks 'Cancel' in confirmation dialog",
@@ -1338,9 +1338,9 @@
         },
         {
           "id": "TC-P2-019-04",
-          "name": "Atomic write pattern \u2014 temp to final",
+          "name": "Atomic write pattern — temp to final",
           "category": "unit",
-          "description": "Verify atomic write pattern (temp file \u2192 rename)",
+          "description": "Verify atomic write pattern (temp file → rename)",
           "input": "Export process",
           "expected_behavior": "Export writes to temp file, then renames to final path"
         }
@@ -1360,7 +1360,7 @@
     {
       "id": "P2-020",
       "priority": "P2",
-      "title": "Large Document Behavior \u2014 Test at Scale",
+      "title": "Large Document Behavior — Test at Scale",
       "description": "Create large document test fixtures (1MB, 5MB, 10MB), test editor behavior at scale (feature set, preview debouncing, graceful degradation), implement graceful degradation for >5MB documents, and verify incremental parsing prevents memory issues.",
       "status": "todo",
       "test_criteria": [
@@ -1377,7 +1377,7 @@
       "test_cases": [
         {
           "id": "TC-P2-020-01",
-          "name": "Open 1MB document \u2014 full feature set",
+          "name": "Open 1MB document — full feature set",
           "category": "performance",
           "description": "Verify 1MB document opens with full feature set",
           "input": "1MB Markdown fixture (100+ headings, 1000+ paragraphs)",
@@ -1385,7 +1385,7 @@
         },
         {
           "id": "TC-P2-020-02",
-          "name": "Open 5MB document \u2014 core editing works",
+          "name": "Open 5MB document — core editing works",
           "category": "performance",
           "description": "Verify 5MB document opens with core editing functionality",
           "input": "5MB Markdown fixture",
@@ -1393,7 +1393,7 @@
         },
         {
           "id": "TC-P2-020-03",
-          "name": "Open 10MB document \u2014 graceful degradation",
+          "name": "Open 10MB document — graceful degradation",
           "category": "performance",
           "description": "Verify >5MB document activates graceful degradation",
           "input": "10MB Markdown fixture",
@@ -1451,7 +1451,7 @@
       "test_cases": [
         {
           "id": "TC-TD-002-01",
-          "name": "Command enum dispatch \u2014 all operations",
+          "name": "Command enum dispatch — all operations",
           "category": "unit",
           "description": "Verify all editor operations go through Command enum dispatch",
           "input": "All editor commands (insert, delete, format, navigate)",
@@ -1579,7 +1579,7 @@
       "test_cases": [
         {
           "id": "TC-TD-005-01",
-          "name": "External file modification \u2014 editor detects",
+          "name": "External file modification — editor detects",
           "category": "integration",
           "description": "External file modification is detected by editor",
           "input": "File watcher active, external process modifies file",
@@ -1587,7 +1587,7 @@
         },
         {
           "id": "TC-TD-005-02",
-          "name": "External file modification \u2014 notification shown",
+          "name": "External file modification — notification shown",
           "category": "integration",
           "description": "Editor shows notification after external change",
           "input": "External file modification detected",

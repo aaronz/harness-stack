@@ -9,6 +9,8 @@ pub fn editor_apply_transform(
     cursor_offset: usize,
     selection_start: Option<usize>,
 ) -> TransformResultDto {
+    let is_wrap = matches!(transform, TransformType::Wrap { .. });
+
     let editor_transform = match transform {
         TransformType::Enter => Transform::Enter,
         TransformType::Backspace => Transform::Backspace,
@@ -19,11 +21,20 @@ pub fn editor_apply_transform(
         TransformType::EnterInHeading { level } => Transform::EnterInHeading { level },
         TransformType::Wrap { before, after } => Transform::Wrap { before, after },
     };
-    let command = EditorCommand::transform(editor_transform);
-    let (new_content, _) = command.apply(&content, cursor_offset);
+
+    let (new_content, new_cursor_offset) = if is_wrap {
+        let engine = crate::editor::transforms::TransformEngine::new();
+        let result = engine.apply(&editor_transform, &content, cursor_offset, selection_start);
+        (result.content, result.cursor_offset)
+    } else {
+        let command = EditorCommand::transform(editor_transform);
+        let (new_content, _) = command.apply(&content, cursor_offset);
+        (new_content, cursor_offset)
+    };
+
     TransformResultDto {
         content: new_content,
-        cursor_offset: cursor_offset,
+        cursor_offset: new_cursor_offset,
     }
 }
 
