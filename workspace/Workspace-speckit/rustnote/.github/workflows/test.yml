@@ -127,6 +127,10 @@ jobs:
         run: npm run test:visual
         if: github.event_name != 'pull_request'
 
+      - name: Run TD-004 visual regression baselines
+        run: npm run test:visual:td004
+        if: github.event_name != 'pull_request'
+
   security-tests:
     name: Security Tests
     runs-on: ubuntu-latest

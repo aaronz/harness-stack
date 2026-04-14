@@ -666,7 +666,7 @@
 | P2-015 | P2 | Service Interface Verification | **DONE** |
 | P2-016 | P2 | Rust-Side Autosave Backup | **DONE** |
 | TD-002 | TD | Command Enum Consistency | **TODO** |
-| TD-004 | TD | Visual Regression Baselines | **TODO** |
+| TD-004 | TD | Visual Regression Baselines | ✅ Done |
 | TD-005 | TD | File Watcher Integration Tests | **TODO** |
 | TD-008 | TD | FrontmatterBlock Polish | **TODO** |
 

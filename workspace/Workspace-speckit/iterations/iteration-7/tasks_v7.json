@@ -1742,7 +1742,7 @@
       "priority": "P2",
       "title": "Visual Regression Baselines",
       "description": "Establish visual regression baselines for key editor states and features.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Visual regression baselines established",
         "CI check compares against baselines"
