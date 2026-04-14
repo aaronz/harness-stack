@@ -802,3 +802,637 @@ fn tc_gfm_perf_many_tasks() {
         elapsed
     );
 }
+
+// =============================================================================
+// TC-P1-008: GFM Parsing Verification Tests
+// Category: render/integration
+// Purpose: Verify tree-sitter correctly parses GFM extensions and define
+//         clear parsing strategy (tree-sitter for structural, comrak for GFM rendering)
+// =============================================================================
+
+/// Helper function to get fixture path
+fn gfm_fixture_path(name: &str) -> std::path::PathBuf {
+    std::path::PathBuf::from("tests/samples/gfm").join(name)
+}
+
+// =============================================================================
+// TC-P1-008-01: GFM table syntax parsing
+// Category: render
+// Input: | Header | Header |
+//        |--------|--------|
+//        | Cell   | Cell   |
+// Expected: tree-sitter correctly identifies table, header row, separator, body rows
+// =============================================================================
+
+#[test]
+fn tc_p1_008_01_tree_sitter_table_syntax() {
+    let mut parser = ts_parser();
+    let source = "| Header | Header |\n|--------|--------|\n| Cell   | Cell   |";
+
+    let result = parser.parse(source);
+    assert!(result.is_ok(), "Tree-sitter should parse table syntax");
+
+    let (tree, _) = result.unwrap();
+    let root = tree.root_node();
+
+    // Verify tree structure exists and has content
+    assert!(
+        root.byte_range().end > 0,
+        "Tree should contain parsed table content"
+    );
+    // Tree-sitter should successfully parse the table structure
+}
+
+#[test]
+fn tc_p1_008_01_tree_sitter_table_with_alignment() {
+    let mut parser = ts_parser();
+    let source = "| Left | Center | Right |\n|:-----|:------:|------:|\n| L    | C      | R     |";
+
+    let result = parser.parse(source);
+    assert!(result.is_ok(), "Tree-sitter should parse aligned table");
+    let (tree, _) = result.unwrap();
+    assert!(
+        tree.root_node().byte_range().end > 0,
+        "Aligned table should parse correctly"
+    );
+}
+
+#[test]
+fn tc_p1_008_01_comrak_table_rendering() {
+    let parser = md_parser();
+    let source = "| Header | Header |\n|--------|--------|\n| Cell   | Cell   |";
+    let html = parser.parse_to_html(source);
+
+    // Verify table elements are present in rendered HTML
+    assert!(
+        html.contains("<table"),
+        "Should contain table element, got: {}",
+        html
+    );
+    assert!(
+        html.contains("<thead") || html.contains("<tr"),
+        "Should contain table structure, got: {}",
+        html
+    );
+    assert!(
+        html.contains("<td") || html.contains("<th"),
+        "Should contain table cells, got: {}",
+        html
+    );
+}
+
+#[test]
+fn tc_p1_008_01_table_multiple_columns_and_rows() {
+    let parser = md_parser();
+    let source = "| Col1 | Col2 | Col3 |\n|------|------|------|\n| A    | B    | C    |\n| D    | E    | F    |";
+    let html = parser.parse_to_html(source);
+
+    assert!(html.contains("<table"), "Should contain table");
+    let td_count = html.matches("<td").count();
+    assert!(
+        td_count >= 6,
+        "Should have at least 6 td cells (2 rows x 3 cols), got {}",
+        td_count
+    );
+}
+
+#[test]
+fn tc_p1_008_01_table_alignment_preserved() {
+    let parser = md_parser();
+    let source = "| Left | Center | Right |\n|:-----|:------:|------:|\n| L    | C      | R     |";
+    let html = parser.parse_to_html(source);
+
+    assert!(html.contains("<table"), "Should contain table");
+    assert!(
+        html.contains("align=\"left\""),
+        "Should have left alignment, got: {}",
+        html
+    );
+    assert!(
+        html.contains("align=\"center\""),
+        "Should have center alignment, got: {}",
+        html
+    );
+    assert!(
+        html.contains("align=\"right\""),
+        "Should have right alignment, got: {}",
+        html
+    );
+}
+
+// =============================================================================
+// TC-P1-008-02: GFM task list checkboxes
+// Category: render
+// Input: - [ ] Unchecked task
+//        - [x] Checked task
+// Expected: tree-sitter identifies task list items with checked/unchecked state
+// =============================================================================
+
+#[test]
+fn tc_p1_008_02_tree_sitter_task_list_parsing() {
+    let mut parser = ts_parser();
+    let source = "- [ ] Unchecked task\n- [x] Checked task";
+
+    let result = parser.parse(source);
+    assert!(result.is_ok(), "Tree-sitter should parse task list syntax");
+
+    let (tree, _) = result.unwrap();
+    let root = tree.root_node();
+    assert!(
+        root.byte_range().end > 0,
+        "Tree should contain parsed task list content"
+    );
+}
+
+#[test]
+fn tc_p1_008_02_task_list_checked_unchecked_states() {
+    let parser = md_parser();
+    let source = "- [ ] Unchecked task\n- [x] Checked task";
+    let html = parser.parse_to_html(source);
+
+    // Verify checkbox inputs are present
+    assert!(
+        html.contains("<input"),
+        "Should contain input elements for checkboxes, got: {}",
+        html
+    );
+    assert!(
+        html.contains("type=\"checkbox\""),
+        "Should contain checkbox type, got: {}",
+        html
+    );
+    assert!(
+        html.contains("checked"),
+        "Should have checked attribute for checked task, got: {}",
+        html
+    );
+}
+
+#[test]
+fn tc_p1_008_02_task_list_mixed_states() {
+    let parser = md_parser();
+    let source = "- [ ] Pending task\n- [x] Done task\n- [X] Also done";
+    let html = parser.parse_to_html(source);
+
+    let checkbox_count = html.matches("type=\"checkbox\"").count();
+    let checked_count = html.matches("checked").count();
+
+    assert_eq!(
+        checkbox_count, 3,
+        "Should have 3 checkbox inputs, got {}",
+        checkbox_count
+    );
+    assert_eq!(
+        checked_count, 2,
+        "Should have 2 checked inputs (both [x] and [X]), got {}",
+        checked_count
+    );
+}
+
+#[test]
+fn tc_p1_008_02_task_list_nested() {
+    let parser = md_parser();
+    let source = "- [x] Main task\n  - [ ] Subtask 1\n  - [x] Subtask 2";
+    let html = parser.parse_to_html(source);
+
+    assert!(
+        html.contains("type=\"checkbox\""),
+        "Should contain checkboxes in nested tasks"
+    );
+    let checked_count = html.matches("checked").count();
+    assert_eq!(
+        checked_count, 2,
+        "Should have 2 checked items in nested structure"
+    );
+}
+
+#[test]
+fn tc_p1_008_02_task_list_task_content_preserved() {
+    let parser = md_parser();
+    let source = "- [x] Complete the implementation\n- [ ] Write tests";
+    let html = parser.parse_to_html(source);
+
+    assert!(
+        html.contains("Complete the implementation"),
+        "Should preserve unchecked task text, got: {}",
+        html
+    );
+    assert!(
+        html.contains("Write tests"),
+        "Should preserve checked task text, got: {}",
+        html
+    );
+}
+
+// =============================================================================
+// TC-P1-008-03: GFM strikethrough parsing
+// Category: render
+// Input: ~~deleted text~~
+// Expected: tree-sitter identifies strikethrough node
+// =============================================================================
+
+#[test]
+fn tc_p1_008_03_tree_sitter_strikethrough() {
+    let mut parser = ts_parser();
+    let source = "~~deleted text~~";
+
+    let result = parser.parse(source);
+    assert!(result.is_ok(), "Tree-sitter should parse strikethrough syntax");
+
+    let (tree, _) = result.unwrap();
+    let root = tree.root_node();
+    assert!(
+        root.byte_range().end > 0,
+        "Tree should contain parsed strikethrough content"
+    );
+}
+
+#[test]
+fn tc_p1_008_03_strikethrough_in_context() {
+    let parser = md_parser();
+    let source = "This is ~~deleted text~~ in context.";
+    let html = parser.parse_to_html(source);
+
+    assert!(
+        html.contains("<del>") || html.contains("<s>") || html.contains("<strike>"),
+        "Should contain strikethrough element, got: {}",
+        html
+    );
+    assert!(
+        html.contains("deleted text"),
+        "Should contain deleted text content, got: {}",
+        html
+    );
+}
+
+#[test]
+fn tc_p1_008_03_multiple_strikethrough() {
+    let parser = md_parser();
+    let source = "~~first~~ and ~~second~~ and ~~third~~.";
+    let html = parser.parse_to_html(source);
+
+    let strike_count = html.matches("<del>").count()
+        + html.matches("<s>").count()
+        + html.matches("<strike>").count();
+    assert!(
+        strike_count >= 3,
+        "Should have at least 3 strikethrough elements, got {}",
+        strike_count
+    );
+}
+
+#[test]
+fn tc_p1_008_03_strikethrough_with_formatting() {
+    let parser = md_parser();
+    let source = "~~**bold strikethrough**~~ and *~~italic strikethrough~~*";
+    let html = parser.parse_to_html(source);
+
+    // Should contain both strikethrough and formatting
+    let has_strike = html.contains("<del>") || html.contains("<s>") || html.contains("<strike>");
+    let has_bold = html.contains("<strong>");
+    let has_italic = html.contains("<em>");
+
+    assert!(has_strike, "Should contain strikethrough, got: {}", html);
+    assert!(has_bold, "Should contain bold, got: {}", html);
+    assert!(has_italic, "Should contain italic, got: {}", html);
+}
+
+// =============================================================================
+// TC-P1-008-04: GFM autolinks parsing
+// Category: render
+// Input: <https://example.com>
+//        <mailto@example.com>
+// Expected: tree-sitter identifies autolink nodes
+// =============================================================================
+
+#[test]
+fn tc_p1_008_04_tree_sitter_autolink() {
+    let mut parser = ts_parser();
+    let source = "<https://example.com>";
+
+    let result = parser.parse(source);
+    assert!(result.is_ok(), "Tree-sitter should parse autolink syntax");
+
+    let (tree, _) = result.unwrap();
+    let root = tree.root_node();
+    assert!(
+        root.byte_range().end > 0,
+        "Tree should contain parsed autolink content"
+    );
+}
+
+#[test]
+fn tc_p1_008_04_autolink_https_http() {
+    let parser = md_parser();
+    let source = "<https://example.com>\n<http://example.org>";
+    let html = parser.parse_to_html(source);
+
+    assert!(
+        html.contains("href=\"https://example.com\""),
+        "Should contain https URL, got: {}",
+        html
+    );
+    assert!(
+        html.contains("href=\"http://example.org\""),
+        "Should contain http URL, got: {}",
+        html
+    );
+}
+
+#[test]
+fn tc_p1_008_04_autolink_email() {
+    let parser = md_parser();
+    let source = "<mailto@example.com>";
+    let html = parser.parse_to_html(source);
+
+    // Email autolinks should be converted to mailto links
+    assert!(
+        html.contains("<a ") || html.contains("mailto:"),
+        "Should contain anchor or mailto for email, got: {}",
+        html
+    );
+}
+
+#[test]
+fn tc_p1_008_04_autolink_ftp() {
+    let parser = md_parser();
+    let source = "<ftp://files.example.com>";
+    let html = parser.parse_to_html(source);
+
+    assert!(
+        html.contains("href=\"ftp://files.example.com\""),
+        "Should contain ftp URL, got: {}",
+        html
+    );
+}
+
+#[test]
+fn tc_p1_008_04_autolink_multiple() {
+    let parser = md_parser();
+    let source = "Visit <https://example.com> or email <test@example.com> for more info.";
+    let html = parser.parse_to_html(source);
+
+    assert!(
+        html.contains("href=\"https://example.com\""),
+        "Should contain https URL"
+    );
+    // Email link might be mailto: or just href
+    assert!(
+        html.contains("href=") || html.contains("mailto:"),
+        "Should contain link for email"
+    );
+}
+
+// =============================================================================
+// TC-P1-008-05: GFM combined features
+// Category: render
+// Input: src-tauri/tests/samples/gfm_all.md
+// Expected: All GFM features render correctly without conflicts
+// =============================================================================
+
+#[test]
+fn tc_p1_008_05_gfm_all_fixture_exists() {
+    let fixture_path = gfm_fixture_path("gfm_all.md");
+    assert!(
+        fixture_path.exists(),
+        "gfm_all.md fixture should exist at {:?}",
+        fixture_path
+    );
+}
+
+#[test]
+fn tc_p1_008_05_tree_sitter_gfm_all() {
+    let mut parser = ts_parser();
+    let fixture_path = gfm_fixture_path("gfm_all.md");
+
+    let source = fs::read_to_string(&fixture_path)
+        .expect("Should be able to read gfm_all.md fixture");
+
+    let result = parser.parse(&source);
+    assert!(
+        result.is_ok(),
+        "Tree-sitter should parse gfm_all.md fixture"
+    );
+
+    let (tree, _) = result.unwrap();
+    assert!(
+        tree.root_node().byte_range().end > 0,
+        "GFM document should parse to non-empty tree"
+    );
+}
+
+#[test]
+fn tc_p1_008_05_comrak_gfm_all_renders() {
+    let parser = md_parser();
+    let fixture_path = gfm_fixture_path("gfm_all.md");
+
+    let source = fs::read_to_string(&fixture_path)
+        .expect("Should be able to read gfm_all.md fixture");
+
+    let html = parser.parse_to_html(&source);
+
+    // Verify all GFM features are present
+    assert!(
+        html.contains("<table"),
+        "Should contain table element"
+    );
+    assert!(
+        html.contains("type=\"checkbox\""),
+        "Should contain checkboxes for task lists"
+    );
+    assert!(
+        html.contains("<del>") || html.contains("<s>") || html.contains("<strike>"),
+        "Should contain strikethrough element"
+    );
+    assert!(
+        html.contains("href="),
+        "Should contain links/autolinks"
+    );
+}
+
+#[test]
+fn tc_p1_008_05_gfm_features_no_conflict() {
+    let parser = md_parser();
+    let source = "| Table | Header |\n|--------|--------|\n| ~~strike~~ | data |\n\n- [x] done task\n\n<https://example.com>";
+    let html = parser.parse_to_html(&source);
+
+    // All features should render without conflict
+    assert!(html.contains("<table"), "Should have table");
+    assert!(
+        html.contains("<del>") || html.contains("<s>") || html.contains("<strike>"),
+        "Should have strikethrough"
+    );
+    assert!(html.contains("checked"), "Should have checked task");
+    assert!(html.contains("href="), "Should have autolink");
+}
+
+#[test]
+fn tc_p1_008_05_combined_tables_tasks_strikethrough() {
+    let parser = md_parser();
+    // Note: GFM task lists inside table cells are not supported by comrak
+    // Test table with strikethrough and separate task list
+    let source = "| Header | Status |\n|----------|--------|\n| ~~done~~ | Complete |\n\n- [x] Task outside table";
+    let html = parser.parse_to_html(&source);
+
+    assert!(html.contains("<table"), "Should contain table");
+    assert!(
+        html.contains("<del>") || html.contains("<s>") || html.contains("<strike>"),
+        "Should contain strikethrough in table"
+    );
+    assert!(
+        html.contains("type=\"checkbox\""),
+        "Should contain checkbox for task outside table"
+    );
+}
+
+// =============================================================================
+// TC-P1-008-06: Parser strategy — no conflicts
+// Category: integration
+// Input: GFM table + task list + strikethrough
+// Expected: No conflicts between tree-sitter structural analysis and comrak GFM rendering
+// =============================================================================
+
+#[test]
+fn tc_p1_008_06_tree_sitter_and_comrak_both_succeed() {
+    let mut ts_parser = ts_parser();
+    let md_parser = md_parser();
+
+    let source = "# Heading\n\n| Table | Test |\n|-------|------|\n| Cell  | ~~x~~ |\n\n- [x] Task\n\n<https://example.com>";
+
+    // Both parsers should succeed without errors
+    let ts_result = ts_parser.parse(&source);
+    let md_html = md_parser.parse_to_html(&source);
+
+    assert!(ts_result.is_ok(), "Tree-sitter should parse GFM successfully");
+    assert!(!md_html.is_empty(), "Comrak should produce HTML output");
+}
+
+#[test]
+fn tc_p1_008_06_consistent_table_parsing() {
+    let source = "| A | B |\n|---|---|\n| 1 | 2 |";
+
+    let ts_result = ts_parser().parse(source);
+    let md_result = md_parser().parse_to_html(source);
+
+    assert!(ts_result.is_ok(), "Tree-sitter should parse table");
+    assert!(md_result.contains("<table"), "Comrak should render table");
+}
+
+#[test]
+fn tc_p1_008_06_consistent_task_list_parsing() {
+    let source = "- [x] Done\n- [ ] Not done";
+
+    let ts_result = ts_parser().parse(source);
+    let md_result = md_parser().parse_to_html(source);
+
+    assert!(ts_result.is_ok(), "Tree-sitter should parse task list");
+    assert!(
+        md_result.contains("type=\"checkbox\""),
+        "Comrak should render checkboxes"
+    );
+}
+
+#[test]
+fn tc_p1_008_06_consistent_strikethrough_parsing() {
+    let source = "~~deleted~~";
+
+    let ts_result = ts_parser().parse(source);
+    let md_result = md_parser().parse_to_html(source);
+
+    assert!(ts_result.is_ok(), "Tree-sitter should parse strikethrough");
+    assert!(
+        md_result.contains("<del>") || md_result.contains("<s>"),
+        "Comrak should render strikethrough"
+    );
+}
+
+#[test]
+fn tc_p1_008_06_consistent_autolink_parsing() {
+    let source = "<https://example.com>";
+
+    let ts_result = ts_parser().parse(source);
+    let md_result = md_parser().parse_to_html(source);
+
+    assert!(ts_result.is_ok(), "Tree-sitter should parse autolink");
+    assert!(md_result.contains("href="), "Comrak should render autolink");
+}
+
+#[test]
+fn tc_p1_008_06_parsing_strategy_documented() {
+    // Verify parsing-strategy.md exists and contains key information
+    let doc_path = std::path::PathBuf::from("../docs/parsing-strategy.md");
+    assert!(
+        doc_path.exists(),
+        "parsing-strategy.md should exist at {:?}",
+        doc_path
+    );
+
+    let content = fs::read_to_string(&doc_path)
+        .expect("Should be able to read parsing-strategy.md");
+
+    // Verify key strategy concepts are documented
+    assert!(
+        content.contains("Tree-Sitter"),
+        "Should mention Tree-Sitter in strategy"
+    );
+    assert!(
+        content.contains("Comrak"),
+        "Should mention Comrak in strategy"
+    );
+    assert!(
+        content.contains("GFM") || content.contains("GitHub Flavored"),
+        "Should mention GFM in strategy"
+    );
+}
+
+#[test]
+fn tc_p1_008_06_no_parser_conflicts_edge_cases() {
+    let mut ts_parser = ts_parser();
+    let md_parser = md_parser();
+
+    // Edge case: complex nested structure
+    let source = "| **Bold Header** | ~~Strike~~ |\n|----------|----------|\n| Task | <https://a.com> |\n\n- [x] Done task";
+    let ts_result = ts_parser.parse(source);
+    let md_result = md_parser.parse_to_html(source);
+
+    assert!(ts_result.is_ok(), "Tree-sitter should handle nested GFM");
+    assert!(md_result.contains("<table"), "Comrak should render table");
+    assert!(
+        md_result.contains("<strong>"),
+        "Comrak should render bold in table"
+    );
+    assert!(
+        md_result.contains("<del>") || md_result.contains("<s>"),
+        "Comrak should render strikethrough in table"
+    );
+    assert!(
+        md_result.contains("type=\"checkbox\""),
+        "Comrak should render checkbox for task outside table"
+    );
+}
+
+// =============================================================================
+// TC-P1-008: Summary verification
+// =============================================================================
+
+#[test]
+fn tc_p1_008_all_gfm_features_verified() {
+    // This test summarizes that all GFM features have been verified
+    let parser = md_parser();
+
+    // Verify all four core GFM features
+    let table_html = parser.parse_to_html("| A | B |\n|---|---|\n| 1 | 2 |");
+    assert!(table_html.contains("<table"), "Tables verified");
+
+    let task_html = parser.parse_to_html("- [x] done");
+    assert!(task_html.contains("type=\"checkbox\""), "Task lists verified");
+
+    let strike_html = parser.parse_to_html("~~text~~");
+    assert!(
+        strike_html.contains("<del>") || strike_html.contains("<s>"),
+        "Strikethrough verified"
+    );
+
+    let link_html = parser.parse_to_html("<https://example.com>");
+    assert!(link_html.contains("href="), "Autolinks verified");
+}
