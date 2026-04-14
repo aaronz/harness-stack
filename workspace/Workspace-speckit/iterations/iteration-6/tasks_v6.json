@@ -732,7 +732,7 @@
       "priority": "P2",
       "title": "Paste Handling Polish",
       "description": "Improve rich text paste conversion for common formats. Test with various paste sources (Word, web, other editors). Ensure Markdown conversion fidelity.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Rich text from Word pastes correctly",
         "Web content pastes correctly",

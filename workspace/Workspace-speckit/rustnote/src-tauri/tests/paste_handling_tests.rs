@@ -1,4 +1,5 @@
 use rustnote_lib::semantic::ast::SemanticDocument;
+use rustnote_lib::semantic::paste::HtmlToMarkdownConverter;
 
 #[test]
 fn test_paste_html_bold_converted_to_markdown() {
@@ -190,4 +191,188 @@ fn test_paste_whitespace_preserved() {
     let doc = SemanticDocument::parse(source);
     let output = doc.serialize_to_commonmark();
     assert_eq!(output, source);
+}
+
+// TC-G012-001: Paste from Microsoft Word
+// Category: integration
+// Input: Bold, italic, lists from Word
+// Expected: Content converts to Markdown correctly
+#[test]
+fn test_tc_g012_001_paste_from_microsoft_word() {
+    let converter = HtmlToMarkdownConverter::new();
+
+    let word_html = r#"<p class="msonormal"><b>This is bold text</b> and <i>this is italic</i>.</p>
+<p class="msonormal"><o:p>List item 1</o:p></p>
+<p class="msonormal"><o:p>List item 2</o:p></p>"#;
+
+    let result = converter.convert_word_html(word_html);
+
+    assert!(result.contains("**This is bold text**"));
+    assert!(result.contains("*this is italic*"));
+    assert!(result.contains("List item 1"));
+    assert!(result.contains("List item 2"));
+}
+
+#[test]
+fn test_tc_g012_001_word_bold_converted() {
+    let converter = HtmlToMarkdownConverter::new();
+    let word_html = "<b>Bold from Word</b>";
+    let result = converter.convert_word_html(word_html);
+    assert_eq!(result, "**Bold from Word**");
+}
+
+#[test]
+fn test_tc_g012_001_word_italic_converted() {
+    let converter = HtmlToMarkdownConverter::new();
+    let word_html = "<i>Italic from Word</i>";
+    let result = converter.convert_word_html(word_html);
+    assert_eq!(result, "*Italic from Word*");
+}
+
+#[test]
+fn test_tc_g012_001_word_lists_converted() {
+    let converter = HtmlToMarkdownConverter::new();
+    let word_html = "<p>Item 1</p><p>Item 2</p><p>Item 3</p>";
+    let result = converter.convert_word_html(word_html);
+    assert!(result.contains("Item 1"));
+    assert!(result.contains("Item 2"));
+    assert!(result.contains("Item 3"));
+}
+
+// TC-G012-002: Paste from web browser
+// Category: integration
+// Input: Formatted content from web
+// Expected: Web formatting converts to Markdown appropriately
+#[test]
+fn test_tc_g012_002_paste_from_web_browser() {
+    let converter = HtmlToMarkdownConverter::new();
+
+    let web_html = r#"<html><body>
+<h1>Web Heading</h1>
+<p>This is <strong>bold</strong> and <em>emphasized</em> text.</p>
+<ul>
+<li>List item one</li>
+<li>List item two</li>
+</ul>
+</body></html>"#;
+
+    let result = converter.convert_web_html(web_html);
+
+    assert!(result.contains("# Web Heading"));
+    assert!(result.contains("**bold**"));
+    assert!(result.contains("*emphasized*"));
+    assert!(result.contains("List item one"));
+    assert!(result.contains("List item two"));
+}
+
+#[test]
+fn test_tc_g012_002_web_headings_converted() {
+    let converter = HtmlToMarkdownConverter::new();
+    let web_html = "<h1>Main Title</h1><h2>Subtitle</h2>";
+    let result = converter.convert_web_html(web_html);
+    assert!(result.contains("# Main Title"));
+    assert!(result.contains("## Subtitle"));
+}
+
+#[test]
+fn test_tc_g012_002_web_formatting_converted() {
+    let converter = HtmlToMarkdownConverter::new();
+    let web_html = "<p>Some <b>bold</b> and <i>italic</i> content.</p>";
+    let result = converter.convert_web_html(web_html);
+    assert!(result.contains("**bold**"));
+    assert!(result.contains("*italic*"));
+}
+
+// TC-G012-003: Paste from another editor
+// Category: integration
+// Input: Markdown from another editor
+// Expected: Markdown fidelity maintained
+#[test]
+fn test_tc_g012_003_paste_from_another_editor() {
+    let converter = HtmlToMarkdownConverter::new();
+
+    let markdown_source = "# Heading\n\n**Bold** and *italic*\n\n- List item 1\n- List item 2\n\n> Blockquote\n\n```rust\nfn main() {}\n```";
+
+    let doc = SemanticDocument::parse(markdown_source);
+    let output = doc.serialize_to_commonmark();
+
+    assert_eq!(output, markdown_source);
+}
+
+#[test]
+fn test_tc_g012_003_markdown_fidelity_headings() {
+    let source = "# H1\n## H2\n### H3";
+    let doc = SemanticDocument::parse(source);
+    let output = doc.serialize_to_commonmark();
+    assert_eq!(output, source);
+}
+
+#[test]
+fn test_tc_g012_003_markdown_fidelity_formatting() {
+    let source = "**bold** *italic* `code` ~~strikethrough~~";
+    let doc = SemanticDocument::parse(source);
+    let output = doc.serialize_to_commonmark();
+    assert_eq!(output, source);
+}
+
+#[test]
+fn test_tc_g012_003_markdown_fidelity_lists() {
+    let source = "- Unordered item\n1. Ordered item";
+    let doc = SemanticDocument::parse(source);
+    let output = doc.serialize_to_commonmark();
+    assert_eq!(output, source);
+}
+
+#[test]
+fn test_tc_g012_003_markdown_fidelity_blockquote() {
+    let source = "> Single line quote";
+    let doc = SemanticDocument::parse(source);
+    let output = doc.serialize_to_commonmark();
+    assert_eq!(output, source);
+}
+
+// TC-G012-004: Paste preserves code blocks
+// Category: edge_case
+// Input: Code block with syntax highlighting
+// Expected: Code block structure preserved
+#[test]
+fn test_tc_g012_004_paste_preserves_code_blocks() {
+    let converter = HtmlToMarkdownConverter::new();
+
+    let code_html = r#"<pre class="language-rust"><code>fn main() {
+    println!("Hello");
+}</code></pre>"#;
+
+    let result = converter.convert(code_html);
+
+    assert!(result.contains("```rust"));
+    assert!(result.contains("fn main()"));
+    assert!(result.contains("```"));
+}
+
+#[test]
+fn test_tc_g012_004_code_block_with_language() {
+    let converter = HtmlToMarkdownConverter::new();
+    let html = "<pre class=\"language-javascript\"><code>console.log('test');</code></pre>";
+    let result = converter.convert(html);
+    assert!(result.contains("```javascript"));
+    assert!(result.contains("console.log('test');"));
+    assert!(result.contains("```"));
+}
+
+#[test]
+fn test_tc_g012_004_code_block_without_language() {
+    let converter = HtmlToMarkdownConverter::new();
+    let html = "<pre><code>some code</code></pre>";
+    let result = converter.convert(html);
+    assert!(result.contains("```"));
+    assert!(result.contains("some code"));
+}
+
+#[test]
+fn test_tc_g012_004_inline_code_preserved() {
+    let converter = HtmlToMarkdownConverter::new();
+    let html = "<code>inline code</code>";
+    let result = converter.convert(html);
+    assert_eq!(result, "`inline code`");
 }
