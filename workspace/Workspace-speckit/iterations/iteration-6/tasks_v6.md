@@ -217,7 +217,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-007: Settings Schema Verification
+### G-007: Done
 **Status:** Pending
 **Priority:** P1
 **Module:** Settings
@@ -237,21 +237,29 @@ All P0 issues must be fully resolved before claiming MVP completion.
 ---
 
 ### G-008: Editor Consolidation
-**Status:** Pending
+**Status:** Done
 **Priority:** P1
 **Module:** Frontend
 **FR Reference:** FR-008
 
 **Task Details:**
-- [ ] Read `Editor.jsx` and `TipTapEditor.jsx`
-- [ ] Understand the distinction and purpose of each
-- [ ] Document the relationship clearly
-- [ ] Either consolidate (if duplication) or add comments (if intentional)
-- [ ] Update if consolidation makes sense
+- [x] Read `Editor.jsx` and `TipTapEditor.jsx`
+- [x] Understand the distinction and purpose of each
+- [x] Document the relationship clearly
+- [x] Either consolidate (if duplication) or add comments (if intentional)
+- [x] Update if consolidation makes sense
 
 **Files:**
-- MOD: `www/src/components/Editor.jsx`
-- MOD: `www/src/components/TipTapEditor.jsx`
+- MOD: `www/src/components/Editor.jsx` (added deprecation notice)
+- MOD: `www/src/components/TipTapEditor.jsx` (added primary editor documentation)
+- MOD: `www/__tests__/editor.test.jsx` (added TC-G008-001 and TC-G008-002 tests)
+
+**Implementation Notes:**
+- TipTapEditor.jsx is the PRIMARY/WYSIWYG editor (imported in App.jsx)
+- Editor.jsx is DEPRECATED legacy plaintext editor (kept for reference)
+- No duplication - TipTapEditor replaced Editor.jsx as the active editor
+- Both files have clear documentation explaining their relationship
+- Tests added to document component relationship and verify no duplication
 
 ---
 

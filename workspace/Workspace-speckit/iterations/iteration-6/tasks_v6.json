@@ -538,7 +538,7 @@
       "priority": "P1",
       "title": "Editor Consolidation",
       "description": "Read Editor.jsx and TipTapEditor.jsx. Understand distinction and purpose. Either consolidate if duplication or add comments if intentional.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Editor.jsx and TipTapEditor.jsx relationship documented",
         "No unintended duplication",

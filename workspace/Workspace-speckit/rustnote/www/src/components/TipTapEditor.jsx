@@ -1,3 +1,37 @@
+/**
+ * PRIMARY WYSIWYG MARKDOWN EDITOR COMPONENT
+ * 
+ * This component (TipTapEditor.jsx) is the CURRENT/PRIMARY editor using TipTap (ProseMirror-based).
+ * 
+ * PURPOSE & CAPABILITIES:
+ * - Provides proper WYSIWYG editing with live Markdown rendering
+ * - Uses TipTap/ProseMirror for structured document editing
+ * - Supports full Markdown syntax: headings, bold, italic, code, lists, task lists, blockquotes, tables
+ * - Built-in undo/redo, cursor positioning, and selection handling
+ * - Search highlighting with match navigation
+ * - Focus mode and typewriter mode support
+ * - Image paste handling via Turndown service
+ * - Frontmatter block display
+ * 
+ * RELATIONSHIP WITH EDITOR.JSX:
+ * - Editor.jsx is the DEPRECATED legacy plaintext editor
+ * - TipTapEditor replaced Editor.jsx as the main editor (imported in App.jsx)
+ * - TipTapEditor provides superior editing experience with proper cursor mapping
+ * - See Editor.jsx for the legacy implementation kept for reference
+ * 
+ * KEY FEATURES:
+ * - Extensions: StarterKit, Highlight, Placeholder, TaskList, TaskItem, Link
+ * - Custom Turndown rules for rich text paste (bold, italic, code, links, task lists)
+ * - IntersectionObserver-based focus mode paragraph tracking
+ * - scrollToHeading() exposed via ref for outline panel navigation
+ * 
+ * USAGE:
+ * - This is the active editor used in the application
+ * - Import and use directly in App.jsx: <TipTapEditor ref={editorRef} />
+ * 
+ * LAST UPDATED: Iteration-6 (2026-04-14)
+ */
+
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';

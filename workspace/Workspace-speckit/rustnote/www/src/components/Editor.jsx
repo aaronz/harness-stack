@@ -1,3 +1,33 @@
+/**
+ * DEPRECATED LEGACY EDITOR COMPONENT
+ * 
+ * This component (Editor.jsx) is the LEGACY/plaintext editor that was used before TipTapEditor.jsx was implemented.
+ * 
+ * PURPOSE & HISTORY:
+ * - Editor.jsx was the original implementation using a simple contentEditable div
+ * - It provided basic Markdown rendering via regex-based decoration (wrapWithDecorations)
+ * - It called Rust backend transforms via `editor_apply_transform` command
+ * - No WYSIWYG - just plaintext editing with syntax highlighting
+ * 
+ * RELATIONSHIP WITH TIPTAPEDITOR.JSX:
+ * - TipTapEditor.jsx is the CURRENT/PRIMARY editor using TipTap (ProseMirror-based)
+ * - TipTapEditor provides proper WYSIWYG editing with live Markdown preview
+ * - TipTapEditor has better cursor mapping, undo/redo, and structured editing
+ * - Editor.jsx is kept for reference/possible future features but is NOT used in the app
+ * 
+ * WHY KEEP THIS FILE:
+ * - Contains working implementations of some features that may be useful
+ * - Transform-based editing logic (handleEnter, handleBackspace) works well
+ * - Image paste/drop handling works correctly
+ * - May serve as reference for low-level text editing without TipTap overhead
+ * 
+ * USAGE DECISION:
+ * - Use TipTapEditor.jsx (imported in App.jsx) for all current development
+ * - This file is preserved for historical reference and potential future extraction
+ * 
+ * LAST UPDATED: Iteration-6 (2026-04-14)
+ */
+
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import TurndownService from 'turndown';
