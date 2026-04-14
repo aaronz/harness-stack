@@ -289,33 +289,106 @@
     text-decoration: line-through;
 }
 
-/* Focus Mode */
+/* Focus Mode - Complete Implementation for P2-011 */
 body.focus-mode #editor-content .paragraph:not(.active),
-body.focus-mode #editor-content p:not(.active) {
+body.focus-mode #editor-content p:not(.active),
+body.focus-mode #editor-content .ProseMirror p:not(.active) {
     opacity: 0.4;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.3s ease;
 }
 
+/* Headings - dim non-active headings */
+body.focus-mode #editor-content h1:not(.active),
+body.focus-mode #editor-content h2:not(.active),
+body.focus-mode #editor-content h3:not(.active),
+body.focus-mode #editor-content h4:not(.active),
+body.focus-mode #editor-content h5:not(.active),
+body.focus-mode #editor-content h6:not(.active),
 body.focus-mode #editor-content .md-heading:not(.active) {
     opacity: 0.4;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.3s ease;
 }
 
-body.focus-mode #editor-content .active {
+/* Blockquotes - dim non-active blockquotes */
+body.focus-mode #editor-content blockquote:not(.active),
+body.focus-mode #editor-content .blockquote:not(.active) {
+    opacity: 0.4;
+    transition: opacity 0.3s ease;
+}
+
+/* Lists - dim non-active list containers */
+body.focus-mode #editor-content ul:not(.active),
+body.focus-mode #editor-content ol:not(.active),
+body.focus-mode #editor-content li:not(.active),
+body.focus-mode #editor-content .list-item:not(.active),
+body.focus-mode #editor-content .task-list-item:not(.active) {
+    opacity: 0.4;
+    transition: opacity 0.3s ease;
+}
+
+/* Nested lists within active containers - restore opacity */
+body.focus-mode #editor-content ul.active *,
+body.focus-mode #editor-content ol.active *,
+body.focus-mode #editor-content li.active *,
+body.focus-mode #editor-content .list-item.active *,
+body.focus-mode #editor-content .task-list-item.active *,
+body.focus-mode #editor-content blockquote.active *,
+body.focus-mode #editor-content .blockquote.active * {
     opacity: 1;
+    transition: opacity 0.3s ease;
 }
 
-/* Focus Mode - Exclude code blocks and tables from de-emphasis */
-body.focus-mode #editor-content pre,
-body.focus-mode #editor-content pre code,
+/* Code blocks - dim non-active code blocks */
+body.focus-mode #editor-content pre:not(.active),
+body.focus-mode #editor-content .code-block:not(.active),
+body.focus-mode #editor-content .code-block-container:not(.active) {
+    opacity: 0.4;
+    transition: opacity 0.3s ease;
+}
+
+/* Active state - full opacity */
+body.focus-mode #editor-content .active {
+    opacity: 1 !important;
+}
+
+/* Focus mode transition - smooth dimming without flash */
+body.focus-mode #editor-content > * {
+    transition: opacity 0.3s ease;
+}
+
+/* Prevent flash on rapid cursor movement - use will-change for performance */
+body.focus-mode #editor-content .paragraph,
+body.focus-mode #editor-content p,
+body.focus-mode #editor-content h1,
+body.focus-mode #editor-content h2,
+body.focus-mode #editor-content h3,
+body.focus-mode #editor-content h4,
+body.focus-mode #editor-content h5,
+body.focus-mode #editor-content h6,
+body.focus-mode #editor-content blockquote,
+body.focus-mode #editor-content ul,
+body.focus-mode #editor-content ol,
+body.focus-mode #editor-content li,
+body.focus-mode #editor-content pre {
+    will-change: opacity;
+}
+
+/* Focus Mode - Exclude certain elements from de-emphasis (always visible) */
 body.focus-mode #editor-content table,
 body.focus-mode #editor-content th,
 body.focus-mode #editor-content td,
-body.focus-mode #editor-content .code-block,
 body.focus-mode #editor-content .code-block-highlight-wrapper,
-body.focus-mode #editor-content .table-wrapper {
+body.focus-mode #editor-content .table-wrapper,
+body.focus-mode #editor-content .code-block-header {
     opacity: 1 !important;
     transition: none;
+}
+
+/* Code block content inside active code block should be visible */
+body.focus-mode #editor-content pre.active code,
+body.focus-mode #editor-content .code-block.active code,
+body.focus-mode #editor-content .code-block-container.active code {
+    opacity: 1 !important;
 }
 
 /* Code Block Highlighting */

@@ -280,13 +280,15 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
     const editorDom = editor.view.dom;
     if (!editorDom) return;
     
-    const paragraphs = editorDom.querySelectorAll('p, h1, h2, h3, h4, h5, h6, .paragraph');
+    const blockElements = editorDom.querySelectorAll(
+      'p, h1, h2, h3, h4, h5, h6, .paragraph, blockquote, ul, ol, li, pre, .code-block, .code-block-container, .task-list-item'
+    );
     
-    paragraphs.forEach((p, index) => {
+    blockElements.forEach((el, index) => {
       if (index === activeParagraph) {
-        p.classList.add('active');
+        el.classList.add('active');
       } else {
-        p.classList.remove('active');
+        el.classList.remove('active');
       }
     });
   }, [settings.focusMode, activeParagraph]);
@@ -298,15 +300,29 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
       const { from } = editor.state.selection;
       let paragraphIndex = 0;
       
-      const allParagraphs = [];
+      const allBlocks = [];
       editor.state.doc.descendants((node, pos) => {
-        if (node.isBlock && (node.type.name === 'paragraph' || node.type.name === 'heading')) {
-          allParagraphs.push({ pos });
+        if (node.isBlock) {
+          const typeName = node.type.name;
+          if (
+            typeName === 'paragraph' ||
+            typeName === 'heading' ||
+            typeName === 'blockquote' ||
+            typeName === 'bulletList' ||
+            typeName === 'orderedList' ||
+            typeName === 'listItem' ||
+            typeName === 'taskList' ||
+            typeName === 'taskItem' ||
+            typeName === 'codeBlock' ||
+            typeName === 'codeBlockHighlight'
+          ) {
+            allBlocks.push({ pos, type: typeName });
+          }
         }
       });
       
-      for (let i = 0; i < allParagraphs.length; i++) {
-        if (allParagraphs[i].pos <= from) {
+      for (let i = 0; i < allBlocks.length; i++) {
+        if (allBlocks[i].pos <= from) {
           paragraphIndex = i;
         }
       }
@@ -353,9 +369,11 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
         });
         
         if (bestEntry) {
-          const paragraphs = editorDom.querySelectorAll('p, h1, h2, h3, h4, h5, h6, .paragraph');
-          paragraphs.forEach((p, index) => {
-            if (p === bestEntry.target) {
+          const blockElements = editorDom.querySelectorAll(
+            'p, h1, h2, h3, h4, h5, h6, .paragraph, blockquote, ul, ol, li, pre, .code-block, .code-block-container, .task-list-item'
+          );
+          blockElements.forEach((el, index) => {
+            if (el === bestEntry.target) {
               setActiveParagraph(index);
             }
           });
@@ -370,8 +388,10 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
 
     intersectionObserverRef.current = observer;
 
-    const paragraphs = editorDom.querySelectorAll('p, h1, h2, h3, h4, h5, h6, .paragraph');
-    paragraphs.forEach((p) => observer.observe(p));
+    const blockElements = editorDom.querySelectorAll(
+      'p, h1, h2, h3, h4, h5, h6, .paragraph, blockquote, ul, ol, li, pre, .code-block, .code-block-container, .task-list-item'
+    );
+    blockElements.forEach((el) => observer.observe(el));
 
     return () => {
       observer.disconnect();

@@ -657,7 +657,7 @@
 | P1-008 | P1 | Settings Schema Verification | **TODO** |
 | P1-009 | P1 | Editor.jsx Deprecation | **DONE** |
 | P2-010 | P2 | Table Editing Documentation | **DONE** |
-| P2-011 | P2 | Focus Mode Visual Verification | **TODO** |
+| P2-011 | P2 | Focus Mode Visual Verification | **DONE** |
 | P2-012 | P2 | Typewriter Mode Scroll Fix | **TODO** |
 | P2-013 | P2 | Paste Handling Improvement | **TODO** |
 | P2-014 | P2 | PreferencesModal Integration | **TODO** |

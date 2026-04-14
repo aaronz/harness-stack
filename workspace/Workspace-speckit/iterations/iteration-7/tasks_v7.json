@@ -1071,7 +1071,7 @@
       "priority": "P2",
       "title": "Focus Mode Visual Verification and Fix",
       "description": "Inspect and fix focus mode CSS, verify non-current paragraphs dim correctly, test both themes.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Focus mode dims non-current paragraphs correctly in both themes",
         "No visual artifacts",
