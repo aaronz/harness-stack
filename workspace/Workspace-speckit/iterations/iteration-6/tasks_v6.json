@@ -340,7 +340,7 @@
       "priority": "P1",
       "title": "Image Path Testing",
       "description": "Add tests for relative path handling in subdirectory documents, URL-encoded paths, cross-platform path separators, and paths with ../ traversal.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Relative path handling in subdirectory documents works",
         "URL-encoded paths (%20 for spaces) work",

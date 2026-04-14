@@ -1,20 +1,10 @@
-//! Image Path Handling Tests
-//!
-//! Tests for relative path calculation based on document location.
-//! Covers:
-//! - Same directory image references
-//! - Subdirectory document with relative path traversal
-//! - Cross-platform path handling
-//! - Document move scenarios
-
+use rustnote_lib::commands::image::resolve_relative_path;
 use rustnote_lib::model::image::get_image_info;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// TC-G009-001: ImagePath_same_directory
 /// Category: unit
-/// Input: doc.md and img.png in same folder
-/// Expected: ![alt](img.png) resolves correctly
 #[test]
 fn test_image_path_same_directory() {
     // Create a temporary directory with a document and image in same folder
@@ -258,55 +248,44 @@ fn test_image_path_move_document_invalid_after_move() {
     assert_ne!(deep_resolved, img_path);
 }
 
-/// Resolve a relative image path from a document's directory
-/// Takes the document's directory path and an image reference (relative path),
-/// returns the absolute path the image reference points to.
-fn resolve_relative_path(doc_dir: &Path, image_ref: &str) -> PathBuf {
-    // URL decode the path first
-    let decoded_ref = url_decode_path(image_ref);
-    let normalized_ref = decoded_ref.replace('\\', "/");
-    let relative_path = Path::new(&normalized_ref);
-
-    let mut components: Vec<std::path::Component> = doc_dir.components().collect();
-    for component in relative_path.components() {
-        match component {
-            std::path::Component::ParentDir => {
-                if components.len() > 1 {
-                    let last = components.last().unwrap();
-                    // Don't pop past the root
-                    if !matches!(last, std::path::Component::Prefix(_)) {
-                        components.pop();
-                    }
-                }
-            }
-            std::path::Component::Normal(s) => {
-                components.push(std::path::Component::Normal(s));
-            }
-            std::path::Component::CurDir => {}
-            _ => {}
-        }
-    }
-
-    components.iter().collect()
+#[test]
+fn test_tc_g005_001_relative_path_subdirectory() {
+    let doc_dir = Path::new("/docs/guide");
+    let resolved = resolve_relative_path(doc_dir, "../images/diagram.png");
+    assert_eq!(resolved, Path::new("/docs/images/diagram.png"));
 }
 
-/// Simple URL decoding for paths (handles %XX encoding)
-fn url_decode_path(path: &str) -> String {
-    let mut result = String::new();
-    let chars: Vec<char> = path.chars().collect();
-    let mut i = 0;
+#[test]
+fn test_tc_g005_002_url_encoded_spaces() {
+    let doc_dir = Path::new("/workspace/docs");
+    let resolved = resolve_relative_path(doc_dir, "My%20Images/photo.png");
+    assert_eq!(resolved, Path::new("/workspace/docs/My Images/photo.png"));
+}
 
-    while i < chars.len() {
-        if chars[i] == '%' && i + 2 < chars.len() {
-            let hex: String = chars[i + 1..i + 3].iter().collect();
-            if let Ok(byte) = u8::from_str_radix(&hex, 16) {
-                result.push(byte as char);
-                i += 3;
-                continue;
-            }
-        }
-        result.push(chars[i]);
-        i += 1;
-    }
-    result
+#[test]
+fn test_tc_g005_003_cross_platform_separators() {
+    let doc_dir = Path::new("/workspace/docs");
+
+    let resolved_unix = resolve_relative_path(doc_dir, "images/photo.png");
+    assert_eq!(resolved_unix, Path::new("/workspace/docs/images/photo.png"));
+
+    let resolved_backslash = resolve_relative_path(doc_dir, "images\\photo.png");
+    assert_eq!(
+        resolved_backslash,
+        Path::new("/workspace/docs/images/photo.png")
+    );
+}
+
+#[test]
+fn test_tc_g005_004_parent_directory_traversal() {
+    let doc_dir = Path::new("/docs/guide");
+    let resolved = resolve_relative_path(doc_dir, "../assets/logo.png");
+    assert_eq!(resolved, Path::new("/docs/assets/logo.png"));
+}
+
+#[test]
+fn test_tc_g005_005_deep_nested_traversal() {
+    let doc_dir = Path::new("/a/b/c");
+    let resolved = resolve_relative_path(doc_dir, "../../images/photo.png");
+    assert_eq!(resolved, Path::new("/a/images/photo.png"));
 }

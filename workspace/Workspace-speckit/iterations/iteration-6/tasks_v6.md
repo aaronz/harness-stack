@@ -147,7 +147,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-004: HTML Export Linked-Assets Mode
+### G-004: Done
 **Status:** Done
 **Priority:** P1
 **Module:** Export
@@ -173,17 +173,17 @@ All P0 issues must be fully resolved before claiming MVP completion.
 ---
 
 ### G-005: Image Path Testing
-**Status:** Pending
+**Status:** Done
 **Priority:** P1
 **Module:** Image
 **FR Reference:** FR-017
 
 **Task Details:**
-- [ ] Add tests for relative path handling in subdirectory documents
-- [ ] Test URL-encoded paths (%20 for spaces)
-- - [ ] Test cross-platform path separators
-- [ ] Test paths with `../` traversal
-- [ ] Verify `resolve_relative_path()` handles all cases
+- [x] Add tests for relative path handling in subdirectory documents
+- [x] Test URL-encoded paths (%20 for spaces)
+- - [x] Test cross-platform path separators
+- [x] Test paths with `../` traversal
+- [x] Verify `resolve_relative_path()` handles all cases
 
 **Files:**
 - MOD: `tests/image_path_tests.rs`
