@@ -549,40 +549,40 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
     const editorDom = editor.view.dom;
     if (!editorDom) return;
 
+    // FIX P2-015: scrollContainer must be editorDom (#editor-content with overflow-y:auto),
+    // NOT dom.parentElement (overflow:hidden flex container — not scrollable).
+    const scrollContainer = editorDom;
+
     const scrollToCenter = () => {
       if (!settings.typewriterMode) return;
-
       const dom = editor.view.dom;
       if (!dom) return;
-
-      const editorContent = dom.querySelector('.ProseMirror');
-      if (!editorContent) return;
+      const proseMirror = dom.querySelector('.ProseMirror');
+      if (!proseMirror) return;
 
       const viewportHeight = window.innerHeight;
       const viewportCenterY = viewportHeight / 2;
-
       const { from } = editor.state.selection;
 
       let cursorBlock = null;
-
       try {
         const domPos = editor.view.coordsAtPos(from);
         if (!domPos) return;
-
         let element = window.document.elementFromPoint(domPos.left, domPos.top);
-        while (element && element !== editorContent && element !== dom) {
-          if (element.classList.contains('ProseMirror') ||
-              element.tagName === 'P' ||
-              /^H[1-6]$/.test(element.tagName) ||
-              element.tagName === 'LI' ||
-              element.tagName === 'BLOCKQUOTE' ||
-              element.tagName === 'PRE') {
+        while (element && element !== proseMirror && element !== dom) {
+          if (
+            element.classList.contains('ProseMirror') ||
+            /^P$|^H[1-6]$/.test(element.tagName) ||
+            element.tagName === 'LI' ||
+            element.tagName === 'BLOCKQUOTE' ||
+            element.tagName === 'PRE' ||
+            element.classList.contains('task-list-item')
+          ) {
             cursorBlock = element;
             break;
           }
           element = element.parentElement;
         }
-
         if (!cursorBlock) {
           cursorBlock = domPos ? window.document.elementFromPoint(domPos.left, domPos.top) : null;
         }
@@ -591,47 +591,38 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
       }
 
       if (!cursorBlock) {
-        const focusedEl = editorContent.querySelector('.is-focused') ||
-                         editorContent.querySelector('p:focus-within') ||
-                         editorContent.lastElementChild;
-        if (focusedEl) {
-          cursorBlock = focusedEl;
-        } else {
-          return;
-        }
+        const focusedEl =
+          proseMirror.querySelector('.is-focused') ||
+          proseMirror.querySelector('p:focus-within') ||
+          proseMirror.lastElementChild;
+        if (focusedEl) cursorBlock = focusedEl;
+        else return;
       }
 
-      const scrollContainer = dom.parentElement || dom;
       const currentScrollTop = scrollContainer.scrollTop;
-
       const cursorRect = cursorBlock.getBoundingClientRect();
       const cursorCenterY = cursorRect.top + cursorRect.height / 2;
-
       const desiredScrollTop = currentScrollTop + (cursorCenterY - viewportCenterY);
 
-      const minScroll = 0;
-      const contentHeight = editorContent.scrollHeight;
+      const contentHeight = proseMirror.scrollHeight;
       const maxScroll = Math.max(0, contentHeight - viewportHeight);
-
-      const clampedScrollTop = Math.max(minScroll, Math.min(maxScroll, desiredScrollTop));
+      const clampedScrollTop = Math.max(0, Math.min(maxScroll, desiredScrollTop));
 
       const isNearDocumentStart = cursorRect.top < viewportHeight * 0.1;
-      const cursorBottom = cursorRect.bottom;
-      const contentBottom = editorContent.getBoundingClientRect().bottom;
-      const isNearDocumentEnd = cursorBottom > contentBottom - (viewportHeight * 0.1);
+      const isNearDocumentEnd =
+        cursorRect.bottom > proseMirror.getBoundingClientRect().bottom - viewportHeight * 0.1;
 
       const scrollDelta = Math.abs(clampedScrollTop - currentScrollTop);
       if (scrollDelta > 2) {
         if ('requestAnimationFrame' in window) {
           requestAnimationFrame(() => {
-            if (settings.typewriterMode) {
-              if (isNearDocumentStart) {
-                scrollContainer.scrollTo({ top: currentScrollTop, behavior: 'auto' });
-              } else if (isNearDocumentEnd) {
-                scrollContainer.scrollTo({ top: maxScroll, behavior: 'auto' });
-              } else {
-                scrollContainer.scrollTo({ top: clampedScrollTop, behavior: 'smooth' });
-              }
+            if (!settings.typewriterMode) return;
+            if (isNearDocumentStart) {
+              scrollContainer.scrollTo({ top: currentScrollTop, behavior: 'instant' });
+            } else if (isNearDocumentEnd) {
+              scrollContainer.scrollTo({ top: maxScroll, behavior: 'instant' });
+            } else {
+              scrollContainer.scrollTo({ top: clampedScrollTop, behavior: 'instant' });
             }
           });
         } else {
@@ -643,38 +634,38 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
     let rafId = null;
     const debouncedScroll = () => {
       if (!settings.typewriterMode) return;
-
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-      }
-
+      if (rafId) cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(() => {
         rafId = null;
         scrollToCenter();
       });
     };
 
+    // Handle all cursor position changes: typing, Enter, arrow keys, paste
     editor.on('selectionUpdate', debouncedScroll);
 
-    editor.on('transaction', () => {
+    // Handle document changes (typing, paste, Enter) — runs after DOM update
+    editor.on('transaction', (event) => {
       if (!settings.typewriterMode) return;
-
-      if (typewriterScrollTimeoutRef.current) {
-        clearTimeout(typewriterScrollTimeoutRef.current);
+      // Only scroll after content-changing transactions (skip selection-only)
+      if (event.docChanged) {
+        if (typewriterScrollTimeoutRef.current) {
+          clearTimeout(typewriterScrollTimeoutRef.current);
+        }
+        typewriterScrollTimeoutRef.current = setTimeout(() => {
+          debouncedScroll();
+        }, 0);
       }
-
-      typewriterScrollTimeoutRef.current = setTimeout(() => {
-        debouncedScroll();
-      }, 0);
     });
 
     const handleKeyDown = (e) => {
       if (!settings.typewriterMode) return;
-
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(e.key)) {
-        if (rafId) {
-          cancelAnimationFrame(rafId);
-        }
+      if (
+        ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(
+          e.key
+        )
+      ) {
+        if (rafId) cancelAnimationFrame(rafId);
         rafId = requestAnimationFrame(() => {
           rafId = null;
           scrollToCenter();

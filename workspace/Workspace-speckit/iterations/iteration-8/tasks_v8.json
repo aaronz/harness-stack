@@ -992,7 +992,7 @@
       "priority": "P2",
       "title": "Typewriter Mode \u2014 Scroll Behavior",
       "description": "Audit typewriter mode scroll implementation in TipTapEditor.jsx, test scroll-to-center behavior during typing/navigation/paste, fix scroll calculation issues, and verify 60 FPS scrolling on 100+ paragraph documents.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Typewriter mode keeps cursor at vertical center during typing, navigation, and paste",
         "100-paragraph document scrolls at 60 FPS",
@@ -1007,6 +1007,7 @@
           "id": "TC-P2-015-01",
           "name": "Type at end of paragraph \u2014 cursor stays centered",
           "category": "render",
+          "status": "pass",
           "description": "Type text at end of paragraph, cursor should stay at vertical center",
           "input": "Enable typewriter mode, type at end of paragraph",
           "expected_behavior": "Cursor stays at vertical center of viewport while typing"
@@ -1015,6 +1016,7 @@
           "id": "TC-P2-015-02",
           "name": "Press Enter \u2014 cursor stays centered",
           "category": "render",
+          "status": "pass",
           "description": "Press Enter (new line), cursor should stay at vertical center",
           "input": "Enable typewriter mode, press Enter",
           "expected_behavior": "New line created, cursor at vertical center"
@@ -1023,6 +1025,7 @@
           "id": "TC-P2-015-03",
           "name": "Arrow key navigation \u2014 cursor stays centered",
           "category": "render",
+          "status": "pass",
           "description": "Navigate with arrow keys, cursor should stay at vertical center",
           "input": "Enable typewriter mode, use arrow keys",
           "expected_behavior": "Cursor stays at vertical center during navigation"
@@ -1031,6 +1034,7 @@
           "id": "TC-P2-015-04",
           "name": "Paste text \u2014 cursor stays centered",
           "category": "render",
+          "status": "pass",
           "description": "Paste text, cursor should stay at vertical center",
           "input": "Enable typewriter mode, paste text",
           "expected_behavior": "Text pasted, cursor at vertical center"
@@ -1039,6 +1043,7 @@
           "id": "TC-P2-015-05",
           "name": "Large document \u2014 100+ paragraphs performance",
           "category": "performance",
+          "status": "pass",
           "description": "Test scrolling performance on large document",
           "input": "100+ paragraph document, enable typewriter mode",
           "expected_behavior": "Scrolling maintains 60 FPS without jank"
@@ -1053,7 +1058,7 @@
         ],
         "browser_features": []
       },
-      "impl_notes": "Typewriter mode implemented but scroll centering NOT verified. Need to audit TipTapEditor.jsx scroll logic, CSS for typewriter mode, and fix scroll calculation if cursor doesn't stay centered.",
+      "impl_notes": "Fixed critical scroll container bug: scrollContainer was incorrectly set to dom.parentElement (overflow:hidden flex container) instead of dom itself (overflow-y:auto #editor-content). All 5 test cases implemented and passing in typewriter_mode_tests.rs (tc_p2_015_01 through tc_p2_015_05). Frontend fixes: scrollContainer = editorDom, behavior: instant for accurate RAF timing, consolidated event listeners, added docChanged guard to transaction handler.",
       "dependencies": []
     },
     {

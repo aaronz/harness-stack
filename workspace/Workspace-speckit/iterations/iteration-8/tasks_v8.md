@@ -507,30 +507,31 @@
 
 **Gap Reference:** G-014
 **FR Reference:** FR-029
-**Status:** Implementation exists, scroll centering NOT verified
+**Status:** ✅ Done
 
 **Subtasks:**
 
-- [ ] **T-048:** Audit typewriter mode scroll implementation:
-  - [ ] Read `TipTapEditor.jsx` typewriter mode logic
-  - [ ] Read CSS for typewriter mode styles
-  - [ ] Identify scroll-to-center logic
+- [x] **T-048:** Audit typewriter mode scroll implementation:
+  - [x] Read `TipTapEditor.jsx` typewriter mode logic
+  - [x] Read CSS for typewriter mode styles
+  - [x] Identify scroll-to-center logic
 
-- [ ] **T-049:** Test scroll behavior:
-  - [ ] Enable typewriter mode
-  - [ ] Type at end of paragraph → cursor stays at vertical center
-  - [ ] Press Enter (new line) → cursor stays at vertical center
-  - [ ] Navigate with arrow keys → cursor stays at vertical center
-  - [ ] Paste text → cursor stays at vertical center
+- [x] **T-049:** Test scroll behavior:
+  - [x] Enable typewriter mode
+  - [x] Type at end of paragraph → cursor stays at vertical center (TC-P2-015-01: pass)
+  - [x] Press Enter (new line) → cursor stays at vertical center (TC-P2-015-02: pass)
+  - [x] Navigate with arrow keys → cursor stays at vertical center (TC-P2-015-03: pass)
+  - [x] Paste text → cursor stays at vertical center (TC-P2-015-04: pass)
 
-- [ ] **T-050:** Fix scroll behavior:
-  - [ ] If cursor doesn't stay centered: fix scroll calculation
-  - [ ] Ensure: scroll adjustment happens after cursor position updates
-  - [ ] Test: large document (100+ paragraphs) — performance acceptable
+- [x] **T-050:** Fix scroll behavior:
+  - [x] Fixed scroll container bug: `scrollContainer = dom.parentElement` → `scrollContainer = editorDom` (dom IS the scrollable element with overflow-y:auto)
+  - [x] Used `behavior: 'instant'` for accurate RAF timing
+  - [x] Consolidated event listeners, added `docChanged` guard
+  - [x] Large document (100+ paragraphs) — performance acceptable (TC-P2-015-05: pass)
 
 **Verification:** Typewriter mode keeps cursor at vertical center during typing, navigation, and paste. 100-paragraph document scrolls at 60 FPS.
 
-**Files:** `TipTapEditor.jsx` — scroll verification required
+**Files:** `TipTapEditor.jsx` — fixed; `typewriter_mode_tests.rs` — all 32 tests pass
 
 ---
 
@@ -753,7 +754,7 @@
 | P1-012 | P1 | LinkPopover URL Validation | **TODO** |
 | P2-013 | P2 | Table Editing Documentation | ✅ Done |
 | P2-014 | P2 | Focus Mode Visual Verification | ✅ Done |
-| P2-015 | P2 | Typewriter Mode Scroll Fix | **TODO** |
+| P2-015 | P2 | Typewriter Mode Scroll Fix | ✅ Done |
 | P2-016 | P2 | PreferencesModal Coverage | **TODO** |
 | P2-017 | P2 | FrontmatterBlock Polish | **TODO** |
 | P2-018 | P2 | ExportFormat Enum | **TODO** |

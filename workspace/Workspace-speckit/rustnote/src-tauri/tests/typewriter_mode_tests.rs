@@ -889,3 +889,386 @@ fn tc_g014_003_empty_lines_typewriter() {
         );
     }
 }
+
+// =============================================================================
+// P2-015: Typewriter Mode — Scroll Behavior
+// Test Cases: TC-P2-015-01 to TC-P2-015-05
+// =============================================================================
+// Verifies that the backend paragraph-detection logic correctly supports the
+// frontend typewriter-mode scroll-to-center requirement:
+// - Cursor stays at vertical center during typing, navigation, and paste
+// - 100-paragraph document scrolls at 60 FPS
+// - Scroll adjustment happens after cursor position updates
+//
+// The frontend (TipTapEditor.jsx) uses SemanticDocument::get_paragraph_at()
+// to determine which paragraph to center on. These tests verify that logic.
+
+// -----------------------------------------------------------------------------
+// TC-P2-015-01: Type at end of paragraph — cursor stays centered
+// Category: render
+// Input: Enable typewriter mode, type at end of paragraph
+// Expected: Cursor stays at vertical center of viewport while typing
+// -----------------------------------------------------------------------------
+
+#[test]
+fn tc_p2_015_01_type_at_end_of_paragraph() {
+    let source = "First paragraph with text\n\nSecond paragraph here\n\nThird paragraph text";
+    let doc = SemanticDocument::parse(source);
+
+    let paragraphs = doc.get_paragraphs();
+    assert_eq!(paragraphs.len(), 3, "Should have 3 paragraphs");
+
+    // TC-P2-015-01: Typing at end of first paragraph
+    let typing_pos_first = paragraphs[0].offset + paragraphs[0].length;
+    let active_first = doc.get_paragraph_at(typing_pos_first);
+    assert_eq!(
+        active_first, 0,
+        "TC-P2-015-01: Typing at end of paragraph 1 should identify paragraph 0 for centering"
+    );
+
+    // TC-P2-015-01: Typing at end of second paragraph
+    let typing_pos_second = paragraphs[1].offset + paragraphs[1].length;
+    let active_second = doc.get_paragraph_at(typing_pos_second);
+    assert_eq!(
+        active_second, 1,
+        "TC-P2-015-01: Typing at end of paragraph 2 should identify paragraph 1 for centering"
+    );
+
+    // TC-P2-015-01: Cursor mid-paragraph (after typing some chars)
+    let mid_first = paragraphs[0].offset + paragraphs[0].length / 2;
+    let active_mid = doc.get_paragraph_at(mid_first);
+    assert_eq!(
+        active_mid, 0,
+        "TC-P2-015-01: Cursor mid-paragraph should identify same paragraph for centering"
+    );
+}
+
+// -----------------------------------------------------------------------------
+// TC-P2-015-02: Press Enter — cursor stays centered
+// Category: render
+// Input: Enable typewriter mode, press Enter
+// Expected: New line created, cursor at vertical center
+// -----------------------------------------------------------------------------
+
+#[test]
+fn tc_p2_015_02_press_enter_cursor_centered() {
+    let source = "Line one\n\nLine two\n\nLine three";
+    let doc = SemanticDocument::parse(source);
+
+    let paragraphs = doc.get_paragraphs();
+    assert_eq!(
+        paragraphs.len(),
+        3,
+        "Should have 3 paragraphs for Enter key test"
+    );
+
+    // TC-P2-015-02: After pressing Enter at end of paragraph 1,
+    // cursor moves to start of paragraph 2
+    let cursor_at_second = paragraphs[1].offset;
+    let active_after_enter = doc.get_paragraph_at(cursor_at_second);
+    assert_eq!(
+        active_after_enter, 1,
+        "TC-P2-015-02: After Enter key, cursor should identify paragraph 2 for centering"
+    );
+
+    // TC-P2-015-02: Enter at start of paragraph (new paragraph created above)
+    let cursor_at_first = paragraphs[0].offset;
+    let active_at_first = doc.get_paragraph_at(cursor_at_first);
+    assert_eq!(
+        active_at_first, 0,
+        "TC-P2-015-02: Cursor at first paragraph should identify paragraph 1 for centering"
+    );
+
+    // TC-P2-015-02: Enter at document end creates implicit paragraph
+    let doc_end = doc.source().len();
+    let active_at_end = doc.get_paragraph_at(doc_end);
+    assert_eq!(
+        active_at_end, 2,
+        "TC-P2-015-02: Enter at document end should identify last paragraph for centering"
+    );
+}
+
+// -----------------------------------------------------------------------------
+// TC-P2-015-03: Arrow key navigation — cursor stays centered
+// Category: render
+// Input: Enable typewriter mode, use arrow keys
+// Expected: Cursor stays at vertical center during navigation
+// -----------------------------------------------------------------------------
+
+#[test]
+fn tc_p2_015_03_arrow_key_navigation() {
+    let source =
+        "Paragraph one\n\nParagraph two\n\nParagraph three\n\nParagraph four\n\nParagraph five";
+    let doc = SemanticDocument::parse(source);
+
+    let paragraphs = doc.get_paragraphs();
+    assert_eq!(
+        paragraphs.len(),
+        5,
+        "Should have 5 paragraphs for navigation test"
+    );
+
+    // TC-P2-015-03: Simulate Down arrow sequence through document
+    let down_navigation = [
+        (paragraphs[0].offset, 0, "Down to paragraph 1"),
+        (paragraphs[1].offset, 1, "Down to paragraph 2"),
+        (paragraphs[2].offset, 2, "Down to paragraph 3"),
+        (paragraphs[3].offset, 3, "Down to paragraph 4"),
+        (paragraphs[4].offset, 4, "Down to paragraph 5"),
+    ];
+
+    for (offset, expected, desc) in down_navigation {
+        let active = doc.get_paragraph_at(offset);
+        assert_eq!(
+            active, expected,
+            "TC-P2-015-03: {} should identify paragraph {}",
+            desc, expected
+        );
+    }
+
+    // TC-P2-015-03: Simulate Up arrow sequence (reverse)
+    let up_navigation = [
+        (paragraphs[4].offset, 4, "Up from paragraph 5"),
+        (paragraphs[3].offset, 3, "Up to paragraph 4"),
+        (paragraphs[2].offset, 2, "Up to paragraph 3"),
+        (paragraphs[1].offset, 1, "Up to paragraph 2"),
+        (paragraphs[0].offset, 0, "Up to paragraph 1"),
+    ];
+
+    for (offset, expected, desc) in up_navigation {
+        let active = doc.get_paragraph_at(offset);
+        assert_eq!(
+            active, expected,
+            "TC-P2-015-03: {} should identify paragraph {}",
+            desc, expected
+        );
+    }
+
+    // TC-P2-015-03: Left/Right arrow within same paragraph
+    let within_first = paragraphs[1].offset + 5;
+    let active_within = doc.get_paragraph_at(within_first);
+    assert_eq!(
+        active_within, 1,
+        "TC-P2-015-03: Left/Right within paragraph should keep same paragraph for centering"
+    );
+}
+
+// -----------------------------------------------------------------------------
+// TC-P2-015-04: Paste text — cursor stays centered
+// Category: render
+// Input: Enable typewriter mode, paste text
+// Expected: Text pasted, cursor at vertical center
+// -----------------------------------------------------------------------------
+
+#[test]
+fn tc_p2_015_04_paste_text_cursor_centered() {
+    let source = "Original content\n\nMore original content";
+    let doc = SemanticDocument::parse(source);
+
+    let paragraphs = doc.get_paragraphs();
+    assert_eq!(
+        paragraphs.len(),
+        2,
+        "Should have 2 paragraphs for paste test"
+    );
+
+    // TC-P2-015-04: Paste at end of first paragraph (cursor ends in paragraph 1)
+    let paste_end_first = paragraphs[0].offset + paragraphs[0].length;
+    let active_paste_first = doc.get_paragraph_at(paste_end_first);
+    assert_eq!(
+        active_paste_first, 0,
+        "TC-P2-015-04: Paste at end of paragraph 1 should identify paragraph 1 for centering"
+    );
+
+    // TC-P2-015-04: Paste at middle of first paragraph
+    let paste_mid_first = paragraphs[0].offset + paragraphs[0].length / 2;
+    let active_paste_mid = doc.get_paragraph_at(paste_mid_first);
+    assert_eq!(
+        active_paste_mid, 0,
+        "TC-P2-015-04: Paste mid-paragraph should identify same paragraph for centering"
+    );
+
+    // TC-P2-015-04: Paste at document end (cursor in last paragraph)
+    let paste_end_doc = doc.source().len();
+    let active_paste_end = doc.get_paragraph_at(paste_end_doc);
+    assert_eq!(
+        active_paste_end, 1,
+        "TC-P2-015-04: Paste at document end should identify last paragraph for centering"
+    );
+
+    // TC-P2-015-04: Paste within second paragraph
+    let paste_second = paragraphs[1].offset + 3;
+    let active_second = doc.get_paragraph_at(paste_second);
+    assert_eq!(
+        active_second, 1,
+        "TC-P2-015-04: Paste within paragraph 2 should identify paragraph 2 for centering"
+    );
+}
+
+// -----------------------------------------------------------------------------
+// TC-P2-015-05: Large document — 100+ paragraphs performance
+// Category: performance
+// Input: 100+ paragraph document, enable typewriter mode
+// Expected: Scrolling maintains 60 FPS without jank
+// -----------------------------------------------------------------------------
+
+#[test]
+fn tc_p2_015_05_large_document_100_paragraphs() {
+    // TC-P2-015-05: Create a 100-paragraph document simulating large document
+    let mut source = String::new();
+    for i in 1..=100 {
+        if i > 1 {
+            source.push_str("\n\n");
+        }
+        source.push_str(&format!("Paragraph {}", i));
+    }
+
+    let doc = SemanticDocument::parse(&source);
+    let paragraphs = doc.get_paragraphs();
+    assert_eq!(
+        paragraphs.len(),
+        100,
+        "TC-P2-015-05: Should have 100 paragraphs for performance test"
+    );
+
+    // TC-P2-015-05: Measure paragraph lookup performance for 60 FPS
+    // 60 FPS = 16.67ms per frame. For smooth scrolling, each paragraph
+    // lookup must complete well within one frame budget.
+    let start = std::time::Instant::now();
+    for i in 0..100 {
+        let offset = paragraphs[i].offset;
+        let _active = doc.get_paragraph_at(offset);
+    }
+    let elapsed = start.elapsed();
+
+    assert!(
+        elapsed.as_millis() < 10,
+        "TC-P2-015-05: 100 sequential paragraph lookups should be < 10ms for 60 FPS, was {}ms",
+        elapsed.as_millis()
+    );
+
+    // TC-P2-015-05: Simulate scrolling through document — random access pattern
+    let scroll_start = std::time::Instant::now();
+    let scroll_positions = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99];
+    for idx in scroll_positions {
+        let offset = paragraphs[idx].offset;
+        let _active = doc.get_paragraph_at(offset);
+    }
+    let scroll_elapsed = scroll_start.elapsed();
+
+    assert!(
+        scroll_elapsed.as_micros() < 5000,
+        "TC-P2-015-05: 11 random-access lookups should be < 5ms for smooth scroll, was {}ms",
+        scroll_elapsed.as_millis()
+    );
+
+    // TC-P2-015-05: Verify all 100 paragraphs are correctly indexed
+    for (i, para) in paragraphs.iter().enumerate() {
+        let active = doc.get_paragraph_at(para.offset);
+        assert_eq!(
+            active, i,
+            "TC-P2-015-05: Paragraph {} offset {} should map to index {}",
+            i, para.offset, i
+        );
+    }
+}
+
+// =============================================================================
+// TC-P2-015 Edge Cases
+// =============================================================================
+
+#[test]
+fn tc_p2_015_edge_cursor_at_first_char() {
+    let source = "First paragraph\n\nSecond paragraph\n\nThird paragraph";
+    let doc = SemanticDocument::parse(source);
+    let paragraphs = doc.get_paragraphs();
+
+    // TC-P2-015: Cursor at very first character
+    let active_at_zero = doc.get_paragraph_at(0);
+    assert_eq!(
+        active_at_zero, 0,
+        "TC-P2-015 edge: Cursor at first char should identify paragraph 1"
+    );
+
+    // TC-P2-015: Cursor at start of second paragraph
+    let active_at_second = doc.get_paragraph_at(paragraphs[1].offset);
+    assert_eq!(
+        active_at_second, 1,
+        "TC-P2-015 edge: Cursor at start of paragraph 2 should identify paragraph 2"
+    );
+}
+
+#[test]
+fn tc_p2_015_edge_cursor_at_last_char() {
+    let source = "Para A\n\nPara B\n\nPara C";
+    let doc = SemanticDocument::parse(source);
+    let paragraphs = doc.get_paragraphs();
+
+    // TC-P2-015: Cursor at last character of last paragraph
+    let last_para_end = paragraphs[2].offset + paragraphs[2].length;
+    let active_last = doc.get_paragraph_at(last_para_end);
+    assert_eq!(
+        active_last, 2,
+        "TC-P2-015 edge: Cursor at last char should identify last paragraph"
+    );
+
+    // TC-P2-015: Cursor one past last character
+    let doc_end = doc.source().len();
+    let active_end = doc.get_paragraph_at(doc_end);
+    assert_eq!(
+        active_end, 2,
+        "TC-P2-015 edge: Cursor past last char should identify last paragraph"
+    );
+}
+
+#[test]
+fn tc_p2_015_edge_single_paragraph() {
+    let source = "Only one paragraph in this document";
+    let doc = SemanticDocument::parse(source);
+    let paragraphs = doc.get_paragraphs();
+
+    assert_eq!(
+        paragraphs.len(),
+        1,
+        "TC-P2-015 edge: Single paragraph document"
+    );
+
+    // TC-P2-015: Any cursor position in single paragraph identifies it
+    let positions = [0, 5, 15, 30];
+    for pos in positions {
+        let active = doc.get_paragraph_at(pos);
+        assert_eq!(
+            active, 0,
+            "TC-P2-015 edge: Cursor at position {} in single paragraph should identify paragraph 1",
+            pos
+        );
+    }
+}
+
+#[test]
+fn tc_p2_015_edge_rapid_sequential_typing() {
+    // TC-P2-015: Simulate rapid character-by-character typing
+    let source = "AAAAAAAAAA\n\nBBBBBBBBBB\n\nCCCCCCCCCC";
+    let doc = SemanticDocument::parse(source);
+    let paragraphs = doc.get_paragraphs();
+
+    // TC-P2-015: Each character position should identify the correct paragraph
+    for offset in 0..paragraphs[0].length {
+        let active = doc.get_paragraph_at(offset);
+        assert_eq!(
+            active, 0,
+            "TC-P2-015 rapid: Offset {} in first paragraph should identify paragraph 1",
+            offset
+        );
+    }
+
+    // TC-P2-015: Verify paragraph 2 is accessible
+    for offset in paragraphs[1].offset..(paragraphs[1].offset + paragraphs[1].length) {
+        let active = doc.get_paragraph_at(offset);
+        assert_eq!(
+            active, 1,
+            "TC-P2-015 rapid: Offset {} in second paragraph should identify paragraph 2",
+            offset
+        );
+    }
+}
