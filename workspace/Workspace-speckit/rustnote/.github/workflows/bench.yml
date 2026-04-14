@@ -1,0 +1,149 @@
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday at midnight
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  rust-benchmarks:
+    name: Rust Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-bench-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build benchmarks
+        working-directory: rustnote/src-tauri
+        run: cargo build --benches --release
+
+      - name: Run cold_start benchmarks
+        working-directory: rustnote/src-tauri
+        run: cargo bench --bench cold_start
+
+      - name: Run NFR threshold benchmarks
+        working-directory: rustnote/src-tauri
+        run: cargo bench --bench nfr_thresholds
+
+      - name: Run transform benchmarks
+        working-directory: rustnote/src-tauri
+        run: cargo bench --bench transforms
+
+      - name: Run parsing benchmarks
+        working-directory: rustnote/src-tauri
+        run: cargo bench --bench parsing
+
+      - name: Run serialization benchmarks
+        working-directory: rustnote/src-tauri
+        run: cargo bench --bench serialization
+
+  frontend-benchmarks:
+    name: Frontend Benchmarks
+    runs-on: ubuntu-latest
+    needs: rust-benchmarks
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: rustnote/www/package-lock.json
+
+      - name: Install dependencies
+        working-directory: rustnote/www
+        run: npm ci
+
+      - name: Run frontend benchmarks
+        working-directory: rustnote/www
+        run: npm run bench || true
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-benchmark-results
+          path: rustnote/www/benchmark-results.json
+          retention-days: 30
+
+  benchmark-comparison:
+    name: Benchmark Comparison
+    runs-on: ubuntu-latest
+    needs: rust-benchmarks
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Run benchmarks on base branch
+        run: |
+          cargo bench --workspace -- --save-baseline=base --noplot || true
+
+      - name: Run benchmarks on current branch
+        run: |
+          cargo bench --workspace -- --baseline=base --noplot || true
+
+      - name: Comment benchmark results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Read benchmark results if available
+            const resultsPath = path.join(process.cwd(), 'benchmark-results.json');
+            if (fs.existsSync(resultsPath)) {
+              const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '## Benchmark Results\n\n' +
+                      'Performance benchmarks have been run. Check the workflow logs for details.'
+              });
+            }

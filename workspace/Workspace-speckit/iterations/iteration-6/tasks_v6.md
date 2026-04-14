@@ -346,7 +346,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-015: Autosave Reliability
+### G-015: Done
 **Status:** Pending
 **Priority:** P2
 **Module:** Autosave

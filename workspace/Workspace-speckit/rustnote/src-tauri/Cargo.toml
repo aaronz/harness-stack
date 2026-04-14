@@ -54,6 +54,31 @@ serde_yaml = "0.9"
 criterion = "0.5"
 tempfile = "3"
 
+[[bench]]
+name = "cold_start"
+harness = false
+
+[[bench]]
+name = "nfr_thresholds"
+harness = false
+
+[[bench]]
+name = "transforms"
+harness = false
+
+[[bench]]
+name = "parsing"
+harness = false
+
+[[bench]]
+name = "serialization"
+harness = false
+
+[profile.bench]
+opt-level = 3
+debug = false
+split-debuginfo = "unpacked"
+
 [profile.release]
 strip = true
 lto = true

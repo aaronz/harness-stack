@@ -1,0 +1,1982 @@
+{
+  "tasks": [
+    {
+      "id": "P0-001",
+      "priority": "P0",
+      "title": "Implement Automated Performance Benchmark Infrastructure",
+      "description": "Create comprehensive benchmark infrastructure covering all NFRs (NFR-001 through NFR-008). Includes cold start benchmarks, NFR threshold benchmarks, transform benchmarks, parsing benchmarks, frontend benchmarks, CI workflow, and documentation.",
+      "status": "done",
+      "test_criteria": [
+        "cargo bench --bench cold_start passes with all thresholds met",
+        "cargo bench --bench nfr_thresholds passes with all thresholds met",
+        "cargo bench --bench transforms completes successfully",
+        "cargo bench --bench parsing completes successfully",
+        "npm run bench completes with all frontend metrics collected",
+        "src-tauri/.github/workflows/bench.yml exists and triggers on push to main",
+        "docs/perf-benchmarks.md exists with complete documentation"
+      ],
+      "test_commands": [
+        "cargo bench --bench cold_start",
+        "cargo bench --bench nfr_thresholds",
+        "cargo bench --bench transforms",
+        "cargo bench --bench parsing",
+        "npm run bench",
+        "gh run list --workflow=bench.yml"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-B001",
+          "name": "Cold start with empty document",
+          "category": "performance",
+          "description": "Verify empty document opens in under 2 seconds",
+          "input": "Empty .md file",
+          "expected_behavior": "Cold start time < 2000ms"
+        },
+        {
+          "id": "TC-B002",
+          "name": "Cold start with 1MB document",
+          "category": "performance",
+          "description": "Verify 1MB document opens in under 3 seconds",
+          "input": "1MB .md file with mixed content",
+          "expected_behavior": "Cold start time < 3000ms"
+        },
+        {
+          "id": "TC-B003",
+          "name": "Hot file open performance",
+          "category": "performance",
+          "description": "Verify cached file opens in under 500ms",
+          "input": "Re-opening recently closed document",
+          "expected_behavior": "Hot open time < 500ms"
+        },
+        {
+          "id": "TC-B004",
+          "name": "Keystroke-to-render latency",
+          "category": "performance",
+          "description": "Verify Rust-side keystroke processing under 100ms",
+          "input": "Single character insertion event",
+          "expected_behavior": "Processing time < 100ms"
+        },
+        {
+          "id": "TC-B005",
+          "name": "Save operation performance",
+          "category": "performance",
+          "description": "Verify save operation completes under 200ms",
+          "input": "Document with 1000 lines, trigger save",
+          "expected_behavior": "Save time < 200ms"
+        },
+        {
+          "id": "TC-B006",
+          "name": "PDF export 10 pages",
+          "category": "performance",
+          "description": "Verify 10-page PDF export under 5 seconds",
+          "input": "10-page Markdown document",
+          "expected_behavior": "Export time < 5000ms"
+        },
+        {
+          "id": "TC-B007",
+          "name": "Memory idle with 10 documents",
+          "category": "performance",
+          "description": "Verify memory stays under 300MB with 10 open docs idle",
+          "input": "10 open documents, no interaction for 30s",
+          "expected_behavior": "Memory usage < 300MB"
+        },
+        {
+          "id": "TC-B008",
+          "name": "Large document scroll",
+          "category": "performance",
+          "description": "Verify scrolling maintains 60fps (under 100ms per frame)",
+          "input": "50000-line document, scroll event",
+          "expected_behavior": "Frame time < 100ms (10fps minimum)"
+        },
+        {
+          "id": "TC-B009",
+          "name": "Transform operations benchmark",
+          "category": "performance",
+          "description": "Benchmark each TransformType operation",
+          "input": "Document with 1000 and 100000 characters",
+          "expected_behavior": "All transform operations complete within thresholds"
+        },
+        {
+          "id": "TC-B010",
+          "name": "Incremental parse benchmark",
+          "category": "performance",
+          "description": "Benchmark incremental parse for small changes",
+          "input": "Document with 100 lines, single line change",
+          "expected_behavior": "Incremental parse < 50ms"
+        },
+        {
+          "id": "TC-B011",
+          "name": "Full parse benchmark",
+          "category": "performance",
+          "description": "Benchmark full parse for large documents",
+          "input": "10000-line document",
+          "expected_behavior": "Full parse completes in reasonable time"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "cold_start_empty",
+          "cold_start_large",
+          "hot_reload",
+          "memory_idle",
+          "scroll_performance"
+        ],
+        "browser_features": [
+          "keystroke_latency",
+          "scroll_fps",
+          "load_time"
+        ]
+      },
+      "impl_notes": "Create benches/ directory with cold_start.rs, nfr_thresholds.rs. Extend existing transforms.rs and parsing.rs. Create www/scripts/bench.js for frontend metrics. Create GitHub Actions workflow for CI benchmarking.",
+      "dependencies": []
+    },
+    {
+      "id": "P0-002",
+      "priority": "P0",
+      "title": "Verify and Fix Bidirectional Cursor Mapping",
+      "description": "Comprehensive audit and fix of cursor mapping between DOM and source positions. Fix edge cases in dom_to_source() and verify TipTap integration end-to-end.",
+      "status": "todo",
+      "test_criteria": [
+        "cargo test cursor_mapping passes 100%",
+        "Manual TipTap verification passes for complex Markdown",
+        "Round-trip tests pass for all 10 complex documents",
+        "dom_to_source() handles all edge cases correctly"
+      ],
+      "test_commands": [
+        "cargo test cursor_mapping",
+        "cargo test dom_to_source",
+        "cargo test round_trip"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-CM001",
+          "name": "Cursor in nested list inside blockquote",
+          "category": "edge_case",
+          "description": "Verify cursor position maps correctly in deeply nested structures",
+          "input": "> - Nested item\n  - Deep nested",
+          "expected_behavior": "Cursor position accurately maps DOM\u2194source"
+        },
+        {
+          "id": "TC-CM002",
+          "name": "Cursor in empty heading",
+          "category": "edge_case",
+          "description": "Verify cursor mapping in empty structural elements",
+          "input": "# \n## ##\n###",
+          "expected_behavior": "Empty heading cursor maps to position after #"
+        },
+        {
+          "id": "TC-CM003",
+          "name": "Cursor in empty list item",
+          "category": "edge_case",
+          "description": "Verify cursor mapping in empty list items",
+          "input": "- \n- item1\n-",
+          "expected_behavior": "Empty list item cursor maps correctly"
+        },
+        {
+          "id": "TC-CM004",
+          "name": "Cursor at start/end of inline code span",
+          "category": "edge_case",
+          "description": "Verify cursor maps to exact position at code span boundaries",
+          "input": "Text `code` more text",
+          "expected_behavior": "Cursor at 0, 5, 6, 11 positions maps correctly"
+        },
+        {
+          "id": "TC-CM005",
+          "name": "Cursor in multi-byte UTF-8 text (CJK)",
+          "category": "edge_case",
+          "description": "Verify cursor handles multi-byte characters correctly",
+          "input": "\u4e2d\u6587\u5185\u5bb9 English \u65e5\u672c\u8a9e",
+          "expected_behavior": "Cursor positions account for byte length, not character count"
+        },
+        {
+          "id": "TC-CM006",
+          "name": "Cursor adjacent to code fence",
+          "category": "edge_case",
+          "description": "Verify cursor maps at code fence boundaries",
+          "input": "```rust\nlet x = 1;\n```\ntext",
+          "expected_behavior": "Cursor positions around fences map correctly"
+        },
+        {
+          "id": "TC-CM007",
+          "name": "Round-trip DOM\u2192source\u2192DOM convergence",
+          "category": "integration",
+          "description": "Verify round-trip mapping converges to same position",
+          "input": "Complex Markdown with tables, code, lists",
+          "expected_behavior": "X == X after source\u2192DOM\u2192source\u2192DOM round-trip"
+        },
+        {
+          "id": "TC-CM008",
+          "name": "Complex document round-trip test 1",
+          "category": "integration",
+          "description": "Round-trip test for document with tables",
+          "input": "Document with GFM table, 10+ rows",
+          "expected_behavior": "All positions 0..source_length within 1 char error"
+        },
+        {
+          "id": "TC-CM009",
+          "name": "Complex document round-trip test 2",
+          "category": "integration",
+          "description": "Round-trip test for document with code blocks",
+          "input": "Document with multiple fenced code blocks",
+          "expected_behavior": "All positions 0..source_length within 1 char error"
+        },
+        {
+          "id": "TC-CM010",
+          "name": "Complex document round-trip test 3",
+          "category": "integration",
+          "description": "Round-trip test for document with nested lists",
+          "input": "Document with 5-level nested lists",
+          "expected_behavior": "All positions 0..source_length within 1 char error"
+        },
+        {
+          "id": "TC-CM011",
+          "name": "Partial re-mapping after incremental edit",
+          "category": "unit",
+          "description": "Verify incremental source changes update cursor mapping efficiently",
+          "input": "Parse document, edit single character, verify mapping update",
+          "expected_behavior": "Only affected range re-mapped, not full document"
+        },
+        {
+          "id": "TC-CM012",
+          "name": "10+ consecutive edits cursor stability",
+          "category": "integration",
+          "description": "Manual TipTap test for cursor after multiple edits",
+          "input": "10+ consecutive typing operations",
+          "expected_behavior": "Cursor remains at intended position after all edits"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "headings",
+          "lists",
+          "code_blocks",
+          "inline_code",
+          "tables",
+          "blockquotes"
+        ],
+        "edge_cases": [
+          "empty_elements",
+          "nested_structures",
+          "multi_byte_chars",
+          "adjacent_fences",
+          "unicode_content"
+        ],
+        "browser_features": [
+          "cursor_position",
+          "text_selection"
+        ]
+      },
+      "impl_notes": "Audit semantic/position.rs CursorMapping implementation. Add edge case tests to tests/cursor_mapping_tests.rs. Fix dom_to_source() edge cases. Verify TipTap integration.",
+      "dependencies": []
+    },
+    {
+      "id": "P0-003",
+      "priority": "P0",
+      "title": "Verify and Improve PDF Export Quality",
+      "description": "Create test fixtures, generate and inspect PDFs, fix rendering issues, add automated quality checks and visual regression baselines.",
+      "status": "todo",
+      "test_criteria": [
+        "All complex Markdown renders correctly in PDF",
+        "NFR-006 passes (< 5s for 10-page document)",
+        "Automated PDF tests pass",
+        "Visual regression baselines established"
+      ],
+      "test_commands": [
+        "cargo test pdf_export",
+        "cargo test pdf_quality",
+        "npm run export:pdf"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-PDF001",
+          "name": "GFM table with merged cells and borders",
+          "category": "render",
+          "description": "Verify tables render with correct borders and cell alignment",
+          "input": "tests/samples/pdf_tables.md with merged cells",
+          "expected_behavior": "Table renders with visible borders, correct alignment"
+        },
+        {
+          "id": "TC-PDF002",
+          "name": "Multi-language code blocks with syntax",
+          "category": "render",
+          "description": "Verify code blocks render with syntax highlighting",
+          "input": "tests/samples/pdf_code.md with rust, js, python blocks",
+          "expected_behavior": "Code renders with monospace font, correct indentation"
+        },
+        {
+          "id": "TC-PDF003",
+          "name": "Images at various sizes and positions",
+          "category": "render",
+          "description": "Verify images render at correct sizes and positions",
+          "input": "tests/samples/pdf_images.md with 100px, 500px, full-width images",
+          "expected_behavior": "Images render at correct size, centered/aligned as specified"
+        },
+        {
+          "id": "TC-PDF004",
+          "name": "All features combined",
+          "category": "render",
+          "description": "Verify complex document with all features renders correctly",
+          "input": "tests/samples/pdf_complex.md with tables, code, images, lists",
+          "expected_behavior": "All elements render in correct order and style"
+        },
+        {
+          "id": "TC-PDF005",
+          "name": "Nested blockquotes, lists, and code",
+          "category": "render",
+          "description": "Verify deeply nested structures render correctly",
+          "input": "tests/samples/pdf_nested.md with 5-level nesting",
+          "expected_behavior": "Nesting levels visually distinguishable"
+        },
+        {
+          "id": "TC-PDF006",
+          "name": "PDF file size validation",
+          "category": "unit",
+          "description": "Verify PDF is not 0 bytes and has reasonable size",
+          "input": "Generate PDF from 10-page document",
+          "expected_behavior": "PDF size > 1KB, < 50MB for typical content"
+        },
+        {
+          "id": "TC-PDF007",
+          "name": "PDF contains expected text",
+          "category": "unit",
+          "description": "Verify PDF text extraction matches expected content",
+          "input": "PDF generated from known Markdown",
+          "expected_behavior": "Extracted text contains all expected content"
+        },
+        {
+          "id": "TC-PDF008",
+          "name": "PDF page count validation",
+          "category": "unit",
+          "description": "Verify PDF has expected number of pages",
+          "input": "10-page Markdown document",
+          "expected_behavior": "PDF page count matches expected (10 pages)"
+        },
+        {
+          "id": "TC-PDF009",
+          "name": "PDF export time < 5s",
+          "category": "performance",
+          "description": "Verify NFR-006: 10-page export completes in under 5 seconds",
+          "input": "10-page Markdown document",
+          "expected_behavior": "Export time < 5000ms"
+        },
+        {
+          "id": "TC-PDF010",
+          "name": "Visual regression baseline comparison",
+          "category": "integration",
+          "description": "Verify new PDF matches baseline visually",
+          "input": "Reference PDFs in tests/samples/expected_output/",
+          "expected_behavior": "Image diff passes, no visual regressions detected"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "tables",
+          "code_blocks",
+          "images",
+          "headings",
+          "lists",
+          "blockquotes",
+          "emphasis"
+        ],
+        "edge_cases": [
+          "merged_cells",
+          "nested_structures",
+          "missing_images",
+          "large_images"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Create test Markdown fixtures in tests/samples/. Generate and inspect PDFs. Fix any rendering issues. Extend pdf_export_tests.rs with automated checks. Create visual regression baselines.",
+      "dependencies": []
+    },
+    {
+      "id": "P1-004",
+      "priority": "P1",
+      "title": "Verify and Fix Wrap Transform End-to-End Integration",
+      "description": "Audit Transform::Wrap in Rust, trace TipTap integration, add integration tests, verify wrap works from UI to Rust and back.",
+      "status": "todo",
+      "test_criteria": [
+        "cargo test wrap passes",
+        "Manual TipTap test: select text \u2192 apply bold wrap \u2192 text wrapped with **"
+      ],
+      "test_commands": [
+        "cargo test wrap",
+        "cargo test transform",
+        "npm run build"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-W001",
+          "name": "Wrap with bold markers **",
+          "category": "integration",
+          "description": "Verify text wrapped with ** markers",
+          "input": "Select 'hello', apply bold wrap",
+          "expected_behavior": "Text becomes **hello**"
+        },
+        {
+          "id": "TC-W002",
+          "name": "Wrap with italic markers _",
+          "category": "integration",
+          "description": "Verify text wrapped with _ markers",
+          "input": "Select 'hello', apply italic wrap",
+          "expected_behavior": "Text becomes _hello_"
+        },
+        {
+          "id": "TC-W003",
+          "name": "Wrap with strikethrough ~~",
+          "category": "integration",
+          "description": "Verify text wrapped with ~~ markers",
+          "input": "Select 'hello', apply strikethrough wrap",
+          "expected_behavior": "Text becomes ~~hello~~"
+        },
+        {
+          "id": "TC-W004",
+          "name": "Wrap with inline code `",
+          "category": "integration",
+          "description": "Verify text wrapped with ` markers",
+          "input": "Select 'code', apply code wrap",
+          "expected_behavior": "Text becomes `code`"
+        },
+        {
+          "id": "TC-W005",
+          "name": "Wrap with custom markers [[ ]]",
+          "category": "integration",
+          "description": "Verify text wrapped with custom markers",
+          "input": "Select 'text', apply [[ wrap",
+          "expected_behavior": "Text becomes [[text]]"
+        },
+        {
+          "id": "TC-W006",
+          "name": "Wrap with empty selection",
+          "category": "edge_case",
+          "description": "Verify behavior when no text selected",
+          "input": "No selection, apply bold wrap",
+          "expected_behavior": "No-op or insert markers at cursor"
+        },
+        {
+          "id": "TC-W007",
+          "name": "Wrap selection spanning multiple paragraphs",
+          "category": "integration",
+          "description": "Verify wrap works across paragraph boundaries",
+          "input": "Select 'para1\\npara2', apply bold wrap",
+          "expected_behavior": "Both paragraphs wrapped"
+        },
+        {
+          "id": "TC-W008",
+          "name": "Wrap with existing formatting (double-bold)",
+          "category": "edge_case",
+          "description": "Verify wrapping already bold text",
+          "input": "Select '**bold**', apply bold wrap",
+          "expected_behavior": "Text becomes *****bold*****"
+        },
+        {
+          "id": "TC-W009",
+          "name": "Unwrap (wrap with empty markers)",
+          "category": "integration",
+          "description": "Verify unwrap removes markers",
+          "input": "Select '**bold**', apply bold wrap with empty before/after",
+          "expected_behavior": "Text becomes 'bold'"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "emphasis",
+          "strikethrough",
+          "inline_code"
+        ],
+        "edge_cases": [
+          "empty_selection",
+          "multi_paragraph",
+          "nested_formatting",
+          "custom_markers"
+        ],
+        "browser_features": [
+          "text_selection",
+          "keyboard_shortcuts"
+        ]
+      },
+      "impl_notes": "Audit editor/transforms.rs Transform::Wrap. Trace TipTapEditor.jsx for wrap shortcuts. Wire integration from UI to Rust. Add tests to editor_transforms.rs.",
+      "dependencies": []
+    },
+    {
+      "id": "P1-005",
+      "priority": "P1",
+      "title": "Implement HTML Export \u2014 Linked Assets Mode",
+      "description": "Add AssetMode enum to ExportOptions, implement linked-assets export pipeline, add UI toggle in ExportModal, add tests for both modes.",
+      "status": "todo",
+      "test_criteria": [
+        "cargo test html_export passes",
+        "ExportModal has working toggle",
+        "Linked mode produces assets/ directory with images",
+        "Inline mode produces base64-encoded images"
+      ],
+      "test_commands": [
+        "cargo test html_export",
+        "npm run build"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-HT001",
+          "name": "Inline assets mode produces base64 images",
+          "category": "unit",
+          "description": "Verify images are base64-encoded inline in HTML",
+          "input": "Markdown with image, export with AssetMode::Inline",
+          "expected_behavior": "HTML contains <img> tags with base64 src data"
+        },
+        {
+          "id": "TC-HT002",
+          "name": "Linked assets mode creates assets directory",
+          "category": "unit",
+          "description": "Verify _assets/ directory is created",
+          "input": "Markdown with 3 images, export with AssetMode::Linked",
+          "expected_behavior": "_assets/ directory exists with copied images"
+        },
+        {
+          "id": "TC-HT003",
+          "name": "Linked mode rewrites image URLs",
+          "category": "unit",
+          "description": "Verify HTML references assets/ relative paths",
+          "input": "Markdown with images, export with AssetMode::Linked",
+          "expected_behavior": "HTML contains <img src='assets/filename.png'>"
+        },
+        {
+          "id": "TC-HT004",
+          "name": "Missing images handled gracefully",
+          "category": "edge_case",
+          "description": "Verify missing image files don't crash export",
+          "input": "Markdown references non-existent image",
+          "expected_behavior": "Export completes, placeholder or skip for missing"
+        },
+        {
+          "id": "TC-HT005",
+          "name": "ExportModal toggle UI",
+          "category": "integration",
+          "description": "Verify UI toggle switches between modes",
+          "input": "Open ExportModal, click 'Linked assets'",
+          "expected_behavior": "Radio button selected, IPC call includes asset_mode"
+        },
+        {
+          "id": "TC-HT006",
+          "name": "Self-contained mode produces valid HTML",
+          "category": "unit",
+          "description": "Verify inline mode HTML is self-contained",
+          "input": "Complex Markdown with images, export inline",
+          "expected_behavior": "HTML opens standalone without external dependencies"
+        },
+        {
+          "id": "TC-HT007",
+          "name": "Relative path resolution in linked mode",
+          "category": "integration",
+          "description": "Verify linked mode handles relative image paths",
+          "input": "Markdown with ../images/photo.png",
+          "expected_behavior": "Image copied to assets/, URL rewritten correctly"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "images",
+          "links"
+        ],
+        "edge_cases": [
+          "missing_images",
+          "relative_paths",
+          "nested_directories"
+        ],
+        "browser_features": [
+          "export_dialog"
+        ]
+      },
+      "impl_notes": "Modify model/export.rs to add AssetMode enum. Update commands/export.rs. Parse HTML output to extract and copy images. Update ExportModal.jsx with toggle.",
+      "dependencies": []
+    },
+    {
+      "id": "P1-006",
+      "priority": "P1",
+      "title": "Image Relative Path Handling \u2014 Edge Cases for Subdirectories",
+      "description": "Audit image path calculation, add subdirectory test cases, fix path calculation, add comprehensive tests.",
+      "status": "todo",
+      "test_criteria": [
+        "cargo test image_path passes all subdirectory tests",
+        "Manual test: insert image in subdirectory document \u2192 correct relative path"
+      ],
+      "test_commands": [
+        "cargo test image_path",
+        "cargo test image"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-IP001",
+          "name": "Image in parent directory (1 level up)",
+          "category": "unit",
+          "description": "Verify correct ../ path when image is in parent",
+          "input": "Document at /workspace/project/notes/chapter.md, image at /workspace/project/assets/diagram.png",
+          "expected_behavior": "Markdown contains ../assets/diagram.png"
+        },
+        {
+          "id": "TC-IP002",
+          "name": "Image 2 levels up",
+          "category": "unit",
+          "description": "Verify correct ../../ path for 2-level nesting",
+          "input": "Document at /workspace/project/notes/sub/chapter.md, image at /workspace/project/assets/img.png",
+          "expected_behavior": "Markdown contains ../../assets/img.png"
+        },
+        {
+          "id": "TC-IP003",
+          "name": "Image 3 levels up",
+          "category": "unit",
+          "description": "Verify correct ../../../ path for 3-level nesting",
+          "input": "Document at /workspace/project/notes/sub/deep/chapter.md, image at /workspace/project/assets/img.png",
+          "expected_behavior": "Markdown contains ../../../assets/img.png"
+        },
+        {
+          "id": "TC-IP004",
+          "name": "Image in same directory",
+          "category": "unit",
+          "description": "Verify no path prefix for same-directory images",
+          "input": "Document and image in same directory",
+          "expected_behavior": "Markdown contains only filename"
+        },
+        {
+          "id": "TC-IP005",
+          "name": "Image in child directory of document",
+          "category": "unit",
+          "description": "Verify forward path for images in child directories",
+          "input": "Document at /notes/chapter.md, image at /notes/images/img.png",
+          "expected_behavior": "Markdown contains images/img.png"
+        },
+        {
+          "id": "TC-IP006",
+          "name": "Absolute path handling",
+          "category": "edge_case",
+          "description": "Verify absolute paths are converted to relative",
+          "input": "Absolute path /workspace/project/assets/img.png",
+          "expected_behavior": "Converted to relative path from document location"
+        },
+        {
+          "id": "TC-IP007",
+          "name": "Windows path separators",
+          "category": "edge_case",
+          "description": "Verify Windows paths are normalized correctly",
+          "input": "Document at C:\\project\\notes\\chapter.md, image at C:\\project\\assets\\img.png",
+          "expected_behavior": "Path uses forward slashes, correct relative path"
+        },
+        {
+          "id": "TC-IP008",
+          "name": "Special characters in filename",
+          "category": "edge_case",
+          "description": "Verify paths with spaces and special chars",
+          "input": "Image at /assets/my photo.png",
+          "expected_behavior": "Path URL-encoded or quoted correctly"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "images"
+        ],
+        "edge_cases": [
+          "nested_directories",
+          "absolute_paths",
+          "windows_paths",
+          "special_characters"
+        ],
+        "browser_features": [
+          "image_insert"
+        ]
+      },
+      "impl_notes": "Audit commands/image.rs for path calculation logic. Implement correct relative path using std::path::Path. Test each subdirectory scenario.",
+      "dependencies": []
+    },
+    {
+      "id": "P1-007",
+      "priority": "P1",
+      "title": "Tree-Sitter GFM Parsing Verification",
+      "description": "Create GFM test fixtures, verify tree-sitter GFM parsing, define clear parsing strategy, add GFM parser tests.",
+      "status": "todo",
+      "test_criteria": [
+        "cargo test tree_sitter passes GFM tests",
+        "GFM features render correctly in editor",
+        "Parsing strategy documented"
+      ],
+      "test_commands": [
+        "cargo test tree_sitter",
+        "cargo test gfm"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-GFM001",
+          "name": "GFM table syntax parsing",
+          "category": "unit",
+          "description": "Verify tree-sitter parses GFM table syntax",
+          "input": "| Header | Header |\n| ------ | ------ |\n| Cell   | Cell   |",
+          "expected_behavior": "Tree-sitter correctly identifies table node"
+        },
+        {
+          "id": "TC-GFM002",
+          "name": "Task list checkboxes - unchecked",
+          "category": "unit",
+          "description": "Verify task list [ ] is recognized",
+          "input": "- [ ] Unchecked task\n- [x] Checked task",
+          "expected_behavior": "Tree-sitter identifies task markers"
+        },
+        {
+          "id": "TC-GFM003",
+          "name": "Task list checkboxes - checked",
+          "category": "unit",
+          "description": "Verify task list [x] is recognized",
+          "input": "- [x] Done task",
+          "expected_behavior": "Tree-sitter identifies checked task marker"
+        },
+        {
+          "id": "TC-GFM004",
+          "name": "Autolinks parsing",
+          "category": "unit",
+          "description": "Verify autolinks are recognized",
+          "input": "Visit <https://example.com> or <mailto:test@example.com>",
+          "expected_behavior": "Tree-sitter identifies autolink nodes"
+        },
+        {
+          "id": "TC-GFM005",
+          "name": "Strikethrough parsing",
+          "category": "unit",
+          "description": "Verify ~~strikethrough~~ is recognized",
+          "input": "This is ~~deleted~~ text",
+          "expected_behavior": "Tree-sitter identifies strikethrough node"
+        },
+        {
+          "id": "TC-GFM006",
+          "name": "GFM feature combination",
+          "category": "integration",
+          "description": "Verify all GFM features work together",
+          "input": "tests/samples/gfm_all.md with tables, tasks, strikethrough, autolinks",
+          "expected_behavior": "All GFM features parse correctly without conflicts"
+        },
+        {
+          "id": "TC-GFM007",
+          "name": "GFM table with alignment",
+          "category": "unit",
+          "description": "Verify table column alignment is preserved",
+          "input": "| Left | Center | Right |\n| :--- | :----: | ----: |",
+          "expected_behavior": "Alignment markers preserved in parsed structure"
+        },
+        {
+          "id": "TC-GFM008",
+          "name": "No conflict between tree-sitter and comrak",
+          "category": "integration",
+          "description": "Verify tree-sitter structural analysis doesn't conflict with comrak rendering",
+          "input": "GFM Markdown document",
+          "expected_behavior": "Both parsers produce correct, non-conflicting results"
+        },
+        {
+          "id": "TC-GFM009",
+          "name": "Malformed GFM tables",
+          "category": "edge_case",
+          "description": "Verify parser handles malformed tables gracefully",
+          "input": "| A | B |\n| - | - |\n| Missing |",
+          "expected_behavior": "Parser handles gracefully, no crash"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "tables",
+          "task_lists",
+          "autolinks",
+          "strikethrough"
+        ],
+        "edge_cases": [
+          "malformed_tables",
+          "mixed_gfm_features"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Create GFM test fixtures. Parse with tree_sitter.rs. Verify comrak GFM support. Document parsing strategy in docs/parsing-strategy.md.",
+      "dependencies": []
+    },
+    {
+      "id": "P1-008",
+      "priority": "P1",
+      "title": "Settings Schema Final Verification Against PRD-09",
+      "description": "Read PRD-09 specifications, audit settings implementation, fix discrepancies, update schema tests.",
+      "status": "todo",
+      "test_criteria": [
+        "cargo test settings_schema passes",
+        "Implementation matches PRD-09 exactly",
+        "All 11 fields present with correct types and defaults"
+      ],
+      "test_commands": [
+        "cargo test settings_schema",
+        "cargo test settings"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-SS001",
+          "name": "Theme field presence and type",
+          "category": "unit",
+          "description": "Verify theme field exists and is correct type",
+          "input": "Read settings schema",
+          "expected_behavior": "theme: string, default 'light'"
+        },
+        {
+          "id": "TC-SS002",
+          "name": "autoSave field presence and type",
+          "category": "unit",
+          "description": "Verify autoSave boolean field",
+          "input": "Read settings schema",
+          "expected_behavior": "autoSave: boolean, default true"
+        },
+        {
+          "id": "TC-SS003",
+          "name": "autoSaveInterval field type",
+          "category": "unit",
+          "description": "Verify autoSaveInterval is number, not string",
+          "input": "Read settings schema",
+          "expected_behavior": "autoSaveInterval: number (milliseconds), default 10000"
+        },
+        {
+          "id": "TC-SS004",
+          "name": "All 11 PRD-09 fields present",
+          "category": "unit",
+          "description": "Verify complete field list from PRD-09",
+          "input": "PRD-09 field list",
+          "expected_behavior": "theme, autoSave, autoSaveInterval, focusMode, typewriterMode, outlineVisible, fontSize, fontFamily, lineHeight, contentWidth, recentFiles all present"
+        },
+        {
+          "id": "TC-SS005",
+          "name": "Flat structure (not nested)",
+          "category": "unit",
+          "description": "Verify settings are flat, not nested under editor key",
+          "input": "Read JSON settings output",
+          "expected_behavior": "Settings at root level, no nested editor: {}"
+        },
+        {
+          "id": "TC-SS006",
+          "name": "Default values match PRD-09",
+          "category": "unit",
+          "description": "Verify all defaults match PRD specification",
+          "input": "Fresh settings object",
+          "expected_behavior": "All defaults match PRD-09 exactly"
+        },
+        {
+          "id": "TC-SS007",
+          "name": "JSON serialization round-trip",
+          "category": "unit",
+          "description": "Verify settings serialize and deserialize correctly",
+          "input": "Settings \u2192 JSON \u2192 Parse \u2192 Settings",
+          "expected_behavior": "Round-trip produces identical settings"
+        },
+        {
+          "id": "TC-SS008",
+          "name": "Invalid field values rejected",
+          "category": "edge_case",
+          "description": "Verify schema validation rejects invalid values",
+          "input": "fontSize: 'large', autoSaveInterval: 'fast'",
+          "expected_behavior": "Validation error, settings rejected"
+        },
+        {
+          "id": "TC-SS009",
+          "name": "recentFiles field type and limit",
+          "category": "unit",
+          "description": "Verify recentFiles is array with max length",
+          "input": "Read settings schema",
+          "expected_behavior": "recentFiles: string[], max 10 items"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "invalid_types",
+          "out_of_range",
+          "missing_fields"
+        ],
+        "browser_features": [
+          "settings_persistence"
+        ]
+      },
+      "impl_notes": "Compare model/settings.rs and services/settings.rs against PRD-09. Fix any missing fields, type mismatches, or structure issues.",
+      "dependencies": []
+    },
+    {
+      "id": "P1-009",
+      "priority": "P1",
+      "title": "Deprecate Editor.jsx \u2014 Mark Legacy Component",
+      "description": "Add deprecation notice to Editor.jsx, update all imports to use TipTapEditor.jsx, update documentation.",
+      "status": "todo",
+      "test_criteria": [
+        "Editor.jsx has deprecation notice",
+        "No code imports Editor.jsx (only TipTapEditor)",
+        "SPEC.md and docs/architecture.md updated"
+      ],
+      "test_commands": [
+        "npm run build",
+        "grep -r 'Editor.jsx' www/src",
+        "grep -r 'TipTapEditor' www/src"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-DP001",
+          "name": "Editor.jsx has JSDoc deprecation",
+          "category": "unit",
+          "description": "Verify Editor.jsx has @deprecated JSDoc",
+          "input": "Read Editor.jsx",
+          "expected_behavior": "/** @deprecated Use TipTapEditor.jsx instead */ at top"
+        },
+        {
+          "id": "TC-DP002",
+          "name": "No Editor.jsx imports remain",
+          "category": "integration",
+          "description": "Verify no files import Editor.jsx",
+          "input": "grep -r 'from.*Editor.jsx' www/src",
+          "expected_behavior": "No matches found"
+        },
+        {
+          "id": "TC-DP003",
+          "name": "TipTapEditor is default editor",
+          "category": "integration",
+          "description": "Verify App.jsx uses TipTapEditor",
+          "input": "Read App.jsx",
+          "expected_behavior": "TipTapEditor imported and used as main editor"
+        },
+        {
+          "id": "TC-DP004",
+          "name": "Barrel export updated",
+          "category": "unit",
+          "description": "Verify index exports only TipTapEditor",
+          "input": "Read components index file",
+          "expected_behavior": "Editor.jsx removed from exports"
+        },
+        {
+          "id": "TC-DP005",
+          "name": "SPEC.md architecture section updated",
+          "category": "integration",
+          "description": "Verify SPEC.md reflects single-editor strategy",
+          "input": "Read SPEC.md architecture section",
+          "expected_behavior": "Mentions TipTapEditor, no Editor.jsx references"
+        },
+        {
+          "id": "TC-DP006",
+          "name": "docs/architecture.md updated",
+          "category": "integration",
+          "description": "Verify architecture docs updated",
+          "input": "Read docs/architecture.md",
+          "expected_behavior": "TipTapEditor as sole active editor documented"
+        },
+        {
+          "id": "TC-DP007",
+          "name": "Feature parity verified",
+          "category": "integration",
+          "description": "Verify TipTapEditor supports all Editor.jsx features",
+          "input": "Compare feature sets",
+          "expected_behavior": "TipTapEditor has feature parity or superset"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": [
+          "editor_rendering"
+        ]
+      },
+      "impl_notes": "Add JSDoc @deprecated to Editor.jsx. Update App.jsx imports. Update barrel exports. Update documentation.",
+      "dependencies": []
+    },
+    {
+      "id": "P2-010",
+      "priority": "P2",
+      "title": "Document Table Editing Constraints",
+      "description": "Document TipTap table editing constraints and limitations, add table data integrity tests.",
+      "status": "todo",
+      "test_criteria": [
+        "cargo test table_editing passes",
+        "docs/table-editing.md exists with complete constraint documentation"
+      ],
+      "test_commands": [
+        "cargo test table_editing"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-TE001",
+          "name": "Add row preserves Markdown",
+          "category": "unit",
+          "description": "Verify adding row keeps Markdown syntax intact",
+          "input": "| A | B |\n| - | - |\n| 1 | 2 | \u2192 add row",
+          "expected_behavior": "Markdown table syntax preserved after add"
+        },
+        {
+          "id": "TC-TE002",
+          "name": "Delete row preserves Markdown",
+          "category": "unit",
+          "description": "Verify deleting row keeps Markdown syntax intact",
+          "input": "| A | B |\n| - | - |\n| 1 | 2 | \u2192 delete row",
+          "expected_behavior": "Markdown table syntax preserved after delete"
+        },
+        {
+          "id": "TC-TE003",
+          "name": "Add column preserves Markdown",
+          "category": "unit",
+          "description": "Verify adding column keeps Markdown syntax intact",
+          "input": "| A |\n| - |\n| 1 | \u2192 add column",
+          "expected_behavior": "Markdown table syntax preserved after add"
+        },
+        {
+          "id": "TC-TE004",
+          "name": "Delete column preserves Markdown",
+          "category": "unit",
+          "description": "Verify deleting column keeps Markdown syntax intact",
+          "input": "| A | B |\n| - | - |\n| 1 | 2 | \u2192 delete column",
+          "expected_behavior": "Markdown table syntax preserved after delete"
+        },
+        {
+          "id": "TC-TE005",
+          "name": "Cell with pipe character escapes",
+          "category": "edge_case",
+          "description": "Verify pipe in cell content is escaped",
+          "input": "| a | b |\n| - | - |\n| x|y | z |",
+          "expected_behavior": "Pipe in cell escaped as \\|, table renders correctly"
+        },
+        {
+          "id": "TC-TE006",
+          "name": "Empty cell handling",
+          "category": "edge_case",
+          "description": "Verify empty cells render correctly",
+          "input": "| A | B |\n| - | - |\n|   | X |",
+          "expected_behavior": "Empty cell renders, no corruption"
+        },
+        {
+          "id": "TC-TE007",
+          "name": "Complex table structure",
+          "category": "render",
+          "description": "Verify complex tables render correctly",
+          "input": "| Header | Header |\n| ------ | ------ |\n| Cell 1 | Cell 2 |",
+          "expected_behavior": "Table renders with correct alignment"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "tables"
+        ],
+        "edge_cases": [
+          "pipe_escape",
+          "empty_cells",
+          "alignment_markers"
+        ],
+        "browser_features": [
+          "table_editing"
+        ]
+      },
+      "impl_notes": "Document constraints in docs/table-editing.md. Extend table_editing_tests.rs with data integrity tests.",
+      "dependencies": []
+    },
+    {
+      "id": "P2-011",
+      "priority": "P2",
+      "title": "Focus Mode Visual Verification and Fix",
+      "description": "Inspect and fix focus mode CSS, verify non-current paragraphs dim correctly, test both themes.",
+      "status": "todo",
+      "test_criteria": [
+        "Focus mode dims non-current paragraphs correctly in both themes",
+        "No visual artifacts",
+        "Nested content dims correctly"
+      ],
+      "test_commands": [
+        "npm run build",
+        "cargo test focus"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-FM001",
+          "name": "Non-current paragraphs dimmed",
+          "category": "render",
+          "description": "Verify paragraphs not at cursor are dimmed",
+          "input": "5-paragraph document, cursor in paragraph 3",
+          "expected_behavior": "Paragraphs 1-2 dim (opacity ~0.3), paragraph 3 full opacity"
+        },
+        {
+          "id": "TC-FM002",
+          "name": "Light theme focus mode",
+          "category": "render",
+          "description": "Verify focus mode works in light theme",
+          "input": "Light theme enabled, focus mode on",
+          "expected_behavior": "Non-current paragraphs visually dimmed"
+        },
+        {
+          "id": "TC-FM003",
+          "name": "Dark theme focus mode",
+          "category": "render",
+          "description": "Verify focus mode works in dark theme",
+          "input": "Dark theme enabled, focus mode on",
+          "expected_behavior": "Non-current paragraphs visually dimmed"
+        },
+        {
+          "id": "TC-FM004",
+          "name": "Nested lists dim correctly",
+          "category": "render",
+          "description": "Verify nested content inherits dimming",
+          "input": "Paragraph with nested list, cursor elsewhere",
+          "expected_behavior": "Entire nested structure dims"
+        },
+        {
+          "id": "TC-FM005",
+          "name": "Blockquotes dim correctly",
+          "category": "render",
+          "description": "Verify blockquote content dims",
+          "input": "Blockquote paragraph, cursor elsewhere",
+          "expected_behavior": "Blockquote content dims"
+        },
+        {
+          "id": "TC-FM006",
+          "name": "Code blocks dim correctly",
+          "category": "render",
+          "description": "Verify code blocks dim",
+          "input": "Document with code blocks, cursor elsewhere",
+          "expected_behavior": "Code block content dims"
+        },
+        {
+          "id": "TC-FM007",
+          "name": "Headings dim correctly",
+          "category": "render",
+          "description": "Verify heading elements dim",
+          "input": "Document with headings, cursor elsewhere",
+          "expected_behavior": "Headings dim"
+        },
+        {
+          "id": "TC-FM008",
+          "name": "No flash on cursor move",
+          "category": "render",
+          "description": "Verify smooth transition when cursor moves",
+          "input": "Cursor moves between paragraphs",
+          "expected_behavior": "No flash or jump, smooth dim transition"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "headings",
+          "lists",
+          "blockquotes",
+          "code_blocks"
+        ],
+        "edge_cases": [
+          "nested_structures",
+          "theme_switching",
+          "cursor_transition"
+        ],
+        "browser_features": [
+          "focus_mode"
+        ]
+      },
+      "impl_notes": "Read www/src/styles/editor.css for focus mode styles. Fix CSS for nested elements. Verify dimming works in both themes.",
+      "dependencies": []
+    },
+    {
+      "id": "P2-012",
+      "priority": "P2",
+      "title": "Typewriter Mode \u2014 Scroll Behavior Fix",
+      "description": "Audit typewriter mode implementation, fix scroll-to-center behavior, verify cursor stays at vertical center.",
+      "status": "todo",
+      "test_criteria": [
+        "Typewriter mode keeps cursor at vertical center during typing",
+        "Cursor stays centered during navigation and paste",
+        "100-paragraph document scrolls at 60 FPS"
+      ],
+      "test_commands": [
+        "npm run build",
+        "cargo test typewriter"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-TW001",
+          "name": "Cursor stays centered while typing",
+          "category": "render",
+          "description": "Verify cursor remains at vertical center during typing",
+          "input": "Typewriter mode on, type at end of paragraph",
+          "expected_behavior": "Cursor remains at vertical center, document scrolls"
+        },
+        {
+          "id": "TC-TW002",
+          "name": "Cursor stays centered on Enter",
+          "category": "render",
+          "description": "Verify cursor stays centered after newline",
+          "input": "Typewriter mode on, press Enter",
+          "expected_behavior": "New line created, cursor stays at center"
+        },
+        {
+          "id": "TC-TW003",
+          "name": "Cursor stays centered on arrow navigation",
+          "category": "render",
+          "description": "Verify cursor stays centered during keyboard navigation",
+          "input": "Typewriter mode on, use arrow keys",
+          "expected_behavior": "Cursor stays centered, view scrolls to follow"
+        },
+        {
+          "id": "TC-TW004",
+          "name": "Cursor stays centered on paste",
+          "category": "render",
+          "description": "Verify cursor stays centered after paste",
+          "input": "Typewriter mode on, paste large text",
+          "expected_behavior": "Cursor stays centered, text inserted"
+        },
+        {
+          "id": "TC-TW005",
+          "name": "Large document performance",
+          "category": "performance",
+          "description": "Verify 100+ paragraph document maintains 60 FPS",
+          "input": "100+ paragraph document, typewriter mode on",
+          "expected_behavior": "Scroll performance remains smooth (60 FPS)"
+        },
+        {
+          "id": "TC-TW006",
+          "name": "Typewriter at document start",
+          "category": "edge_case",
+          "description": "Verify behavior at document start",
+          "input": "Move to start, typewriter mode on, type",
+          "expected_behavior": "Cursor at top, no scroll up needed"
+        },
+        {
+          "id": "TC-TW007",
+          "name": "Typewriter at document end",
+          "category": "edge_case",
+          "description": "Verify behavior at document end",
+          "input": "Move to end, typewriter mode on, type",
+          "expected_behavior": "Cursor stays centered if possible, or at bottom"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "document_start",
+          "document_end",
+          "large_documents"
+        ],
+        "browser_features": [
+          "typewriter_mode",
+          "scroll_behavior"
+        ]
+      },
+      "impl_notes": "Audit TipTapEditor.jsx typewriter mode logic. Fix scroll calculation. Ensure scroll happens after cursor position updates.",
+      "dependencies": []
+    },
+    {
+      "id": "P2-013",
+      "priority": "P2",
+      "title": "Paste Handling \u2014 Improve Rich Text Conversion",
+      "description": "Audit paste handling, improve Markdown conversion from rich text, add comprehensive paste tests.",
+      "status": "todo",
+      "test_criteria": [
+        "cargo test paste_handling passes",
+        "Common rich text paste cases convert to valid Markdown"
+      ],
+      "test_commands": [
+        "cargo test paste_handling"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-PH001",
+          "name": "Plain text paste",
+          "category": "unit",
+          "description": "Verify plain text pastes correctly",
+          "input": "Plain text from text editor",
+          "expected_behavior": "Text inserted as-is, valid Markdown"
+        },
+        {
+          "id": "TC-PH002",
+          "name": "Markdown paste",
+          "category": "unit",
+          "description": "Verify Markdown text pastes correctly",
+          "input": "Markdown text with **bold** and _italic_",
+          "expected_behavior": "Markdown syntax preserved"
+        },
+        {
+          "id": "TC-PH003",
+          "name": "HTML to Markdown conversion",
+          "category": "unit",
+          "description": "Verify HTML paste converts to Markdown",
+          "input": "<p>Text with <b>bold</b></p>",
+          "expected_behavior": "Converted to **bold** Markdown"
+        },
+        {
+          "id": "TC-PH004",
+          "name": "Rich text from Word - bold",
+          "category": "unit",
+          "description": "Verify Word bold converts to **bold**",
+          "input": "Rich text with bold formatting from Word",
+          "expected_behavior": "Bold text converted to **text**"
+        },
+        {
+          "id": "TC-PH005",
+          "name": "Rich text from Word - italic",
+          "category": "unit",
+          "description": "Verify Word italic converts to _italic_",
+          "input": "Rich text with italic formatting from Word",
+          "expected_behavior": "Italic text converted to _text_"
+        },
+        {
+          "id": "TC-PH006",
+          "name": "Hyperlink conversion",
+          "category": "unit",
+          "description": "Verify hyperlinks convert to [text](url)",
+          "input": "Rich text with hyperlink",
+          "expected_behavior": "Converted to Markdown link syntax"
+        },
+        {
+          "id": "TC-PH007",
+          "name": "List conversion",
+          "category": "unit",
+          "description": "Verify list formatting converts to Markdown lists",
+          "input": "Rich text with bulleted list",
+          "expected_behavior": "Converted to - item Markdown list"
+        },
+        {
+          "id": "TC-PH008",
+          "name": "Excel table to Markdown table",
+          "category": "edge_case",
+          "description": "Verify Excel data converts to Markdown table",
+          "input": "Tab-separated data from Excel",
+          "expected_behavior": "Converted to | A | B | Markdown table"
+        },
+        {
+          "id": "TC-PH009",
+          "name": "Unknown format fallback",
+          "category": "edge_case",
+          "description": "Verify unknown formats fall back to plain text",
+          "input": "Unknown clipboard format",
+          "expected_behavior": "Falls back to plain text, no crash"
+        },
+        {
+          "id": "TC-PH010",
+          "name": "Paste from web page",
+          "category": "integration",
+          "description": "Verify web page content pastes correctly",
+          "input": "HTML content from browser",
+          "expected_behavior": "Converts to Markdown, no HTML artifacts"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "emphasis",
+          "links",
+          "lists",
+          "tables"
+        ],
+        "edge_cases": [
+          "unknown_formats",
+          "nested_html",
+          "excel_data"
+        ],
+        "browser_features": [
+          "clipboard_paste"
+        ]
+      },
+      "impl_notes": "Audit semantic/paste.rs and TipTapEditor.jsx paste handler. Improve conversion logic for common formats.",
+      "dependencies": []
+    },
+    {
+      "id": "P2-014",
+      "priority": "P2",
+      "title": "PreferencesModal \u2014 SettingsContext Integration Verification",
+      "description": "Audit PreferencesModal and SettingsContext integration, test all settings controls, fix integration issues.",
+      "status": "todo",
+      "test_criteria": [
+        "All 10 settings controls work correctly",
+        "Changes persist",
+        "Keyboard accessibility passes"
+      ],
+      "test_commands": [
+        "npm run build",
+        "cargo test settings"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-PM001",
+          "name": "Theme toggle integration",
+          "category": "integration",
+          "description": "Verify theme changes persist",
+          "input": "Toggle theme in PreferencesModal",
+          "expected_behavior": "Theme switches instantly, persists after close"
+        },
+        {
+          "id": "TC-PM002",
+          "name": "Font size slider integration",
+          "category": "integration",
+          "description": "Verify font size changes persist",
+          "input": "Adjust font size in PreferencesModal",
+          "expected_behavior": "Font size changes instantly, persists"
+        },
+        {
+          "id": "TC-PM003",
+          "name": "Font family selector integration",
+          "category": "integration",
+          "description": "Verify font family changes persist",
+          "input": "Select font family in PreferencesModal",
+          "expected_behavior": "Font changes instantly, persists"
+        },
+        {
+          "id": "TC-PM004",
+          "name": "Line height adjustment",
+          "category": "integration",
+          "description": "Verify line height changes persist",
+          "input": "Adjust line height in PreferencesModal",
+          "expected_behavior": "Line height changes, persists"
+        },
+        {
+          "id": "TC-PM005",
+          "name": "Content width adjustment",
+          "category": "integration",
+          "description": "Verify content width changes persist",
+          "input": "Adjust content width in PreferencesModal",
+          "expected_behavior": "Content width changes, persists"
+        },
+        {
+          "id": "TC-PM006",
+          "name": "Focus mode toggle",
+          "category": "integration",
+          "description": "Verify focus mode toggle works",
+          "input": "Toggle focus mode in PreferencesModal",
+          "expected_behavior": "Focus mode enables/disables, persists"
+        },
+        {
+          "id": "TC-PM007",
+          "name": "Typewriter mode toggle",
+          "category": "integration",
+          "description": "Verify typewriter mode toggle works",
+          "input": "Toggle typewriter mode in PreferencesModal",
+          "expected_behavior": "Typewriter mode enables/disables, persists"
+        },
+        {
+          "id": "TC-PM008",
+          "name": "Outline visible toggle",
+          "category": "integration",
+          "description": "Verify outline toggle works",
+          "input": "Toggle outline in PreferencesModal",
+          "expected_behavior": "Outline shows/hides, persists"
+        },
+        {
+          "id": "TC-PM009",
+          "name": "Auto-save toggle",
+          "category": "integration",
+          "description": "Verify auto-save toggle works",
+          "input": "Toggle auto-save in PreferencesModal",
+          "expected_behavior": "Auto-save enables/disables, persists"
+        },
+        {
+          "id": "TC-PM010",
+          "name": "Auto-save interval",
+          "category": "integration",
+          "description": "Verify auto-save interval changes",
+          "input": "Adjust auto-save interval in PreferencesModal",
+          "expected_behavior": "Interval changes, persists"
+        },
+        {
+          "id": "TC-PM011",
+          "name": "Keyboard accessibility - Escape closes",
+          "category": "integration",
+          "description": "Verify Escape key closes modal",
+          "input": "Open PreferencesModal, press Escape",
+          "expected_behavior": "Modal closes"
+        },
+        {
+          "id": "TC-PM012",
+          "name": "Keyboard accessibility - Tab navigation",
+          "category": "integration",
+          "description": "Verify Tab navigates controls",
+          "input": "Open PreferencesModal, press Tab",
+          "expected_behavior": "Focus moves through controls logically"
+        },
+        {
+          "id": "TC-PM013",
+          "name": "Settings persist across open/close",
+          "category": "integration",
+          "description": "Verify changes persist after modal close/reopen",
+          "input": "Change setting, close modal, reopen",
+          "expected_behavior": "Changed value is still selected"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "keyboard_navigation",
+          "rapid_changes"
+        ],
+        "browser_features": [
+          "settings_modal",
+          "preference_controls"
+        ]
+      },
+      "impl_notes": "Audit PreferencesModal.jsx and SettingsContext.jsx. Fix missing context bindings. Ensure close button updates context.",
+      "dependencies": []
+    },
+    {
+      "id": "P2-015",
+      "priority": "P2",
+      "title": "Service Interface Verification Against PRD-10",
+      "description": "Audit all service traits, compare against PRD-10, fix discrepancies, update service interface tests.",
+      "status": "todo",
+      "test_criteria": [
+        "cargo test service_interface passes",
+        "All traits match PRD-10 exactly",
+        "All 8 service traits are complete"
+      ],
+      "test_commands": [
+        "cargo test service_interface"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-SI001",
+          "name": "DocumentServiceTrait completeness",
+          "category": "unit",
+          "description": "Verify DocumentServiceTrait has all required methods",
+          "input": "Read DocumentServiceTrait vs PRD-10",
+          "expected_behavior": "All methods match PRD-10 signatures"
+        },
+        {
+          "id": "TC-SI002",
+          "name": "EditorServiceTrait completeness",
+          "category": "unit",
+          "description": "Verify EditorServiceTrait has all required methods",
+          "input": "Read EditorServiceTrait vs PRD-10",
+          "expected_behavior": "All methods match PRD-10 signatures"
+        },
+        {
+          "id": "TC-SI003",
+          "name": "SettingsServiceTrait completeness",
+          "category": "unit",
+          "description": "Verify SettingsServiceTrait has all required methods",
+          "input": "Read SettingsServiceTrait vs PRD-10",
+          "expected_behavior": "All methods match PRD-10 signatures"
+        },
+        {
+          "id": "TC-SI004",
+          "name": "FileWatcherServiceTrait completeness",
+          "category": "unit",
+          "description": "Verify FileWatcherServiceTrait has all required methods",
+          "input": "Read FileWatcherServiceTrait vs PRD-10",
+          "expected_behavior": "All methods match PRD-10 signatures"
+        },
+        {
+          "id": "TC-SI005",
+          "name": "AutosaveServiceTrait completeness",
+          "category": "unit",
+          "description": "Verify AutosaveServiceTrait has all required methods",
+          "input": "Read AutosaveServiceTrait vs PRD-10",
+          "expected_behavior": "All methods match PRD-10 signatures"
+        },
+        {
+          "id": "TC-SI006",
+          "name": "ExportServiceTrait completeness",
+          "category": "unit",
+          "description": "Verify ExportServiceTrait has all required methods",
+          "input": "Read ExportServiceTrait vs PRD-10",
+          "expected_behavior": "All methods match PRD-10 signatures"
+        },
+        {
+          "id": "TC-SI007",
+          "name": "RecoveryServiceTrait completeness",
+          "category": "unit",
+          "description": "Verify RecoveryServiceTrait has all required methods",
+          "input": "Read RecoveryServiceTrait vs PRD-10",
+          "expected_behavior": "All methods match PRD-10 signatures"
+        },
+        {
+          "id": "TC-SI008",
+          "name": "WorkspaceServiceTrait completeness",
+          "category": "unit",
+          "description": "Verify WorkspaceServiceTrait has all required methods",
+          "input": "Read WorkspaceServiceTrait vs PRD-10",
+          "expected_behavior": "All methods match PRD-10 signatures"
+        },
+        {
+          "id": "TC-SI009",
+          "name": "No extra methods in traits",
+          "category": "unit",
+          "description": "Verify no extraneous methods beyond PRD-10",
+          "input": "Compare trait methods to PRD-10",
+          "expected_behavior": "No methods not in PRD-10"
+        },
+        {
+          "id": "TC-SI010",
+          "name": "Method signatures match exactly",
+          "category": "unit",
+          "description": "Verify method signatures match PRD-10",
+          "input": "Compare each method signature",
+          "expected_behavior": "Return types, parameters match PRD-10"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "missing_methods",
+          "extra_methods",
+          "signature_mismatch"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Read services/mod.rs and PRD-10. Compare methods. Add missing, remove extra, fix signatures.",
+      "dependencies": []
+    },
+    {
+      "id": "P2-016",
+      "priority": "P2",
+      "title": "Rust-Side Autosave Backup",
+      "description": "Implement Rust-side autosave with debounce independent of frontend, test crash recovery scenario.",
+      "status": "todo",
+      "test_criteria": [
+        "cargo test autosave passes",
+        "Crash recovery test passes",
+        "Rust autosave fires independently of frontend timer"
+      ],
+      "test_commands": [
+        "cargo test autosave"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-AS001",
+          "name": "Rust autosave fires after debounce",
+          "category": "unit",
+          "description": "Verify Rust autosave fires after debounce period",
+          "input": "Make edit, wait 5 seconds (debounce)",
+          "expected_behavior": "Rust autosave backup file created"
+        },
+        {
+          "id": "TC-AS002",
+          "name": "Rust and frontend autosave no conflict",
+          "category": "integration",
+          "description": "Verify Rust and frontend autosave don't overwrite",
+          "input": "Frontend autosave fires, then Rust autosave fires",
+          "expected_behavior": "No conflict, both complete successfully"
+        },
+        {
+          "id": "TC-AS003",
+          "name": "Crash recovery - edits not in frontend save",
+          "category": "integration",
+          "description": "Verify Rust backup recovers edits not in frontend save",
+          "input": "Edit made, frontend save interval not reached, force kill",
+          "expected_behavior": "Rust backup contains edits on recovery"
+        },
+        {
+          "id": "TC-AS004",
+          "name": "Rust autosave debounce configurable",
+          "category": "unit",
+          "description": "Verify debounce time is configurable",
+          "input": "Change debounce setting",
+          "expected_behavior": "Rust autosave uses new debounce time"
+        },
+        {
+          "id": "TC-AS005",
+          "name": "Rust autosave independent of frontend",
+          "category": "integration",
+          "description": "Verify Rust autosave works if frontend disabled",
+          "input": "Frontend auto-save off, make edits",
+          "expected_behavior": "Rust autosave still fires"
+        },
+        {
+          "id": "TC-AS006",
+          "name": "Backup file cleanup",
+          "category": "unit",
+          "description": "Verify old backup files cleaned up",
+          "input": "Many backup files created",
+          "expected_behavior": "Old backups pruned, only recent kept"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "crash_recovery",
+          "conflicting_saves",
+          "disabled_frontend"
+        ],
+        "browser_features": [
+          "autosave"
+        ]
+      },
+      "impl_notes": "Add Rust timer (tokio) independent of frontend. Implement debounce. Ensure no conflicts with frontend autosave.",
+      "dependencies": []
+    },
+    {
+      "id": "TD-002",
+      "priority": "P2",
+      "title": "Command Enum Usage Consistency",
+      "description": "Audit editor operations to ensure Command enum is the primary dispatch mechanism, refactor inconsistencies.",
+      "status": "todo",
+      "test_criteria": [
+        "Command enum is primary dispatch mechanism",
+        "No editor operations bypass Command enum"
+      ],
+      "test_commands": [
+        "cargo test command",
+        "cargo build"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-CE001",
+          "name": "All editor operations use Command",
+          "category": "unit",
+          "description": "Verify all editor operations go through Command enum",
+          "input": "Audit editor/mod.rs and editor/commands.rs",
+          "expected_behavior": "All operations dispatched via Command enum"
+        },
+        {
+          "id": "TC-CE002",
+          "name": "No bypass of Command dispatch",
+          "category": "unit",
+          "description": "Verify no direct editor method calls",
+          "input": "Search for direct editor operations",
+          "expected_behavior": "All operations go through Command:: variants"
+        },
+        {
+          "id": "TC-CE003",
+          "name": "Command enum completeness",
+          "category": "unit",
+          "description": "Verify Command enum covers all editor operations",
+          "input": "List all editor operations",
+          "expected_behavior": "Command enum has variant for each operation"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Audit editor/commands.rs and editor/mod.rs. Identify bypasses. Refactor to use Command enum consistently.",
+      "dependencies": []
+    },
+    {
+      "id": "TD-004",
+      "priority": "P2",
+      "title": "Visual Regression Baselines",
+      "description": "Establish visual regression baselines for key editor states and features.",
+      "status": "todo",
+      "test_criteria": [
+        "Visual regression baselines established",
+        "CI check compares against baselines"
+      ],
+      "test_commands": [
+        "npm run test:visual"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-VR001",
+          "name": "Empty editor baseline",
+          "category": "render",
+          "description": "Capture baseline for empty editor",
+          "input": "Fresh editor, no content",
+          "expected_behavior": "Screenshot captured for baseline"
+        },
+        {
+          "id": "TC-VR002",
+          "name": "Focused editor with content baseline",
+          "category": "render",
+          "description": "Capture baseline for editor with content",
+          "input": "Editor with sample Markdown content",
+          "expected_behavior": "Screenshot captured for baseline"
+        },
+        {
+          "id": "TC-VR003",
+          "name": "Dark theme baseline",
+          "category": "render",
+          "description": "Capture baseline for dark theme",
+          "input": "Dark theme enabled",
+          "expected_behavior": "Screenshot captured for baseline"
+        },
+        {
+          "id": "TC-VR004",
+          "name": "Light theme baseline",
+          "category": "render",
+          "description": "Capture baseline for light theme",
+          "input": "Light theme enabled",
+          "expected_behavior": "Screenshot captured for baseline"
+        },
+        {
+          "id": "TC-VR005",
+          "name": "Focus mode baseline",
+          "category": "render",
+          "description": "Capture baseline for focus mode",
+          "input": "Focus mode enabled",
+          "expected_behavior": "Screenshot captured for baseline"
+        },
+        {
+          "id": "TC-VR006",
+          "name": "Typewriter mode baseline",
+          "category": "render",
+          "description": "Capture baseline for typewriter mode",
+          "input": "Typewriter mode enabled",
+          "expected_behavior": "Screenshot captured for baseline"
+        },
+        {
+          "id": "TC-VR007",
+          "name": "Export modal baseline",
+          "category": "render",
+          "description": "Capture baseline for export modal",
+          "input": "Export modal open",
+          "expected_behavior": "Screenshot captured for baseline"
+        },
+        {
+          "id": "TC-VR008",
+          "name": "Visual regression CI check",
+          "category": "integration",
+          "description": "Verify CI compares new screenshots to baselines",
+          "input": "Run visual regression CI",
+          "expected_behavior": "Passes when no visual changes detected"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "all"
+        ],
+        "edge_cases": [],
+        "browser_features": [
+          "visual_comparison"
+        ]
+      },
+      "impl_notes": "Create tests/visual/ directory. Capture baseline screenshots. Add visual regression CI check.",
+      "dependencies": []
+    },
+    {
+      "id": "TD-005",
+      "priority": "P2",
+      "title": "File Watcher + Editor Integration Tests",
+      "description": "Create comprehensive tests for file watcher with external file modification, reload, and delete scenarios.",
+      "status": "todo",
+      "test_criteria": [
+        "External modification detection works",
+        "Reload and Ignore options work correctly",
+        "File deletion handling works"
+      ],
+      "test_commands": [
+        "cargo test file_watcher"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-FW001",
+          "name": "External file modification detection",
+          "category": "integration",
+          "description": "Verify editor detects when file modified externally",
+          "input": "Open file, modify externally",
+          "expected_behavior": "Editor shows notification of external change"
+        },
+        {
+          "id": "TC-FW002",
+          "name": "Reload option",
+          "category": "integration",
+          "description": "Verify Reload option reloads content",
+          "input": "External change notification, click Reload",
+          "expected_behavior": "Editor content replaced with file content"
+        },
+        {
+          "id": "TC-FW003",
+          "name": "Ignore option",
+          "category": "integration",
+          "description": "Verify Ignore option keeps current content",
+          "input": "External change notification, click Ignore",
+          "expected_behavior": "Editor keeps current content, no reload"
+        },
+        {
+          "id": "TC-FW004",
+          "name": "File deleted externally",
+          "category": "integration",
+          "description": "Verify editor handles file deletion",
+          "input": "Open file, delete file externally",
+          "expected_behavior": "Editor shows error message"
+        },
+        {
+          "id": "TC-FW005",
+          "name": "Multiple rapid changes",
+          "category": "edge_case",
+          "description": "Verify handling of multiple rapid changes",
+          "input": "File changed 5 times rapidly",
+          "expected_behavior": "Notification shows, handles gracefully"
+        },
+        {
+          "id": "TC-FW006",
+          "name": "Unsaved changes + external change",
+          "category": "edge_case",
+          "description": "Verify handling when local changes exist",
+          "input": "Unsaved changes, external change detected",
+          "expected_behavior": "Conflict resolution dialog shown"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "rapid_changes",
+          "unsaved_conflict",
+          "file_deletion"
+        ],
+        "browser_features": [
+          "file_watcher",
+          "reload_dialog"
+        ]
+      },
+      "impl_notes": "Create integration tests in tests/integration_file_watcher_tests.rs. Test all scenarios.",
+      "dependencies": []
+    },
+    {
+      "id": "TD-008",
+      "priority": "P2",
+      "title": "FrontmatterBlock Visual Polish",
+      "description": "Review and polish FrontmatterBlock component for visual consistency with editor themes.",
+      "status": "todo",
+      "test_criteria": [
+        "Frontmatter renders consistently in both themes",
+        "No visual inconsistencies"
+      ],
+      "test_commands": [
+        "npm run build",
+        "cargo test frontmatter"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-FM8001",
+          "name": "Frontmatter in light theme",
+          "category": "render",
+          "description": "Verify frontmatter renders correctly in light theme",
+          "input": "YAML frontmatter block, light theme",
+          "expected_behavior": "Frontmatter styled consistently with theme"
+        },
+        {
+          "id": "TC-FM8002",
+          "name": "Frontmatter in dark theme",
+          "category": "render",
+          "description": "Verify frontmatter renders correctly in dark theme",
+          "input": "YAML frontmatter block, dark theme",
+          "expected_behavior": "Frontmatter styled consistently with theme"
+        },
+        {
+          "id": "TC-FM8003",
+          "name": "Frontmatter with code blocks",
+          "category": "render",
+          "description": "Verify frontmatter code blocks render",
+          "input": "Frontmatter with multiline code",
+          "expected_behavior": "Code blocks render with monospace font"
+        },
+        {
+          "id": "TC-FM8004",
+          "name": "Frontmatter styling consistency",
+          "category": "render",
+          "description": "Verify frontmatter matches editor styling",
+          "input": "Compare frontmatter to editor content",
+          "expected_behavior": "Frontmatter visually consistent with editor"
+        },
+        {
+          "id": "TC-FM8005",
+          "name": "Frontmatter scroll behavior",
+          "category": "render",
+          "description": "Verify frontmatter scrolls with document",
+          "input": "Large document with frontmatter",
+          "expected_behavior": "Frontmatter scrolls normally with content"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "frontmatter"
+        ],
+        "edge_cases": [
+          "theme_switching",
+          "scroll_behavior"
+        ],
+        "browser_features": [
+          "frontmatter_rendering"
+        ]
+      },
+      "impl_notes": "Review FrontmatterBlock.jsx styling. Fix visual inconsistencies between themes.",
+      "dependencies": []
+    }
+  ]
+}

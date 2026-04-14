@@ -181,6 +181,202 @@ fn bench_is_in_heading(c: &mut Criterion) {
     });
 }
 
+/// TC-B009: Transform operations benchmark
+/// Target: All transform operations complete within thresholds
+/// Tests with 1000 and 100000 character documents
+fn bench_transform_wrap(c: &mut Criterion) {
+    use rustnote_lib::editor::transforms::Transform;
+
+    c.bench_function("transform_wrap_bold", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(
+                &Transform::Wrap {
+                    before: "**".to_string(),
+                    after: "**".to_string(),
+                },
+                "text",
+                4,
+                Some(0),
+            )
+        });
+    });
+
+    c.bench_function("transform_wrap_italic", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(
+                &Transform::Wrap {
+                    before: "*".to_string(),
+                    after: "*".to_string(),
+                },
+                "text",
+                4,
+                Some(0),
+            )
+        });
+    });
+
+    c.bench_function("transform_wrap_code", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(
+                &Transform::Wrap {
+                    before: "`".to_string(),
+                    after: "`".to_string(),
+                },
+                "text",
+                4,
+                Some(0),
+            )
+        });
+    });
+}
+
+fn bench_transform_enter_in_list_item(c: &mut Criterion) {
+    use rustnote_lib::editor::transforms::Transform;
+
+    c.bench_function("transform_enter_in_list_item_simple", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(
+                &Transform::EnterInListItem { is_empty: false },
+                "- item",
+                6,
+                None,
+            )
+        });
+    });
+
+    c.bench_function("transform_enter_in_list_item_task", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(
+                &Transform::EnterInListItem { is_empty: false },
+                "- [ ] task",
+                10,
+                None,
+            )
+        });
+    });
+
+    c.bench_function("transform_enter_in_list_item_numbered", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(
+                &Transform::EnterInListItem { is_empty: false },
+                "1. item",
+                7,
+                None,
+            )
+        });
+    });
+}
+
+fn bench_transform_enter_in_blockquote(c: &mut Criterion) {
+    use rustnote_lib::editor::transforms::Transform;
+
+    c.bench_function("transform_enter_in_blockquote_simple", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(&Transform::EnterInBlockQuote, "> quote", 7, None)
+        });
+    });
+
+    c.bench_function("transform_enter_in_blockquote_nested", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(&Transform::EnterInBlockQuote, "> > nested quote", 14, None)
+        });
+    });
+}
+
+fn bench_transform_enter_in_heading(c: &mut Criterion) {
+    use rustnote_lib::editor::transforms::Transform;
+
+    c.bench_function("transform_enter_in_heading_h1", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(
+                &Transform::EnterInHeading { level: 1 },
+                "# Heading",
+                9,
+                None,
+            )
+        });
+    });
+
+    c.bench_function("transform_enter_in_heading_h2", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(
+                &Transform::EnterInHeading { level: 2 },
+                "## Subheading",
+                13,
+                None,
+            )
+        });
+    });
+}
+
+fn bench_transform_large_document(c: &mut Criterion) {
+    use rustnote_lib::editor::transforms::Transform;
+    let large_content = "# Title\n\n".to_string() + &"x".repeat(1000);
+
+    c.bench_function("transform_enter_1000_chars", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(&Transform::Enter, &large_content, 1000, None)
+        });
+    });
+
+    let huge_content = "# Title\n\n".to_string() + &"x".repeat(100000);
+
+    c.bench_function("transform_enter_100000_chars", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(&Transform::Enter, &huge_content, 100000, None)
+        });
+    });
+}
+
+fn bench_transform_wrap_large_document(c: &mut Criterion) {
+    use rustnote_lib::editor::transforms::Transform;
+
+    let large_content = "x".repeat(1000);
+    let huge_content = "x".repeat(100000);
+
+    c.bench_function("transform_wrap_1000_chars", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(
+                &Transform::Wrap {
+                    before: "**".to_string(),
+                    after: "**".to_string(),
+                },
+                &large_content,
+                1000,
+                Some(0),
+            )
+        });
+    });
+
+    c.bench_function("transform_wrap_100000_chars", |b| {
+        b.iter(|| {
+            let e = engine();
+            e.apply(
+                &Transform::Wrap {
+                    before: "**".to_string(),
+                    after: "**".to_string(),
+                },
+                &huge_content,
+                100000,
+                Some(0),
+            )
+        });
+    });
+}
+
 criterion_group!(
     benches,
     bench_transform_enter,
@@ -191,5 +387,11 @@ criterion_group!(
     bench_is_empty_list_item,
     bench_is_in_blockquote,
     bench_is_in_heading,
+    bench_transform_wrap,
+    bench_transform_enter_in_list_item,
+    bench_transform_enter_in_blockquote,
+    bench_transform_enter_in_heading,
+    bench_transform_large_document,
+    bench_transform_wrap_large_document,
 );
 criterion_main!(benches);

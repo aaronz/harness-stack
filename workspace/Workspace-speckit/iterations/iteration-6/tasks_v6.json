@@ -908,7 +908,7 @@
       "priority": "P2",
       "title": "Autosave Reliability",
       "description": "Consider Rust-side autosave with debounce as backup. Verify crash recovery still works if app crashes before frontend timer fires. Test crash scenarios.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "Rust-side autosave works with debounce",
         "Crash recovery works even if crash before frontend timer",
