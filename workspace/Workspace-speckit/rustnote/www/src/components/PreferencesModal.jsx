@@ -442,6 +442,33 @@ export default function PreferencesModal({ isVisible, onClose }) {
               )}
             </div>
           </section>
+
+          <section className="mb-6">
+            <h3 className="text-sm font-semibold mb-3 uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
+              Recent Folders
+            </h3>
+            <div 
+              id="recent-folders-list"
+              className="border rounded p-3 text-sm"
+              style={{ 
+                borderColor: 'var(--border-color)',
+                backgroundColor: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+              }}
+            >
+              {settings.recentFolders && settings.recentFolders.length > 0 ? (
+                <ul className="space-y-1">
+                  {settings.recentFolders.slice(0, 10).map((folder, index) => (
+                    <li key={index} className="truncate text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      {folder}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span style={{ color: 'var(--text-secondary)' }}>No recent folders</span>
+              )}
+            </div>
+          </section>
         </div>
 
         <div

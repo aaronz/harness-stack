@@ -635,7 +635,7 @@
       "priority": "P1",
       "title": "tree-sitter GFM Parsing \u2014 Verification",
       "description": "Create GFM test fixtures (tables, task lists, strikethrough, autolinks), verify tree-sitter correctly parses GFM extensions, define clear parsing strategy (tree-sitter for structural, comrak for GFM rendering), and add GFM parser tests.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "cargo test tree_sitter passes GFM tests",
         "GFM features render correctly in editor",
@@ -717,7 +717,7 @@
       "priority": "P1",
       "title": "Settings Schema \u2014 Add recent_folders",
       "description": "Add recent_folders: Vec<String> field to Rust Settings model, update persistence in services/settings.rs, add recent folders UI in PreferencesModal, wire to IPC read/write settings, and add tests.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "cargo test settings passes",
         "PreferencesModal shows recent folders list",

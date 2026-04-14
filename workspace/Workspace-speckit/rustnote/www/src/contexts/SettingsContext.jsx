@@ -16,6 +16,7 @@ export function SettingsProvider({ children }) {
     lineHeight: 1.6,
     contentWidth: 720,
     recentFiles: [],
+    recentFolders: [],
   });
   
   const isDirtyRef = useRef(false);
@@ -44,6 +45,7 @@ export function SettingsProvider({ children }) {
         lineHeight: result.lineHeight ?? result.editor?.line_height ?? prev.lineHeight,
         contentWidth: result.contentWidth ?? result.editor?.content_width ?? prev.contentWidth,
         recentFiles: result.recentFiles ?? result.recent_files ?? prev.recentFiles,
+        recentFolders: result.recentFolders ?? result.recent_folders ?? prev.recentFolders,
       }));
     } catch (e) {
       console.log('Using default settings');
@@ -69,6 +71,7 @@ export function SettingsProvider({ children }) {
           contentWidth: settings.contentWidth,
         },
         recentFiles: settings.recentFiles,
+        recentFolders: settings.recentFolders,
       };
       await invoke('write_settings', { settings: settingsToSave });
       isDirtyRef.current = false;
@@ -118,6 +121,18 @@ export function SettingsProvider({ children }) {
     setSettings(prev => ({ ...prev, recentFiles: [] }));
   }, [setSettings]);
 
+  const addToRecentFolders = useCallback((folderPath) => {
+    if (!folderPath) return;
+    setSettings(prev => ({
+      ...prev,
+      recentFolders: [folderPath, ...prev.recentFolders.filter(p => p !== folderPath)].slice(0, 10),
+    }));
+  }, [setSettings]);
+
+  const clearRecentFolders = useCallback(() => {
+    setSettings(prev => ({ ...prev, recentFolders: [] }));
+  }, [setSettings]);
+
   return (
     <SettingsContext.Provider value={{
       settings,
@@ -129,6 +144,8 @@ export function SettingsProvider({ children }) {
       setSettings,
       addToRecentFiles,
       clearRecentFiles,
+      addToRecentFolders,
+      clearRecentFolders,
     }}>
       {children}
     </SettingsContext.Provider>

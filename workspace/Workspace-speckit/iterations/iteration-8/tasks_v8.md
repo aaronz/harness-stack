@@ -747,7 +747,7 @@
 | P1-006 | P1 | HTML Linked-Assets Mode | ✅ Done |
 | P1-007 | P1 | Image Path Subdirectory Edge Cases | **DONE** |
 | P1-008 | P1 | GFM Parser Verification | **TODO** |
-| P1-009 | P1 | Settings Schema — recent_folders | **TODO** |
+| P1-009 | P1 | Settings Schema — recent_folders | ✅ Done |
 | P1-010 | P1 | Editor.jsx Deprecation Notice | **TODO** |
 | P1-011 | P1 | i18n Architecture — Install i18next | **TODO** |
 | P1-012 | P1 | LinkPopover URL Validation | **TODO** |

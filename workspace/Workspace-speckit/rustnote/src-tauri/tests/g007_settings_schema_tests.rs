@@ -92,6 +92,7 @@ fn tc_g007_003_settings_persistence() {
             line_height: 1.8,
             content_width: 900,
             recent_files: vec!["test1.md".to_string(), "test2.md".to_string()],
+            recent_folders: vec![],
         };
 
         service
@@ -143,6 +144,7 @@ fn tc_g007_003b_settings_update_persistence() {
         line_height: 1.6,
         content_width: 720,
         recent_files: vec![],
+        recent_folders: vec![],
     };
     service.write_settings(&initial).unwrap();
 
@@ -158,6 +160,7 @@ fn tc_g007_003b_settings_update_persistence() {
         line_height: 2.0,
         content_width: 1000,
         recent_files: vec!["updated.md".to_string()],
+        recent_folders: vec![],
     };
     service.write_settings(&updated).unwrap();
 
@@ -285,6 +288,7 @@ fn tc_ss007_json_serialization_round_trip() {
         line_height: 1.8,
         content_width: 850,
         recent_files: vec!["a.md".to_string(), "b.md".to_string()],
+        recent_folders: vec![],
     };
     let json = serde_json::to_string(&original).unwrap();
     let deserialized: Settings = serde_json::from_str(&json).unwrap();

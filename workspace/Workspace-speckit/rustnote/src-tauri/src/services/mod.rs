@@ -178,6 +178,9 @@ pub trait SettingsServiceTrait: Send + Sync {
     fn add_recent_file(&self, path: &str) -> SettingsResult<()>;
     fn get_recent_files(&self) -> SettingsResult<Vec<String>>;
     fn clear_recent_files(&self) -> SettingsResult<()>;
+    fn add_recent_folder(&self, path: &str) -> SettingsResult<()>;
+    fn get_recent_folders(&self) -> SettingsResult<Vec<String>>;
+    fn clear_recent_folders(&self) -> SettingsResult<()>;
     fn set_workspace_state(&self, key: &str, value: &str) -> SettingsResult<()>;
     fn get_workspace_state(&self, key: &str) -> SettingsResult<Option<String>>;
     fn delete_workspace_state(&self, key: &str) -> SettingsResult<()>;

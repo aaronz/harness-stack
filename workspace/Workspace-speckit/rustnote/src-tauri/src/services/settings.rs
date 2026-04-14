@@ -64,6 +64,12 @@ impl SettingsService {
                 last_opened INTEGER NOT NULL
             );
             
+            CREATE TABLE IF NOT EXISTS recent_folders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                path TEXT NOT NULL UNIQUE,
+                last_opened INTEGER NOT NULL
+            );
+            
             CREATE TABLE IF NOT EXISTS workspace_state (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
@@ -170,6 +176,17 @@ impl SettingsServiceTrait for SettingsService {
             .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
         }
 
+        conn.execute("DELETE FROM recent_folders", [])
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
+
+        for (idx, path) in settings.recent_folders.iter().enumerate() {
+            conn.execute(
+                "INSERT INTO recent_folders (id, path, last_opened) VALUES (?, ?, ?)",
+                params![idx as i64 + 1, path, chrono::Utc::now().timestamp()],
+            )
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
+        }
+
         conn.execute("COMMIT", [])
             .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
         Ok(())
@@ -223,6 +240,36 @@ impl SettingsServiceTrait for SettingsService {
     fn clear_recent_files(&self) -> SettingsResult<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute("DELETE FROM recent_files", [])
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    fn add_recent_folder(&self, path: &str) -> SettingsResult<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT OR REPLACE INTO recent_folders (path, last_opened) VALUES (?, ?)",
+            params![path, chrono::Utc::now().timestamp()],
+        )
+        .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    fn get_recent_folders(&self) -> SettingsResult<Vec<String>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn
+            .prepare("SELECT path FROM recent_folders ORDER BY last_opened DESC LIMIT 20")
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
+        let folders = stmt
+            .query_map([], |row| row.get(0))
+            .map_err(|e| SettingsServiceError::Database(e.to_string()))?
+            .filter_map(|r| r.ok())
+            .collect();
+        Ok(folders)
+    }
+
+    fn clear_recent_folders(&self) -> SettingsResult<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute("DELETE FROM recent_folders", [])
             .map_err(|e| SettingsServiceError::Database(e.to_string()))?;
         Ok(())
     }

@@ -20,7 +20,10 @@ pub struct Settings {
     pub font_size: u32,
     pub line_height: f32,
     pub content_width: u32,
+    #[serde(default)]
     pub recent_files: Vec<String>,
+    #[serde(default)]
+    pub recent_folders: Vec<String>,
 }
 
 impl Default for Settings {
@@ -37,6 +40,7 @@ impl Default for Settings {
             line_height: 1.6,
             content_width: 720,
             recent_files: vec![],
+            recent_folders: vec![],
         }
     }
 }
