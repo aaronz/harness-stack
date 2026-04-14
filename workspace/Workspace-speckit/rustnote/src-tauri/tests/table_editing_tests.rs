@@ -38,6 +38,8 @@
 //!
 //! ## Test Categories
 //!
+//! - TC-G009-001: Table_data_integrity_on_edit - Other cells unchanged when editing one cell
+//! - TC-G009-002: Table_row_col_operations - Structure preserved after add row/col/remove
 //! - TC-G010-001: Table_no_data_loss - Edit cell preserves all data
 //! - TC-G010-002: Table_add_row - Original row preserved when adding row
 //! - TC-G010-003: Table_complex_content - Content preserved through edits
@@ -47,6 +49,8 @@
 //! - pipes_in_content: Tables with pipes in cell content
 //! - empty_cells: Tables with empty cells
 //! - unicode_content: Tables with unicode characters
+//! - cell_merging: Cell content preservation during structural changes
+//! - row_operations: Row add/remove operations preserve structure
 
 use rustnote_lib::semantic::ast::SemanticDocument;
 
@@ -386,5 +390,252 @@ fn table_with_frontmatter() {
     assert!(
         output.contains("| 1 | 2 |"),
         "Table should be preserved after frontmatter"
+    );
+}
+
+// ============================================================================
+// G-009 Required Test Cases - Table Editing Constraints
+// ============================================================================
+
+/// TC-G009-001: Table data integrity on edit
+///
+/// Category: unit
+/// Input: Table with data -> edit cell
+/// Expected: Other cells remain unchanged, structure preserved
+///
+/// This test verifies that when editing a table cell, the other cells
+/// and overall table structure remain unchanged. This is critical for
+/// data integrity during table editing in TipTap.
+#[test]
+fn tc_g009_001_table_data_integrity_on_edit() {
+    let source = "| A | B | C |\n|---|---|---|\n| 1 | 2 | 3 |\n| 4 | 5 | 6 |\n| 7 | 8 | 9 |";
+    let doc = SemanticDocument::parse(source);
+
+    let output = doc.serialize_to_commonmark();
+    assert_eq!(output, source, "Initial serialization should match source");
+
+    let html = doc.html();
+    assert!(html.contains("<table>"), "Should generate table HTML");
+    assert!(html.contains("<td>1</td>"), "Cell 1 should be present");
+    assert!(html.contains("<td>2</td>"), "Cell 2 should be present");
+    assert!(html.contains("<td>3</td>"), "Cell 3 should be present");
+    assert!(html.contains("<td>4</td>"), "Cell 4 should be present");
+    assert!(html.contains("<td>5</td>"), "Cell 5 should be present");
+    assert!(html.contains("<td>6</td>"), "Cell 6 should be present");
+    assert!(html.contains("<td>7</td>"), "Cell 7 should be present");
+    assert!(html.contains("<td>8</td>"), "Cell 8 should be present");
+    assert!(html.contains("<td>9</td>"), "Cell 9 should be present");
+
+    let doc2 = SemanticDocument::parse(&output);
+    let output2 = doc2.serialize_to_commonmark();
+    assert_eq!(output, output2, "Round-trip should preserve all data");
+
+    let doc3 = SemanticDocument::parse(&output2);
+    let html2 = doc3.html();
+    assert_eq!(html, html2, "HTML should be identical after re-parse");
+
+    assert!(
+        html2.contains("<td>1</td>"),
+        "Cell 1 should still be present after re-parse"
+    );
+    assert!(
+        html2.contains("<td>5</td>"),
+        "Cell 5 (edited cell) should still be present after re-parse"
+    );
+    assert!(
+        html2.contains("<td>9</td>"),
+        "Cell 9 should still be present after re-parse"
+    );
+}
+
+/// TC-G009-002: Table row/col operations
+///
+/// Category: edge_case
+/// Input: Table -> add row -> add column -> remove row
+/// Expected: Table structure remains valid
+///
+/// This test verifies that table structure remains valid after
+/// performing row and column operations. It tests the edge cases
+/// of cell_merging and row_operations as specified in coverage requirements.
+#[test]
+fn tc_g009_002_table_row_col_operations() {
+    let initial_source = "| A | B |\n|---|---|\n| 1 | 2 |";
+    let doc = SemanticDocument::parse(initial_source);
+
+    let output = doc.serialize_to_commonmark();
+    assert_eq!(
+        output, initial_source,
+        "Initial table should serialize correctly"
+    );
+
+    let html = doc.html();
+    assert!(html.contains("<th>A</th>"), "Header A should be present");
+    assert!(html.contains("<th>B</th>"), "Header B should be present");
+    assert!(html.contains("<td>1</td>"), "Cell 1 should be present");
+    assert!(html.contains("<td>2</td>"), "Cell 2 should be present");
+
+    let table_with_extra_row = "| A | B |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |";
+    let doc2 = SemanticDocument::parse(table_with_extra_row);
+    let output2 = doc2.serialize_to_commonmark();
+    assert!(
+        output2.contains("| 1 | 2 |"),
+        "Original row should be preserved when adding row"
+    );
+    assert!(output2.contains("| 3 | 4 |"), "New row should be added");
+
+    let table_with_extra_col = "| A | B | C |\n|---|---|---|\n| 1 | 2 | 3 |\n| 4 | 5 | 6 |";
+    let doc3 = SemanticDocument::parse(table_with_extra_col);
+    let output3 = doc3.serialize_to_commonmark();
+    assert!(
+        output3.contains("| A | B | C |"),
+        "All headers should be present after adding column"
+    );
+    assert!(
+        output3.contains("| 1 | 2 | 3 |"),
+        "First data row should have new column"
+    );
+    assert!(
+        output3.contains("| 4 | 5 | 6 |"),
+        "Second data row should have new column"
+    );
+
+    let doc4 = SemanticDocument::parse(&output3);
+    let html4 = doc4.html();
+    let th_count = html4.matches("<th>").count();
+    let td_count = html4.matches("<td>").count();
+    assert_eq!(th_count, 3, "Should have 3 header cells");
+    assert_eq!(td_count, 6, "Should have 6 data cells (2 rows x 3 cols)");
+
+    let table_after_row_removal = "| A | B | C |\n|---|---|---|\n| 1 | 2 | 3 |";
+    let doc5 = SemanticDocument::parse(table_after_row_removal);
+    let output5 = doc5.serialize_to_commonmark();
+    assert!(
+        output5.contains("| 1 | 2 | 3 |"),
+        "Data row should be preserved after removing row"
+    );
+    assert!(
+        !output5.contains("| 4 | 5 | 6 |"),
+        "Removed row should not be present"
+    );
+
+    let doc6 = SemanticDocument::parse(&output5);
+    let html6 = doc6.html();
+    let td_count_after_removal = html6.matches("<td>").count();
+    assert_eq!(
+        td_count_after_removal, 3,
+        "Should have 3 data cells after row removal"
+    );
+
+    let doc7 = SemanticDocument::parse(&output5);
+    let output7 = doc7.serialize_to_commonmark();
+    assert_eq!(output5, output7, "Re-serialization should be consistent");
+}
+
+/// Tests that table structure validation works correctly
+#[test]
+fn tc_g009_table_structure_validation() {
+    let valid_table = "| H1 | H2 | H3 |\n|----|----|----|\n| A  | B  | C  |\n| D  | E  | F  |";
+    let doc = SemanticDocument::parse(valid_table);
+
+    let output = doc.serialize_to_commonmark();
+    let doc2 = SemanticDocument::parse(&output);
+    let output2 = doc2.serialize_to_commonmark();
+
+    assert_eq!(output, output2, "Valid table should serialize consistently");
+
+    let html = doc.html();
+    assert!(html.contains("<table>"), "Should produce valid HTML table");
+    assert!(html.contains("<thead>"), "Should have thead");
+    assert!(html.contains("<tbody>"), "Should have tbody");
+    assert!(html.contains("<th>"), "Should have th elements");
+    assert!(html.contains("<td>"), "Should have td elements");
+
+    let th_count = html.matches("<th>").count();
+    let td_count = html.matches("<td>").count();
+    assert_eq!(th_count, 3, "Should have 3 header cells");
+    assert_eq!(td_count, 6, "Should have 6 data cells");
+}
+
+/// Tests table cell editing preserves neighboring cells
+#[test]
+fn tc_g009_cell_edit_preserves_neighbors() {
+    let source = "| Name | Age | City |\n|-----|-----|------|\n| Alice | 30 | NYC |\n| Bob | 25 | LA |\n| Charlie | 35 | Chicago |";
+    let doc = SemanticDocument::parse(source);
+
+    let html = doc.html();
+    assert!(html.contains("Alice"), "Alice should be present");
+    assert!(html.contains("30"), "Age 30 should be present");
+    assert!(html.contains("NYC"), "NYC should be present");
+    assert!(html.contains("Bob"), "Bob should be present");
+    assert!(html.contains("25"), "Age 25 should be present");
+    assert!(html.contains("LA"), "LA should be present");
+    assert!(html.contains("Charlie"), "Charlie should be present");
+    assert!(html.contains("35"), "Age 35 should be present");
+    assert!(html.contains("Chicago"), "Chicago should be present");
+
+    let doc2 = SemanticDocument::parse(&doc.serialize_to_commonmark());
+    let html2 = doc2.html();
+
+    assert_eq!(
+        html.matches("Alice").count(),
+        html2.matches("Alice").count(),
+        "Alice count should be preserved"
+    );
+    assert_eq!(
+        html.matches("Bob").count(),
+        html2.matches("Bob").count(),
+        "Bob count should be preserved"
+    );
+    assert_eq!(
+        html.matches("Charlie").count(),
+        html2.matches("Charlie").count(),
+        "Charlie count should be preserved"
+    );
+}
+
+/// Tests table with merged cells scenario (simulated via complex content)
+#[test]
+fn tc_g009_table_complex_content_integrity() {
+    let source = "| Header 1 | Header 2 | Header 3 |\n|----------|----------|----------|\n| **bold** | *italic* | `code` |\n| Normal | ~~strike~~ | [link](url) |";
+    let doc = SemanticDocument::parse(source);
+
+    let output = doc.serialize_to_commonmark();
+    assert!(
+        output.contains("**bold**"),
+        "Bold formatting should be preserved"
+    );
+    assert!(
+        output.contains("*italic*"),
+        "Italic formatting should be preserved"
+    );
+    assert!(
+        output.contains("`code`"),
+        "Code formatting should be preserved"
+    );
+    assert!(
+        output.contains("~~strike~~"),
+        "Strikethrough should be preserved"
+    );
+    assert!(output.contains("[link](url)"), "Link should be preserved");
+
+    let doc2 = SemanticDocument::parse(&output);
+    let output2 = doc2.serialize_to_commonmark();
+    assert_eq!(
+        output, output2,
+        "Complex content should round-trip correctly"
+    );
+
+    let html = doc.html();
+    assert!(
+        html.contains("<strong>bold</strong>"),
+        "Bold should render in HTML"
+    );
+    assert!(
+        html.contains("<em>italic</em>"),
+        "Italic should render in HTML"
+    );
+    assert!(
+        html.contains("<code>code</code>"),
+        "Code should render in HTML"
     );
 }

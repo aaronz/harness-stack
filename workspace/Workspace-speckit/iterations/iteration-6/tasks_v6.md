@@ -236,7 +236,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-008: Editor Consolidation
+### G-008: Done
 **Status:** Done
 **Priority:** P1
 **Module:** Frontend
