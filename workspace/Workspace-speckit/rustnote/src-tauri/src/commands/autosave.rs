@@ -1,5 +1,5 @@
 use crate::model::RecoverySnapshot;
-use crate::services::autosave::{AutosaveConfig, AutosaveService, compute_content_hash};
+use crate::services::autosave::{AutosaveConfig, AutosaveService, BackupFile, RustAutosaveManager, compute_content_hash};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
@@ -10,6 +10,13 @@ static AUTOSAVE_SERVICE: Lazy<Mutex<AutosaveService>> = Lazy::new(|| {
         .unwrap_or_else(|| PathBuf::from("."))
         .join("rustnote");
     Mutex::new(AutosaveService::new(app_data_dir))
+});
+
+static RUST_AUTOSAVE_MANAGER: Lazy<RustAutosaveManager> = Lazy::new(|| {
+    let app_data_dir = dirs::data_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("rustnote");
+    RustAutosaveManager::new(app_data_dir)
 });
 
 fn get_app_data_dir() -> PathBuf {
@@ -50,6 +57,65 @@ pub async fn trigger_autosave(
     } else {
         Ok(None)
     }
+}
+
+#[tauri::command]
+pub async fn rust_autosave_trigger(
+    doc_id: String,
+    content: String,
+    cursor_offset: usize,
+    file_path: Option<String>,
+    title: String,
+) -> Result<Option<String>, String> {
+    let uuid = Uuid::parse_str(&doc_id).map_err(|e| e.to_string())?;
+    Ok(RUST_AUTOSAVE_MANAGER.trigger_autosave(uuid, &content, cursor_offset, file_path, &title))
+}
+
+#[tauri::command]
+pub fn rust_autosave_mark_dirty(doc_id: String, content: String) -> Result<(), String> {
+    let uuid = Uuid::parse_str(&doc_id).map_err(|e| e.to_string())?;
+    let hash = compute_content_hash(&content);
+    RUST_AUTOSAVE_MANAGER.mark_dirty(uuid, hash);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn rust_autosave_create_backup(doc_id: String, content: String) -> Result<Option<BackupFile>, String> {
+    let uuid = Uuid::parse_str(&doc_id).map_err(|e| e.to_string())?;
+    Ok(RUST_AUTOSAVE_MANAGER.create_backup(uuid, &content))
+}
+
+#[tauri::command]
+pub fn rust_autosave_list_backups(doc_id: Option<String>) -> Result<Vec<BackupFile>, String> {
+    let uuid = doc_id.and_then(|id| Uuid::parse_str(&id).ok());
+    Ok(RUST_AUTOSAVE_MANAGER.list_backups(uuid))
+}
+
+#[tauri::command]
+pub fn rust_autosave_delete_backup(backup_id: String) -> Result<bool, String> {
+    Ok(RUST_AUTOSAVE_MANAGER.delete_backup(&backup_id))
+}
+
+#[tauri::command]
+pub fn rust_autosave_set_debounce(debounce_ms: u64) -> Result<(), String> {
+    RUST_AUTOSAVE_MANAGER.set_debounce(debounce_ms);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn rust_autosave_get_debounce() -> Result<u64, String> {
+    Ok(RUST_AUTOSAVE_MANAGER.get_debounce())
+}
+
+#[tauri::command]
+pub fn rust_autosave_set_enabled(enabled: bool) -> Result<(), String> {
+    RUST_AUTOSAVE_MANAGER.set_enabled(enabled);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn rust_autosave_is_enabled() -> Result<bool, String> {
+    Ok(RUST_AUTOSAVE_MANAGER.is_enabled())
 }
 
 #[tauri::command]

@@ -1,5 +1,7 @@
 use rustnote_lib::model::recovery::RecoverySnapshot;
-use rustnote_lib::services::autosave::{compute_content_hash, AutosaveConfig, AutosaveService};
+use rustnote_lib::services::autosave::{
+    compute_content_hash, AutosaveConfig, AutosaveService, RustAutosaveManager,
+};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use tempfile::TempDir;
@@ -659,5 +661,349 @@ fn test_edge_case_crash_during_edit() {
         recovered.file_path,
         Some("/test/crash_during_edit.md".to_string()),
         "File path should be preserved for recovery"
+    );
+}
+
+// =============================================================================
+// TC-AS001: Rust autosave fires after debounce
+// Category: unit
+// Input: Make edit, wait 5 seconds (debounce)
+// Expected: Rust autosave backup file created
+// =============================================================================
+#[test]
+fn test_tc_as001_rust_autosave_fires_after_debounce() {
+    let temp_dir = TempDir::new().unwrap();
+    let app_data_dir = temp_dir.path().to_path_buf();
+
+    let manager = RustAutosaveManager::new(app_data_dir.clone());
+    manager.set_debounce(5000);
+    manager.set_enabled(true);
+
+    let doc_id = Uuid::new_v4();
+    let content = "# Test Document\n\nContent that needs to be autosaved.";
+
+    manager.mark_dirty(doc_id, compute_content_hash(content));
+
+    assert!(
+        manager.needs_autosave(doc_id),
+        "Document should need autosave immediately after edit"
+    );
+    assert!(
+        !manager.can_autosave(doc_id),
+        "Should NOT autosave immediately - debounce not elapsed"
+    );
+
+    std::thread::sleep(Duration::from_millis(5500));
+
+    assert!(
+        manager.can_autosave(doc_id),
+        "Rust autosave should be allowed after 5 second debounce"
+    );
+
+    let backup = manager.create_backup(doc_id, content);
+    assert!(
+        backup.is_some(),
+        "Rust autosave backup file should be created after debounce"
+    );
+
+    let backup = backup.unwrap();
+    assert_eq!(
+        backup.content_hash,
+        compute_content_hash(content),
+        "Backup should contain correct content"
+    );
+}
+
+// =============================================================================
+// TC-AS002: Rust and frontend autosave no conflict
+// Category: integration
+// Input: Frontend autosave fires, then Rust autosave fires
+// Expected: No conflict, both complete successfully
+// =============================================================================
+#[test]
+fn test_tc_as002_rust_and_frontend_autosave_no_conflict() {
+    let temp_dir = TempDir::new().unwrap();
+    let app_data_dir = temp_dir.path().to_path_buf();
+
+    let rust_manager = RustAutosaveManager::new(app_data_dir.clone());
+    let mut frontend_service = AutosaveService::new(app_data_dir.clone());
+
+    let doc_id = Uuid::new_v4();
+    let content = "# Document for Conflict Test\n\nTesting no conflict between saves.";
+
+    rust_manager.set_debounce(1000);
+    rust_manager.mark_dirty(doc_id, compute_content_hash(content));
+    frontend_service.set_config(AutosaveConfig {
+        enabled: true,
+        interval_ms: 30000,
+        debounce_ms: 2000,
+    });
+    frontend_service.mark_dirty(doc_id, compute_content_hash(content));
+
+    std::thread::sleep(Duration::from_millis(2500));
+
+    let rust_backup = rust_manager.create_backup(doc_id, content);
+    assert!(
+        rust_backup.is_some(),
+        "Rust autosave should complete successfully"
+    );
+
+    let doc =
+        rustnote_lib::model::document::Document::from_file("conflict_test.md", content.to_string())
+            .unwrap();
+    let frontend_snapshot_id = frontend_service.create_recovery_snapshot(&doc, 10);
+    assert!(
+        frontend_snapshot_id.is_ok(),
+        "Frontend autosave should complete successfully without conflict"
+    );
+
+    frontend_service.record_autosave(doc_id, compute_content_hash(content));
+    rust_manager.mark_dirty(doc_id, compute_content_hash(content));
+    std::thread::sleep(Duration::from_millis(1500));
+
+    let rust_backup_2 = rust_manager.create_backup(doc_id, content);
+    assert!(
+        rust_backup_2.is_some(),
+        "Second Rust autosave should also work after frontend save"
+    );
+}
+
+// =============================================================================
+// TC-AS003: Crash recovery - edits not in frontend save
+// Category: integration
+// Input: Edit made, frontend save interval not reached, force kill
+// Expected: Rust backup contains edits on recovery
+// =============================================================================
+#[test]
+fn test_tc_as003_crash_recovery_edits_not_in_frontend_save() {
+    let temp_dir = TempDir::new().unwrap();
+    let app_data_dir = temp_dir.path().to_path_buf();
+
+    let rust_manager = RustAutosaveManager::new(app_data_dir.clone());
+    rust_manager.set_debounce(500);
+    rust_manager.set_enabled(true);
+
+    let doc_id = Uuid::new_v4();
+    let original_content = "# Original Document\n\nInitial content here.";
+    let edited_content = "# Original Document\n\nInitial content here.\n\nThis is a new paragraph added just before the simulated crash!";
+
+    rust_manager.mark_dirty(doc_id, compute_content_hash(edited_content));
+
+    std::thread::sleep(Duration::from_millis(600));
+
+    let backup = rust_manager.create_backup(doc_id, edited_content);
+    assert!(
+        backup.is_some(),
+        "Rust backup should be created even though frontend hasn't saved"
+    );
+
+    let backups = rust_manager.list_backups(Some(doc_id));
+    assert!(
+        !backups.is_empty(),
+        "Backups list should contain the crash recovery backup"
+    );
+
+    let latest_backup = backups.first().unwrap();
+    assert!(
+        latest_backup.content_hash != compute_content_hash(original_content),
+        "Backup should contain the edited content, not the original"
+    );
+}
+
+// =============================================================================
+// TC-AS004: Rust autosave debounce configurable
+// Category: unit
+// Input: Change debounce setting
+// Expected: Rust autosave uses new debounce time
+// =============================================================================
+#[test]
+fn test_tc_as004_rust_autosave_debounce_configurable() {
+    let temp_dir = TempDir::new().unwrap();
+    let app_data_dir = temp_dir.path().to_path_buf();
+
+    let manager = RustAutosaveManager::new(app_data_dir);
+    let doc_id = Uuid::new_v4();
+
+    manager.set_debounce(10000);
+    assert_eq!(
+        manager.get_debounce(),
+        10000,
+        "Debounce should be configurable to 10 seconds"
+    );
+
+    manager.mark_dirty(doc_id, compute_content_hash("content 1"));
+    std::thread::sleep(Duration::from_millis(5000));
+    assert!(
+        !manager.can_autosave(doc_id),
+        "Should not autosave after 5 seconds when debounce is 10s"
+    );
+
+    manager.set_debounce(3000);
+    assert_eq!(
+        manager.get_debounce(),
+        3000,
+        "Debounce should be configurable to 3 seconds"
+    );
+
+    manager.mark_dirty(doc_id, compute_content_hash("content 2"));
+    std::thread::sleep(Duration::from_millis(3500));
+    assert!(
+        manager.can_autosave(doc_id),
+        "Should autosave after 3.5 seconds when debounce is 3s"
+    );
+}
+
+// =============================================================================
+// TC-AS005: Rust autosave independent of frontend
+// Category: integration
+// Input: Frontend auto-save off, make edits
+// Expected: Rust autosave still fires
+// =============================================================================
+#[test]
+fn test_tc_as005_rust_autosave_independent_of_frontend() {
+    let temp_dir = TempDir::new().unwrap();
+    let app_data_dir = temp_dir.path().to_path_buf();
+
+    let rust_manager = RustAutosaveManager::new(app_data_dir);
+    rust_manager.set_debounce(1000);
+    rust_manager.set_enabled(true);
+
+    let doc_id = Uuid::new_v4();
+    let content = "# Document with Frontend Disabled\n\nThis content should be saved by Rust autosave even when frontend autosave is off.";
+
+    rust_manager.mark_dirty(doc_id, compute_content_hash(content));
+
+    std::thread::sleep(Duration::from_millis(1200));
+
+    assert!(
+        rust_manager.can_autosave(doc_id),
+        "Rust autosave should fire independently of frontend state"
+    );
+
+    let backup = rust_manager.create_backup(doc_id, content);
+    assert!(
+        backup.is_some(),
+        "Rust backup should be created even when frontend autosave is disabled"
+    );
+}
+
+// =============================================================================
+// TC-AS006: Backup file cleanup
+// Category: unit
+// Input: Many backup files created
+// Expected: Old backups pruned, only recent kept
+// =============================================================================
+#[test]
+fn test_tc_as006_backup_file_cleanup() {
+    let temp_dir = TempDir::new().unwrap();
+    let app_data_dir = temp_dir.path().to_path_buf();
+
+    let manager = RustAutosaveManager::new(app_data_dir);
+    let doc_id = Uuid::new_v4();
+
+    for i in 0..20 {
+        let content = format!(
+            "# Backup Test Content {}\n\nThis is backup number {}.",
+            i, i
+        );
+        let backup = manager.create_backup(doc_id, &content);
+        assert!(backup.is_some(), "Each backup creation should succeed");
+        std::thread::sleep(Duration::from_millis(10));
+    }
+
+    let backups = manager.list_backups(Some(doc_id));
+    assert!(
+        backups.len() <= 10,
+        "Old backups should be pruned, keeping only recent ones (max 10)"
+    );
+
+    assert_eq!(
+        backups.first().map(|b| b.content_hash),
+        Some(compute_content_hash(
+            "# Backup Test Content 19\n\nThis is backup number 19."
+        )),
+        "Most recent backup should be first in the list"
+    );
+}
+
+// =============================================================================
+// Edge Case: conflicting_saves
+// Test that simultaneous Rust and frontend saves don't corrupt data
+// =============================================================================
+#[test]
+fn test_edge_case_conflicting_saves() {
+    let temp_dir = TempDir::new().unwrap();
+    let app_data_dir = temp_dir.path().to_path_buf();
+
+    let rust_manager = RustAutosaveManager::new(app_data_dir.clone());
+    let mut frontend_service = AutosaveService::new(app_data_dir);
+
+    let doc_id = Uuid::new_v4();
+    let content1 = "# First Version";
+    let content2 = "# Second Version";
+
+    rust_manager.mark_dirty(doc_id, compute_content_hash(content1));
+    frontend_service.mark_dirty(doc_id, compute_content_hash(content1));
+
+    std::thread::sleep(Duration::from_millis(1500));
+
+    let rust_backup = rust_manager.create_backup(doc_id, content1);
+    let frontend_doc =
+        rustnote_lib::model::document::Document::from_file("conflict.md", content1.to_string())
+            .unwrap();
+    let _frontend_snapshot = frontend_service.create_recovery_snapshot(&frontend_doc, 5);
+
+    rust_manager.mark_dirty(doc_id, compute_content_hash(content2));
+    frontend_service.record_autosave(doc_id, compute_content_hash(content1));
+
+    std::thread::sleep(Duration::from_millis(1500));
+
+    let rust_backup2 = rust_manager.create_backup(doc_id, content2);
+    assert!(
+        rust_backup2.is_some(),
+        "Second Rust save should succeed after frontend save"
+    );
+
+    assert_ne!(
+        rust_backup.as_ref().unwrap().content_hash,
+        rust_backup2.as_ref().unwrap().content_hash,
+        "Different content versions should have different hashes"
+    );
+}
+
+// =============================================================================
+// Edge Case: disabled_frontend
+// Test that Rust autosave works when frontend autosave is completely disabled
+// =============================================================================
+#[test]
+fn test_edge_case_disabled_frontend() {
+    let temp_dir = TempDir::new().unwrap();
+    let app_data_dir = temp_dir.path().to_path_buf();
+
+    let rust_manager = RustAutosaveManager::new(app_data_dir);
+    rust_manager.set_enabled(true);
+    rust_manager.set_debounce(500);
+
+    let doc_id = Uuid::new_v4();
+    let content =
+        "# Content with Disabled Frontend\n\nFrontend is off but Rust autosave should still work.";
+
+    assert!(rust_manager.is_enabled(), "Rust autosave should be enabled");
+
+    rust_manager.mark_dirty(doc_id, compute_content_hash(content));
+
+    std::thread::sleep(Duration::from_millis(600));
+
+    let backup = rust_manager.create_backup(doc_id, content);
+    assert!(
+        backup.is_some(),
+        "Rust autosave should create backup even when frontend is disabled"
+    );
+
+    let backups = rust_manager.list_backups(Some(doc_id));
+    assert_eq!(
+        backups.len(),
+        1,
+        "Should have exactly one backup after frontend-disabled autosave"
     );
 }

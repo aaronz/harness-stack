@@ -10,7 +10,10 @@ pub mod recovery;
 pub mod settings;
 pub mod workspace;
 
-pub use autosave::{compute_content_hash, AutosaveConfig, AutosaveService, AutosaveServiceTrait};
+pub use autosave::{
+    compute_content_hash, AutosaveConfig, AutosaveService, AutosaveServiceTrait, BackupFile,
+    RustAutosaveManager,
+};
 pub use document::DocumentService;
 pub use editor::EditorService;
 pub use export::{ExportResult, ExportService, ExportServiceError, ExportServiceTrait};

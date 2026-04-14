@@ -1616,7 +1616,7 @@
       "priority": "P2",
       "title": "Rust-Side Autosave Backup",
       "description": "Implement Rust-side autosave with debounce independent of frontend, test crash recovery scenario.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "cargo test autosave passes",
         "Crash recovery test passes",
