@@ -191,7 +191,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-006: GFM Parser Verification
+### G-006: Done
 **Status:** Done
 **Priority:** P1
 **Module:** Parser

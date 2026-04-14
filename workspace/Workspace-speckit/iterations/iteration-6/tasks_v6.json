@@ -488,7 +488,7 @@
       "priority": "P1",
       "title": "Settings Schema Verification",
       "description": "Review PRD-09 Settings interface specification. Verify Settings model uses flat structure (not nested editor struct). Fix if nested editor struct found.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Settings model uses flat structure",
         "No nested editor struct in settings",

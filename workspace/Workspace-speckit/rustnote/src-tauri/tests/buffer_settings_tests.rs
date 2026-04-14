@@ -1,6 +1,6 @@
 use rustnote_lib::model::document::Document;
 use rustnote_lib::model::recovery::{RecoveryData, RecoverySnapshot};
-use rustnote_lib::model::settings::{EditorSettings, Settings, Theme};
+use rustnote_lib::model::settings::{Settings, Theme};
 use std::path::PathBuf;
 
 #[test]
@@ -80,8 +80,8 @@ fn test_settings_default() {
     assert!(!settings.focus_mode);
     assert!(!settings.typewriter_mode);
     assert!(!settings.outline_visible);
-    assert_eq!(settings.editor.font_size, 16);
-    assert_eq!(settings.editor.tab_size, 4);
+    assert_eq!(settings.font_size, 16);
+    assert_eq!(settings.tab_size, 4);
 }
 
 #[test]
@@ -94,25 +94,26 @@ fn test_settings_theme_toggle() {
 
 #[test]
 fn test_editor_settings_default() {
-    let editor = EditorSettings::default();
-    assert_eq!(editor.font_family, "System");
-    assert_eq!(editor.font_size, 16);
-    assert_eq!(editor.line_height, 1.6);
-    assert_eq!(editor.tab_size, 4);
+    let settings = Settings::default();
+    assert_eq!(settings.font_family, "System");
+    assert_eq!(settings.font_size, 16);
+    assert_eq!(settings.line_height, 1.6);
+    assert_eq!(settings.tab_size, 4);
 }
 
 #[test]
 fn test_editor_settings_custom() {
-    let editor = EditorSettings {
+    let settings = Settings {
         font_family: "Menlo".to_string(),
         font_size: 14,
         line_height: 1.8,
         tab_size: 2,
         content_width: 800,
+        ..Settings::default()
     };
-    assert_eq!(editor.font_family, "Menlo");
-    assert_eq!(editor.font_size, 14);
-    assert_eq!(editor.tab_size, 2);
+    assert_eq!(settings.font_family, "Menlo");
+    assert_eq!(settings.font_size, 14);
+    assert_eq!(settings.tab_size, 2);
 }
 
 #[test]
@@ -307,7 +308,7 @@ fn test_settings_deserialize() {
     assert!(!settings.auto_save);
     assert_eq!(settings.auto_save_interval, 60000);
     assert!(settings.focus_mode);
-    assert_eq!(settings.editor.font_family, "Menlo");
-    assert_eq!(settings.editor.font_size, 14);
-    assert_eq!(settings.editor.content_width, 800);
+    assert_eq!(settings.font_family, "Menlo");
+    assert_eq!(settings.font_size, 14);
+    assert_eq!(settings.content_width, 800);
 }

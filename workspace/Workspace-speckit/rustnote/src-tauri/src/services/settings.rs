@@ -322,15 +322,15 @@ mod tests {
 
         let mut settings = Settings::default();
         settings.theme = Theme::Dark;
-        settings.editor.font_size = 18;
-        settings.editor.font_family = "Monaco".to_string();
+        settings.font_size = 18;
+        settings.font_family = "Monaco".to_string();
 
         service.write_settings(&settings).unwrap();
 
         let read = service.read_settings().unwrap();
         assert_eq!(read.theme, Theme::Dark);
-        assert_eq!(read.editor.font_size, 18);
-        assert_eq!(read.editor.font_family, "Monaco");
+        assert_eq!(read.font_size, 18);
+        assert_eq!(read.font_family, "Monaco");
     }
 
     #[test]

@@ -1,4 +1,4 @@
-use rustnote_lib::model::settings::{EditorSettings, Settings, Theme};
+use rustnote_lib::model::settings::{Settings, Theme};
 use rustnote_lib::services::{SettingsService, SettingsServiceTrait};
 use std::fs;
 
@@ -15,8 +15,8 @@ fn tc_g003_001_settings_basic_crud() {
 
     let mut settings = Settings::default();
     settings.theme = Theme::Dark;
-    settings.editor.font_size = 14;
-    settings.editor.font_family = "Monaco".to_string();
+    settings.font_size = 14;
+    settings.font_family = "Monaco".to_string();
     settings.auto_save = false;
     settings.focus_mode = true;
 
@@ -26,14 +26,14 @@ fn tc_g003_001_settings_basic_crud() {
 
     let read = service.read_settings().expect("Failed to read settings");
     assert_eq!(read.theme, Theme::Dark);
-    assert_eq!(read.editor.font_size, 14);
-    assert_eq!(read.editor.font_family, "Monaco");
+    assert_eq!(read.font_size, 14);
+    assert_eq!(read.font_family, "Monaco");
     assert_eq!(read.auto_save, false);
     assert_eq!(read.focus_mode, true);
 
     let mut update = Settings::default();
     update.theme = Theme::Light;
-    update.editor.font_size = 18;
+    update.font_size = 18;
 
     service
         .write_settings(&update)
@@ -43,8 +43,8 @@ fn tc_g003_001_settings_basic_crud() {
         .read_settings()
         .expect("Failed to read updated settings");
     assert_eq!(updated.theme, Theme::Light);
-    assert_eq!(updated.editor.font_size, 18);
-    assert_eq!(updated.editor.font_family, "System");
+    assert_eq!(updated.font_size, 18);
+    assert_eq!(updated.font_family, "System");
 }
 
 #[test]
@@ -128,13 +128,11 @@ fn tc_g003_003_settings_crash_recovery() {
         focus_mode: true,
         typewriter_mode: true,
         outline_visible: true,
-        editor: EditorSettings {
-            font_family: "Courier".to_string(),
-            font_size: 16,
-            line_height: 1.8,
-            tab_size: 4,
-            content_width: 900,
-        },
+        font_family: "Courier".to_string(),
+        font_size: 16,
+        line_height: 1.8,
+        tab_size: 4,
+        content_width: 900,
         recent_files: vec!["file1.md".to_string(), "file2.md".to_string()],
     };
 
@@ -199,8 +197,8 @@ fn tc_g003_004_settings_migration_from_json() {
     assert_eq!(settings.auto_save, true);
     assert_eq!(settings.auto_save_interval, 45000);
     assert_eq!(settings.typewriter_mode, true);
-    assert_eq!(settings.editor.font_family, "Menlo");
-    assert_eq!(settings.editor.font_size, 18);
+    assert_eq!(settings.font_family, "Menlo");
+    assert_eq!(settings.font_size, 18);
     assert!(settings.recent_files.contains(&"test1.md".to_string()));
 
     let backup_path = json_path.with_extension("json.bak");
@@ -236,7 +234,7 @@ fn tc_g003_005_settings_concurrent_access() {
                 let service = SettingsService::new_with_path(Some(db_path_clone))
                     .expect("Failed to create service in thread");
                 let mut settings = Settings::default();
-                settings.editor.font_size = 10 + (i as u32);
+                settings.font_size = 10 + (i as u32);
                 service
                     .write_settings(&settings)
                     .expect("Failed to write from thread");
@@ -254,7 +252,7 @@ fn tc_g003_005_settings_concurrent_access() {
     let final_settings = service
         .read_settings()
         .expect("Failed to read final settings");
-    assert!(final_settings.editor.font_size >= 10);
+    assert!(final_settings.font_size >= 10);
 
     let integrity = service
         .verify_integrity()
@@ -359,7 +357,7 @@ fn settings_empty_database() {
         .expect("Failed to read default settings");
     assert_eq!(settings.theme, Theme::Light);
     assert!(settings.auto_save);
-    assert_eq!(settings.editor.font_size, 16);
+    assert_eq!(settings.font_size, 16);
 }
 
 #[test]
@@ -373,13 +371,11 @@ fn settings_persist_editor_settings() {
         focus_mode: true,
         typewriter_mode: false,
         outline_visible: true,
-        editor: EditorSettings {
-            font_family: "SF Mono".to_string(),
-            font_size: 20,
-            line_height: 2.0,
-            tab_size: 8,
-            content_width: 1000,
-        },
+        font_family: "SF Mono".to_string(),
+        font_size: 20,
+        line_height: 2.0,
+        tab_size: 8,
+        content_width: 1000,
         recent_files: vec![],
     };
 
@@ -390,11 +386,11 @@ fn settings_persist_editor_settings() {
     let read = service
         .read_settings()
         .expect("Failed to read editor settings");
-    assert_eq!(read.editor.font_family, "SF Mono");
-    assert_eq!(read.editor.font_size, 20);
-    assert_eq!(read.editor.line_height, 2.0);
-    assert_eq!(read.editor.tab_size, 8);
-    assert_eq!(read.editor.content_width, 1000);
+    assert_eq!(read.font_family, "SF Mono");
+    assert_eq!(read.font_size, 20);
+    assert_eq!(read.line_height, 2.0);
+    assert_eq!(read.tab_size, 8);
+    assert_eq!(read.content_width, 1000);
 }
 
 #[test]
