@@ -841,7 +841,7 @@
       "priority": "P2",
       "title": "Service Interface Verification",
       "description": "Verify service trait implementations match PRD-10 specification. Check DocumentService, EditorService, WorkspaceService, ExportService, RecoveryService.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "All service traits match PRD-10 signatures",
         "DocumentService interface correct",
@@ -908,7 +908,7 @@
       "priority": "P2",
       "title": "Autosave Reliability",
       "description": "Consider Rust-side autosave with debounce as backup. Verify crash recovery still works if app crashes before frontend timer fires. Test crash scenarios.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "Rust-side autosave works with debounce",
         "Crash recovery works even if crash before frontend timer",
