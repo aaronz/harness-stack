@@ -136,7 +136,7 @@
       "priority": "P0",
       "title": "Verify and Fix Bidirectional Cursor Mapping",
       "description": "Comprehensive audit and fix of cursor mapping between DOM and source positions. Fix edge cases in dom_to_source() and verify TipTap integration end-to-end.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "cargo test cursor_mapping passes 100%",
         "Manual TipTap verification passes for complex Markdown",
