@@ -376,19 +376,19 @@
 
 **Subtasks:**
 
-- [ ] **T-041:** Document constraints in `docs/table-editing.md`:
-  - [ ] Current behavior: TipTap default table editing
-  - [ ] Constraints: no column resize handles, basic cell navigation
-  - [ ] Markdown preservation guarantee: table Markdown never corrupted
-  - [ ] Future enhancements (post-MVP)
+- [x] **T-041:** Document constraints in `docs/table-editing.md`:
+  - [x] Current behavior: TipTap default table editing
+  - [x] Constraints: no column resize handles, basic cell navigation
+  - [x] Markdown preservation guarantee: table Markdown never corrupted
+  - [x] Future enhancements (post-MVP)
 
-- [ ] **T-042:** Add table data integrity tests:
-  - [ ] Extend `src-tauri/tests/table_editing_tests.rs`
-  - [ ] Test: add row → Markdown table syntax preserved
-  - [ ] Test: delete row → Markdown table syntax preserved
-  - [ ] Test: add column → Markdown table syntax preserved
-  - [ ] Test: delete column → Markdown table syntax preserved
-  - [ ] Test: cell with pipe character escapes correctly
+- [x] **T-042:** Add table data integrity tests:
+  - [x] Extend `src-tauri/tests/table_editing_tests.rs`
+  - [x] Test: add row → Markdown table syntax preserved
+  - [x] Test: delete row → Markdown table syntax preserved
+  - [x] Test: add column → Markdown table syntax preserved
+  - [x] Test: delete column → Markdown table syntax preserved
+  - [x] Test: cell with pipe character escapes correctly
 
 **Verification:** `cargo test table_editing` passes, `docs/table-editing.md` exists with complete constraint documentation.
 
@@ -656,7 +656,7 @@
 | P1-007 | P1 | GFM Parser Verification | **TODO** |
 | P1-008 | P1 | Settings Schema Verification | **TODO** |
 | P1-009 | P1 | Editor.jsx Deprecation | **DONE** |
-| P2-010 | P2 | Table Editing Documentation | **TODO** |
+| P2-010 | P2 | Table Editing Documentation | **DONE** |
 | P2-011 | P2 | Focus Mode Visual Verification | **TODO** |
 | P2-012 | P2 | Typewriter Mode Scroll Fix | **TODO** |
 | P2-013 | P2 | Paste Handling Improvement | **TODO** |

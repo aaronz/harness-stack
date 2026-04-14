@@ -984,7 +984,7 @@
       "priority": "P2",
       "title": "Document Table Editing Constraints",
       "description": "Document TipTap table editing constraints and limitations, add table data integrity tests.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "cargo test table_editing passes",
         "docs/table-editing.md exists with complete constraint documentation"
