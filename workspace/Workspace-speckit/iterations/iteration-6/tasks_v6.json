@@ -677,7 +677,7 @@
       "priority": "P2",
       "title": "Typewriter Mode Scroll Verification",
       "description": "Verify scroll behavior keeps cursor at vertical center during navigation. Test with various document lengths. Fix scroll issues if found.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Cursor stays at vertical center during navigation",
         "Works with various document lengths",

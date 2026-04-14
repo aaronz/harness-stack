@@ -280,7 +280,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-010: Focus Mode Visual Verification
+### G-010: Done
 **Status:** Pending
 **Priority:** P2
 **Module:** Display
