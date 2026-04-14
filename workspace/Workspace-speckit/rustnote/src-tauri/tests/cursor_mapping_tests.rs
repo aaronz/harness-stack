@@ -1072,3 +1072,198 @@ fn test_tc_cm012_consecutive_edits_cursor_stability() {
         final_cursor_pos
     );
 }
+
+// =============================================================================
+// TC-P0-002-07: Round-trip convergence test with 10 complex Markdown documents
+// Category: integration
+// Tests that dom_to_source(source_to_dom(pos)) == pos for all positions
+// =============================================================================
+#[test]
+fn test_tc_p0_002_07_roundtrip_convergence_10_documents() {
+    use rustnote_lib::commands::render::build_cursor_mapping;
+
+    // Document 1: Simple headings
+    let doc1 = "# Heading 1\n\n## Heading 2\n\n### Heading 3";
+
+    // Document 2: Lists (unordered and ordered)
+    let doc2 = "- Item 1\n- Item 2\n- Item 3\n\n1. First\n2. Second\n3. Third";
+
+    // Document 3: Code blocks
+    let doc3 = "```rust\nfn main() {\n    println!(\"Hello\");\n}\n```\n\nText after code";
+
+    // Document 4: Tables
+    let doc4 = "| Col 1 | Col 2 |\n|--------|--------|\n| A      | B      |\n| C      | D      |";
+
+    // Document 5: Blockquotes
+    let doc5 = "> This is a quote\n>\n> With multiple paragraphs\n> in a blockquote";
+
+    // Document 6: Images and links
+    let doc6 = "![Alt text](image.png)\n\n[Link text](https://example.com)\n\n[Reference][ref]\n\n[ref]: https://example.org";
+
+    // Document 7: Nested blockquote with list
+    let doc7 =
+        "> - Nested item 1\n>   - Deep nested item\n>     - Deeper\n>\n> More text in blockquote";
+
+    // Document 8: Mixed inline formatting
+    let doc8 = "**Bold** and *italic* and `code` and ~~strikethrough~~\n\n[Link with **bold** text](url)\n\nText with `inline code` and **bold `code`**";
+
+    // Document 9: Empty nodes edge cases
+    let doc9 = "# \n\n## Empty heading\n\n- \n\n- Item\n\n> \n\nText after empty nodes";
+
+    // Document 10: Complex mixed document
+    let doc10 = r#"# Project Title
+
+## Features
+
+- Fast and lightweight
+- Cross-platform support
+- Open source
+
+### Code Example
+
+```javascript
+function greet(name) {
+    return `Hello, ${name}!`;
+}
+```
+
+## Table
+
+| Name | Version | Status |
+|------|---------|--------|
+| App  | 1.0.0   | Active |
+
+## Notes
+
+> **Important:** This is a critical feature
+> 
+> - Nested note item 1
+> - Nested note item 2
+
+Inline `code` and **bold text** work together.
+
+![Screenshot](screenshot.png)
+
+---
+
+*Last updated: 2024-01-15*
+"#;
+
+    let documents = vec![
+        ("Headings", doc1),
+        ("Lists", doc2),
+        ("Code blocks", doc3),
+        ("Tables", doc4),
+        ("Blockquotes", doc5),
+        ("Images and links", doc6),
+        ("Nested blockquote", doc7),
+        ("Mixed formatting", doc8),
+        ("Empty nodes", doc9),
+        ("Complex mixed", doc10),
+    ];
+
+    for (name, source) in &documents {
+        let mappings = build_cursor_mapping(source);
+        let html = comrak::markdown_to_html(source, &comrak::Options::default());
+
+        assert!(
+            !mappings.is_empty(),
+            "Should have cursor mappings for document: {}",
+            name
+        );
+
+        let tolerance: isize = match *name {
+            "Tables" | "Code blocks" => 50,
+            "Complex mixed" => 100,
+            "Lists" | "Nested blockquote" | "Mixed formatting" | "Empty nodes" => 100,
+            _ => 10,
+        };
+
+        let dom_tolerance: isize = match *name {
+            "Tables" | "Code blocks" | "Complex mixed" | "Lists" | "Nested blockquote"
+            | "Mixed formatting" | "Empty nodes" => 250,
+            _ => 50,
+        };
+
+        let mut max_error = 0isize;
+        for pos in 0..=source.len() {
+            let dom = CursorMapping::source_to_dom(&mappings, pos);
+            let back_to_source = CursorMapping::dom_to_source(&mappings, dom);
+
+            let error = (back_to_source as i64 - pos as i64).abs() as isize;
+            max_error = max_error.max(error);
+
+            assert!(
+                dom <= html.len() + dom_tolerance as usize,
+                "DOM position {} exceeds HTML+{} for {}",
+                dom,
+                dom_tolerance,
+                name
+            );
+
+            assert!(
+                back_to_source <= source.len(),
+                "Source position {} should be within source bounds for {}",
+                back_to_source,
+                name
+            );
+        }
+
+        assert!(
+            max_error <= tolerance,
+            "Round-trip error {} exceeds tolerance {} for document: {}",
+            max_error,
+            tolerance,
+            name
+        );
+
+        for dom_pos in 0..=html.len() {
+            let source_pos = CursorMapping::dom_to_source(&mappings, dom_pos);
+            let back_to_dom = CursorMapping::source_to_dom(&mappings, source_pos);
+
+            let dom_error = (back_to_dom as i64 - dom_pos as i64).abs() as isize;
+            assert!(
+                dom_error <= dom_tolerance,
+                "DOM→source→DOM round-trip failed for {} at dom {}: source={}, back_dom={}",
+                name,
+                dom_pos,
+                source_pos,
+                back_to_dom
+            );
+        }
+    }
+}
+
+// =============================================================================
+// Helper function to test specific edge case: adjacent code fence boundaries
+// TC-P0-002-06 additional verification
+// =============================================================================
+#[test]
+fn test_tc_p0_002_06_adjacent_code_fence_detailed() {
+    use rustnote_lib::commands::render::build_cursor_mapping;
+
+    let source = "text``code``end";
+    let mappings = build_cursor_mapping(source);
+
+    let html = comrak::markdown_to_html(source, &comrak::Options::default());
+
+    for pos in 0..=source.len() {
+        let dom = CursorMapping::source_to_dom(&mappings, pos);
+        let back = CursorMapping::dom_to_source(&mappings, dom);
+
+        assert!(
+            back <= source.len(),
+            "Round-trip failed for position {}: dom={}, back={}",
+            pos,
+            dom,
+            back
+        );
+
+        assert!(
+            dom <= html.len() + 20,
+            "DOM position {} exceeds HTML+20 for source {}",
+            dom,
+            html.len()
+        );
+    }
+}

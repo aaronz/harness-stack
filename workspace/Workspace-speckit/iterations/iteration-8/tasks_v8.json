@@ -5,7 +5,7 @@
       "priority": "P0",
       "title": "Run & Document NFR Benchmark Results",
       "description": "Run cargo bench on all benchmark files (cold_start, nfr_thresholds, transforms, parsing, serialization), document results against PRD-05 NFR thresholds (NFR-001 to NFR-008, NFR-014), fix any failing thresholds, and set up CI benchmark publishing with delta reporting.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "cargo bench cold_start: empty start < 2s, 1MB start < 3s",
         "cargo bench nfr_thresholds: keystroke < 100ms, save < 200ms, PDF export < 5s, memory idle < 300MB, scroll 60 FPS",
@@ -93,7 +93,7 @@
       "priority": "P0",
       "title": "Bidirectional Cursor Mapping \u2014 TipTap End-to-End Verification",
       "description": "Audit CursorMapping implementation in src-tauri/src/semantic/position.rs, add edge case unit tests, fix dom_to_source() edge cases (nested structures, empty nodes, multi-byte UTF-8, code span boundaries), and create end-to-end TipTap round-trip test with 10 complex Markdown documents.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "cargo test cursor_mapping passes 100%",
         "TipTap round-trip test converges with zero divergence on all 10 documents",

@@ -46,55 +46,42 @@ impl CursorMapping {
         result
     }
 
-    /// Convert a DOM offset back to source offset using the cursor mappings.
-    /// This is used for DOM→source conversion (bidirectional).
-    ///
-    /// Uses binary search to find the appropriate mapping and accounts for
-    /// HTML insertions that occurred during Markdown rendering.
     pub fn dom_to_source(mappings: &[CursorMapping], dom_offset: usize) -> usize {
         if mappings.is_empty() {
             return dom_offset;
         }
 
-        // Find the largest mapping with dom_offset <= target using binary search
-        let mut left = 0;
-        let mut right = mappings.len();
-
-        while left < right {
-            let mid = (left + right + 1) / 2;
-            if mappings[mid - 1].dom_offset <= dom_offset {
-                left = mid;
+        // dom_offset <= first.dom_offset: interpolate from 0
+        if dom_offset <= mappings[0].dom_offset {
+            return if mappings[0].dom_offset == 0 {
+                mappings[0].source_offset
             } else {
-                right = mid - 1;
-            }
+                let ratio = dom_offset as f64 / mappings[0].dom_offset as f64;
+                (ratio * mappings[0].source_offset as f64) as usize
+            };
         }
 
-        if left >= mappings.len() {
+        // Find segment where dom_offset falls
+        let mut idx = 0;
+        while idx + 1 < mappings.len() && mappings[idx + 1].dom_offset <= dom_offset {
+            idx += 1;
+        }
+
+        if idx + 1 >= mappings.len() {
             return mappings[mappings.len() - 1].source_offset;
         }
 
-        let mapping = &mappings[left];
-        if left == 0 {
-            return mapping.source_offset.saturating_add(dom_offset);
+        let prev = &mappings[idx];
+        let next = &mappings[idx + 1];
+
+        let dom_len = next.dom_offset.saturating_sub(prev.dom_offset);
+        if dom_len == 0 {
+            return prev.source_offset;
         }
 
-        let prev_mapping = &mappings[left - 1];
-
-        // Calculate how far we are into this segment
-        let segment_dom_length = mapping.dom_offset - prev_mapping.dom_offset;
-        if segment_dom_length == 0 {
-            return mapping.source_offset;
-        }
-
-        // Calculate relative position in segment (0.0 to 1.0)
-        let relative_pos =
-            (dom_offset - prev_mapping.dom_offset) as f64 / segment_dom_length as f64;
-
-        // Map back to source position
-        let segment_source_length = mapping.source_offset - prev_mapping.source_offset;
-        let source_delta = (relative_pos * segment_source_length as f64) as usize;
-
-        prev_mapping.source_offset + source_delta
+        let rel_pos = (dom_offset.saturating_sub(prev.dom_offset)) as f64 / dom_len as f64;
+        let src_len = next.source_offset.saturating_sub(prev.source_offset);
+        prev.source_offset + (rel_pos * src_len as f64) as usize
     }
 }
 
