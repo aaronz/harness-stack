@@ -831,7 +831,7 @@
       "priority": "P1",
       "title": "i18n Architecture \u2014 Install i18next",
       "description": "Install i18next, react-i18next, i18next-browser-languagedetector packages, configure i18next with language detection and resource loading, externalize all UI strings to locales/en.json, and prioritize Toolbar, Sidebar, PreferencesModal, ExportModal.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "All user-facing strings in locales/en.json",
         "No hardcoded strings in priority components",

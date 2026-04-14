@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSettings } from '../contexts/SettingsContext';
 
 const FONT_FAMILIES = ['System', 'Serif', 'Monospace'];
@@ -12,6 +13,7 @@ const MIN_TAB_SIZE = 2;
 const MAX_TAB_SIZE = 8;
 
 export default function PreferencesModal({ isVisible, onClose }) {
+  const { t } = useTranslation();
   const { settings, setSettings } = useSettings();
   const modalRef = useRef(null);
   const closeButtonRef = useRef(null);
@@ -119,14 +121,14 @@ export default function PreferencesModal({ isVisible, onClose }) {
           className="flex items-center justify-between px-6 py-4 border-b shrink-0"
           style={{ borderColor: 'var(--border-color)' }}
         >
-          <h2 id="preferences-title" className="text-lg font-semibold">Preferences</h2>
+          <h2 id="preferences-title" className="text-lg font-semibold">{t('preferences.title')}</h2>
           <button
             ref={closeButtonRef}
             id="btn-preferences-close"
             onClick={handleClose}
             className="text-2xl leading-none opacity-60 hover:opacity-100 focus:outline-none focus:ring-2"
             style={{ color: 'var(--text-primary)' }}
-            aria-label="Close preferences"
+            aria-label={t('preferences.close')}
           >
             ×
           </button>
@@ -135,12 +137,12 @@ export default function PreferencesModal({ isVisible, onClose }) {
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <section className="mb-6">
             <h3 className="text-sm font-semibold mb-3 uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
-              Appearance
+              {t('preferences.appearance')}
             </h3>
             
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                Theme
+                {t('preferences.theme')}
               </label>
               <div className="flex gap-2">
                 <button
@@ -156,7 +158,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                     ringColor: 'var(--accent-color)',
                   }}
                 >
-                  Light
+                  {t('preferences.light')}
                 </button>
                 <button
                   id="btn-theme-dark"
@@ -171,7 +173,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                     ringColor: 'var(--accent-color)',
                   }}
                 >
-                  Dark
+                  {t('preferences.dark')}
                 </button>
               </div>
             </div>
@@ -182,7 +184,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                 className="block text-sm font-medium mb-2" 
                 style={{ color: 'var(--text-primary)' }}
               >
-                Font Family
+                {t('preferences.fontFamily')}
               </label>
               <select
                 id="font-family-select"
@@ -207,7 +209,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                 className="block text-sm font-medium mb-2" 
                 style={{ color: 'var(--text-primary)' }}
               >
-                Font Size: {localSettings.fontSize}px
+                {t('preferences.fontSize')}: {localSettings.fontSize}px
               </label>
               <input
                 id="font-size-slider"
@@ -234,7 +236,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                 className="block text-sm font-medium mb-2" 
                 style={{ color: 'var(--text-primary)' }}
               >
-                Line Height: {localSettings.lineHeight.toFixed(1)}
+                {t('preferences.lineHeight')}: {localSettings.lineHeight.toFixed(1)}
               </label>
               <input
                 id="line-height-slider"
@@ -262,7 +264,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                 className="block text-sm font-medium mb-2" 
                 style={{ color: 'var(--text-primary)' }}
               >
-                Content Width: {localSettings.contentWidth}px
+                {t('preferences.contentWidth')}: {localSettings.contentWidth}px
               </label>
               <input
                 id="content-width-slider"
@@ -287,7 +289,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
 
           <section className="mb-6">
             <h3 className="text-sm font-semibold mb-3 uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
-              Editor
+              {t('preferences.editor')}
             </h3>
 
             <div className="mb-4">
@@ -296,7 +298,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                 className="block text-sm font-medium mb-2" 
                 style={{ color: 'var(--text-primary)' }}
               >
-                Tab Size: {localSettings.tabSize} spaces
+                {t('preferences.tabSize')}: {localSettings.tabSize} {t('preferences.spaces')}
               </label>
               <input
                 id="tab-size-slider"
@@ -328,7 +330,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                   style={{ accentColor: 'var(--accent-color)' }}
                 />
                 <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                  Focus Mode (dims non-active paragraphs)
+                  {t('preferences.focusMode')}
                 </span>
               </label>
             </div>
@@ -344,7 +346,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                   style={{ accentColor: 'var(--accent-color)' }}
                 />
                 <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                  Typewriter Mode (keeps cursor centered)
+                  {t('preferences.typewriterMode')}
                 </span>
               </label>
             </div>
@@ -360,7 +362,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                   style={{ accentColor: 'var(--accent-color)' }}
                 />
                 <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                  Show Outline Panel
+                  {t('preferences.showOutlinePanel')}
                 </span>
               </label>
             </div>
@@ -368,7 +370,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
 
           <section className="mb-6">
             <h3 className="text-sm font-semibold mb-3 uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
-              Auto-save
+              {t('preferences.autosave')}
             </h3>
 
             <div className="mb-4">
@@ -382,7 +384,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                   style={{ accentColor: 'var(--accent-color)' }}
                 />
                 <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                  Enable Auto-save
+                  {t('preferences.enableAutosave')}
                 </span>
               </label>
             </div>
@@ -393,7 +395,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                 className="block text-sm font-medium mb-2" 
                 style={{ color: 'var(--text-primary)' }}
               >
-                Auto-save Interval: {autoSaveIntervalSeconds} seconds
+                {t('preferences.autosaveInterval')}: {autoSaveIntervalSeconds} seconds
               </label>
               <input
                 id="auto-save-interval-slider"
@@ -418,7 +420,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
 
           <section className="mb-6">
             <h3 className="text-sm font-semibold mb-3 uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
-              Recent Files
+              {t('preferences.recentFiles')}
             </h3>
             <div 
               id="recent-files-list"
@@ -438,14 +440,14 @@ export default function PreferencesModal({ isVisible, onClose }) {
                   ))}
                 </ul>
               ) : (
-                <span style={{ color: 'var(--text-secondary)' }}>No recent files</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('preferences.noRecentFiles')}</span>
               )}
             </div>
           </section>
 
           <section className="mb-6">
             <h3 className="text-sm font-semibold mb-3 uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
-              Recent Folders
+              {t('preferences.recentFolders')}
             </h3>
             <div 
               id="recent-folders-list"
@@ -465,7 +467,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
                   ))}
                 </ul>
               ) : (
-                <span style={{ color: 'var(--text-secondary)' }}>No recent folders</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('preferences.noRecentFolders')}</span>
               )}
             </div>
           </section>
@@ -485,7 +487,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
               color: 'var(--text-primary)',
             }}
           >
-            Cancel
+            {t('preferences.cancel')}
           </button>
           <button
             id="btn-preferences-save"
@@ -497,7 +499,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
               color: 'white',
             }}
           >
-            Save
+            {t('preferences.save')}
           </button>
         </div>
       </div>

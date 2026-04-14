@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function ExternalChangeModal({ 
   isVisible, 
@@ -8,6 +9,8 @@ export default function ExternalChangeModal({
   onCompareLater,
   isLoading 
 }) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isVisible) return;
@@ -40,7 +43,7 @@ export default function ExternalChangeModal({
           className="flex items-center justify-between px-6 py-4 border-b"
           style={{ borderColor: 'var(--border-color)' }}
         >
-          <h2 className="text-lg font-semibold">File Changed Externally</h2>
+          <h2 className="text-lg font-semibold">{t('externalChange.title')}</h2>
           <button
             onClick={onCompareLater}
             className="text-2xl leading-none opacity-60 hover:opacity-100"
@@ -76,7 +79,7 @@ export default function ExternalChangeModal({
                 {fileName}
               </p>
               <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                This file has been modified outside the editor. What would you like to do?
+                {t('externalChange.message')}
               </p>
             </div>
           </div>
@@ -96,7 +99,7 @@ export default function ExternalChangeModal({
               color: 'var(--text-primary)',
             }}
           >
-            Compare Later
+            {t('externalChange.compareLater')}
           </button>
           <button
             onClick={onKeepCurrent}
@@ -108,7 +111,7 @@ export default function ExternalChangeModal({
               color: 'var(--text-primary)',
             }}
           >
-            Keep Current
+            {t('externalChange.keepCurrent')}
           </button>
           <button
             onClick={onReload}
@@ -120,7 +123,7 @@ export default function ExternalChangeModal({
               color: 'white',
             }}
           >
-            {isLoading ? 'Reloading...' : 'Reload'}
+            {isLoading ? t('externalChange.reloading') : t('externalChange.reload')}
           </button>
         </div>
       </div>

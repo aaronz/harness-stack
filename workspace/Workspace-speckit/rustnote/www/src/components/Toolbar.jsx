@@ -1,11 +1,13 @@
+import { useTranslation } from 'react-i18next';
 import { useDocument } from '../contexts/DocumentContext';
 import { useSettings } from '../contexts/SettingsContext';
 
 export default function Toolbar({ onExportClick, onPreferencesClick }) {
+  const { t } = useTranslation();
   const { createNewDocument, openDocument, saveDocument, insertImage, isSaving, currentDocument } = useDocument();
   const { settings, toggleTheme, toggleFocusMode, toggleTypewriterMode, toggleOutline } = useSettings();
 
-  const documentTitle = currentDocument?.title || 'Untitled';
+  const documentTitle = currentDocument?.title || t('app.untitled');
   const isDirty = currentDocument?.isDirty || false;
 
   return (
@@ -26,9 +28,9 @@ export default function Toolbar({ onExportClick, onPreferencesClick }) {
           borderColor: 'var(--border-color)',
           color: 'var(--text-primary)',
         }}
-        title="New (Ctrl+N)"
+        title={t('toolbar.newTitle')}
       >
-        New
+        {t('toolbar.new')}
       </button>
 
       <button
@@ -40,9 +42,9 @@ export default function Toolbar({ onExportClick, onPreferencesClick }) {
           borderColor: 'var(--border-color)',
           color: 'var(--text-primary)',
         }}
-        title="Open (Ctrl+O)"
+        title={t('toolbar.openTitle')}
       >
-        Open
+        {t('toolbar.open')}
       </button>
 
       <button
@@ -56,9 +58,9 @@ export default function Toolbar({ onExportClick, onPreferencesClick }) {
           color: 'var(--text-primary)',
           opacity: isSaving ? 0.6 : 1,
         }}
-        title="Save (Ctrl+S)"
+        title={t('toolbar.saveTitle')}
       >
-        {isSaving ? 'Saving...' : 'Save'}
+        {isSaving ? t('toolbar.saving') : t('toolbar.save')}
       </button>
 
       <div className="flex-1" />
@@ -67,7 +69,7 @@ export default function Toolbar({ onExportClick, onPreferencesClick }) {
         id="document-title"
         className="px-3 py-1.5 text-sm font-medium"
         style={{ color: 'var(--text-primary)' }}
-        title={isDirty ? 'Unsaved changes' : 'Document title'}
+        title={isDirty ? t('app.unsavedChanges') : t('app.documentTitle')}
       >
         {isDirty && <span style={{ color: 'var(--accent-color)' }}>*</span>} {documentTitle}
       </div>
@@ -83,9 +85,9 @@ export default function Toolbar({ onExportClick, onPreferencesClick }) {
           borderColor: 'var(--border-color)',
           color: 'var(--text-primary)',
         }}
-        title="Export Document"
+        title={t('toolbar.exportTitle')}
       >
-        Export
+        {t('toolbar.export')}
       </button>
 
       <button
@@ -97,7 +99,7 @@ export default function Toolbar({ onExportClick, onPreferencesClick }) {
           borderColor: 'var(--border-color)',
           color: 'var(--text-primary)',
         }}
-        title="Preferences"
+        title={t('toolbar.preferencesTitle')}
       >
         ⚙️
       </button>
@@ -111,9 +113,9 @@ export default function Toolbar({ onExportClick, onPreferencesClick }) {
           borderColor: 'var(--border-color)',
           color: 'var(--text-primary)',
         }}
-        title="Insert Image"
+        title={t('toolbar.imageTitle')}
       >
-        Image
+        {t('toolbar.image')}
       </button>
 
       <button
@@ -127,9 +129,9 @@ export default function Toolbar({ onExportClick, onPreferencesClick }) {
           borderColor: settings.outlineVisible ? 'var(--accent-color)' : 'var(--border-color)',
           color: settings.outlineVisible ? 'white' : 'var(--text-primary)',
         }}
-        title="Toggle Outline (Ctrl+Shift+O)"
+        title={t('toolbar.outlineTitle')}
       >
-        Outline
+        {t('toolbar.outline')}
       </button>
 
       <button
@@ -143,9 +145,9 @@ export default function Toolbar({ onExportClick, onPreferencesClick }) {
           borderColor: settings.focusMode ? 'var(--accent-color)' : 'var(--border-color)',
           color: settings.focusMode ? 'white' : 'var(--text-primary)',
         }}
-        title="Focus Mode (Ctrl+Shift+F)"
+        title={t('toolbar.focusTitle')}
       >
-        Focus
+        {t('toolbar.focus')}
       </button>
 
       <button
@@ -159,9 +161,9 @@ export default function Toolbar({ onExportClick, onPreferencesClick }) {
           borderColor: settings.typewriterMode ? 'var(--accent-color)' : 'var(--border-color)',
           color: settings.typewriterMode ? 'white' : 'var(--text-primary)',
         }}
-        title="Typewriter Mode (Ctrl+Shift+T)"
+        title={t('toolbar.typewriterTitle')}
       >
-        Typewriter
+        {t('toolbar.typewriter')}
       </button>
 
       <button
@@ -173,7 +175,7 @@ export default function Toolbar({ onExportClick, onPreferencesClick }) {
           borderColor: 'var(--border-color)',
           color: 'var(--text-primary)',
         }}
-        title="Toggle Theme"
+        title={t('toolbar.toggleTheme')}
       >
         {settings.theme === 'light' ? '🌙' : '☀️'}
       </button>

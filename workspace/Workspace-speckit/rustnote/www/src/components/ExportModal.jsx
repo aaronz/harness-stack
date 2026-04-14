@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
 import { save } from '@tauri-apps/plugin-dialog';
 import { useDocument } from '../contexts/DocumentContext';
@@ -12,15 +13,8 @@ const EXPORT_FORMATS = {
   PDF_LEGAL: 'pdf_legal',
 };
 
-const FORMAT_LABELS = {
-  [EXPORT_FORMATS.HTML_STANDALONE]: 'HTML (Standalone)',
-  [EXPORT_FORMATS.HTML_LINKED]: 'HTML (Linked Assets)',
-  [EXPORT_FORMATS.PDF_A4]: 'PDF (A4)',
-  [EXPORT_FORMATS.PDF_LETTER]: 'PDF (Letter)',
-  [EXPORT_FORMATS.PDF_LEGAL]: 'PDF (Legal)',
-};
-
 export default function ExportModal({ isVisible, onClose }) {
+  const { t } = useTranslation();
   const { currentDocument } = useDocument();
   const { success, error } = useToast();
   const [selectedFormat, setSelectedFormat] = useState(EXPORT_FORMATS.HTML_STANDALONE);
@@ -53,14 +47,14 @@ export default function ExportModal({ isVisible, onClose }) {
   };
 
   const getDefaultFileName = () => {
-    const title = currentDocument?.title || 'Untitled';
+    const title = currentDocument?.title || t('app.untitled');
     const safeName = title.replace(/[^a-zA-Z0-9_-]/g, '_');
     return `${safeName}_export.${getFileExtension(selectedFormat)}`;
   };
 
   const handleExport = async () => {
     if (!currentDocument?.content) {
-      error('No document content to export');
+      error(t('export.noContent'));
       return;
     }
 
@@ -88,7 +82,7 @@ export default function ExportModal({ isVisible, onClose }) {
         };
         await invoke('export_to_html', { markdown, outputPath, options: inlineOptions });
         setProgress(100);
-        success('HTML exported successfully');
+        success(t('export.htmlExported'));
       } else if (selectedFormat === EXPORT_FORMATS.HTML_LINKED) {
         setProgress(30);
         const linkedOptions = {
@@ -97,7 +91,7 @@ export default function ExportModal({ isVisible, onClose }) {
         };
         await invoke('export_to_html', { markdown, outputPath, options: linkedOptions });
         setProgress(100);
-        success('HTML exported successfully');
+        success(t('export.htmlExported'));
       } else if (selectedFormat.startsWith('pdf_')) {
         setProgress(30);
         let pageSize;
@@ -122,13 +116,13 @@ export default function ExportModal({ isVisible, onClose }) {
 
         await invoke('export_to_pdf_native', { markdown, outputPath, options });
         setProgress(100);
-        success('PDF exported successfully');
+        success(t('export.pdfExported'));
       }
 
       onClose();
     } catch (e) {
       console.error('Export error:', e);
-      error(`Export failed: ${e}`);
+      error(`${t('export.exportFailed')}: ${e}`);
     } finally {
       setIsExporting(false);
       setProgress(0);
@@ -162,7 +156,7 @@ export default function ExportModal({ isVisible, onClose }) {
           className="flex items-center justify-between px-6 py-4 border-b"
           style={{ borderColor: 'var(--border-color)' }}
         >
-          <h2 className="text-lg font-semibold">Export Document</h2>
+          <h2 className="text-lg font-semibold">{t('export.title')}</h2>
           <button
             id="btn-export-close"
             onClick={onClose}
@@ -179,31 +173,104 @@ export default function ExportModal({ isVisible, onClose }) {
               className="block text-sm font-medium mb-2"
               style={{ color: 'var(--text-primary)' }}
             >
-              Export Format
+              {t('export.format')}
             </label>
             <div className="space-y-2">
-              {Object.entries(FORMAT_LABELS).map(([value, label]) => (
-                <label
-                  key={value}
-                  className="flex items-center gap-3 p-3 rounded border cursor-pointer transition-colors"
-                  style={{
-                    borderColor: selectedFormat === value ? 'var(--accent-color)' : 'var(--border-color)',
-                    backgroundColor: selectedFormat === value ? 'var(--bg-secondary)' : 'transparent',
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="export-format"
-                    value={value}
-                    checked={selectedFormat === value}
-                    onChange={(e) => setSelectedFormat(e.target.value)}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                    {label}
-                  </span>
-                </label>
-              ))}
+              <label
+                className="flex items-center gap-3 p-3 rounded border cursor-pointer transition-colors"
+                style={{
+                  borderColor: selectedFormat === EXPORT_FORMATS.HTML_STANDALONE ? 'var(--accent-color)' : 'var(--border-color)',
+                  backgroundColor: selectedFormat === EXPORT_FORMATS.HTML_STANDALONE ? 'var(--bg-secondary)' : 'transparent',
+                }}
+              >
+                <input
+                  type="radio"
+                  name="export-format"
+                  value={EXPORT_FORMATS.HTML_STANDALONE}
+                  checked={selectedFormat === EXPORT_FORMATS.HTML_STANDALONE}
+                  onChange={(e) => setSelectedFormat(e.target.value)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                  {t('export.htmlStandalone')}
+                </span>
+              </label>
+              <label
+                className="flex items-center gap-3 p-3 rounded border cursor-pointer transition-colors"
+                style={{
+                  borderColor: selectedFormat === EXPORT_FORMATS.HTML_LINKED ? 'var(--accent-color)' : 'var(--border-color)',
+                  backgroundColor: selectedFormat === EXPORT_FORMATS.HTML_LINKED ? 'var(--bg-secondary)' : 'transparent',
+                }}
+              >
+                <input
+                  type="radio"
+                  name="export-format"
+                  value={EXPORT_FORMATS.HTML_LINKED}
+                  checked={selectedFormat === EXPORT_FORMATS.HTML_LINKED}
+                  onChange={(e) => setSelectedFormat(e.target.value)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                  {t('export.htmlLinked')}
+                </span>
+              </label>
+              <label
+                className="flex items-center gap-3 p-3 rounded border cursor-pointer transition-colors"
+                style={{
+                  borderColor: selectedFormat === EXPORT_FORMATS.PDF_A4 ? 'var(--accent-color)' : 'var(--border-color)',
+                  backgroundColor: selectedFormat === EXPORT_FORMATS.PDF_A4 ? 'var(--bg-secondary)' : 'transparent',
+                }}
+              >
+                <input
+                  type="radio"
+                  name="export-format"
+                  value={EXPORT_FORMATS.PDF_A4}
+                  checked={selectedFormat === EXPORT_FORMATS.PDF_A4}
+                  onChange={(e) => setSelectedFormat(e.target.value)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                  {t('export.pdfA4')}
+                </span>
+              </label>
+              <label
+                className="flex items-center gap-3 p-3 rounded border cursor-pointer transition-colors"
+                style={{
+                  borderColor: selectedFormat === EXPORT_FORMATS.PDF_LETTER ? 'var(--accent-color)' : 'var(--border-color)',
+                  backgroundColor: selectedFormat === EXPORT_FORMATS.PDF_LETTER ? 'var(--bg-secondary)' : 'transparent',
+                }}
+              >
+                <input
+                  type="radio"
+                  name="export-format"
+                  value={EXPORT_FORMATS.PDF_LETTER}
+                  checked={selectedFormat === EXPORT_FORMATS.PDF_LETTER}
+                  onChange={(e) => setSelectedFormat(e.target.value)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                  {t('export.pdfLetter')}
+                </span>
+              </label>
+              <label
+                className="flex items-center gap-3 p-3 rounded border cursor-pointer transition-colors"
+                style={{
+                  borderColor: selectedFormat === EXPORT_FORMATS.PDF_LEGAL ? 'var(--accent-color)' : 'var(--border-color)',
+                  backgroundColor: selectedFormat === EXPORT_FORMATS.PDF_LEGAL ? 'var(--bg-secondary)' : 'transparent',
+                }}
+              >
+                <input
+                  type="radio"
+                  name="export-format"
+                  value={EXPORT_FORMATS.PDF_LEGAL}
+                  checked={selectedFormat === EXPORT_FORMATS.PDF_LEGAL}
+                  onChange={(e) => setSelectedFormat(e.target.value)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                  {t('export.pdfLegal')}
+                </span>
+              </label>
             </div>
           </div>
 
@@ -222,7 +289,7 @@ export default function ExportModal({ isVisible, onClose }) {
                 />
               </div>
               <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                Exporting... {progress}%
+                {t('export.exporting')} {progress}%
               </p>
             </div>
           )}
@@ -243,7 +310,7 @@ export default function ExportModal({ isVisible, onClose }) {
               color: 'var(--text-primary)',
             }}
           >
-            Cancel
+            {t('export.cancel')}
           </button>
           <button
             id="btn-export-confirm"
@@ -256,7 +323,7 @@ export default function ExportModal({ isVisible, onClose }) {
               color: 'white',
             }}
           >
-            {isExporting ? 'Exporting...' : 'Export'}
+            {isExporting ? t('export.exporting') : t('export.export')}
           </button>
         </div>
       </div>

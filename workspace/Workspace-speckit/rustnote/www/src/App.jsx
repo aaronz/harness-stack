@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { DocumentProvider, useDocument } from './contexts/DocumentContext';
@@ -18,6 +19,7 @@ import DropZone from './components/DropZone';
 import { useFileWatcher } from './hooks/useFileWatcher';
 
 function AppContent() {
+  const { t } = useTranslation();
   const { settings } = useSettings();
   const { createNewDocument, currentDocument, setCurrentDocument, saveDocument, openDocument, openWorkspace } = useDocument();
   const { isSearchVisible, showSearch, hideSearch, findNext, findPrev } = useSearch();
@@ -158,10 +160,10 @@ function AppContent() {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const modifier = isMac ? e.metaKey : e.ctrlKey;
 
-      if (modifier && e.key === 'n') {
+        if (modifier && e.key === 'n') {
         e.preventDefault();
         if (currentDocument?.isDirty) {
-          const shouldSave = window.confirm('Do you want to save changes before creating a new document?');
+          const shouldSave = window.confirm(t('confirm.saveBeforeNew'));
           if (shouldSave) {
             saveDocument();
           }
@@ -176,7 +178,7 @@ function AppContent() {
       if (modifier && e.key === 'o') {
         e.preventDefault();
         if (currentDocument?.isDirty) {
-          const shouldSave = window.confirm('Do you want to save changes before opening a new file?');
+          const shouldSave = window.confirm(t('confirm.saveBeforeOpen'));
           if (shouldSave) {
             saveDocument();
           }
@@ -239,7 +241,7 @@ function AppContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSearch, hideSearch, findNext, findPrev, isSearchVisible, openDocument, openWorkspace, currentDocument, saveDocument]);
+  }, [showSearch, hideSearch, findNext, findPrev, isSearchVisible, openDocument, openWorkspace, currentDocument, saveDocument, t]);
 
   return (
     <DropZone>

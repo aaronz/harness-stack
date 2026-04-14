@@ -1,10 +1,12 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDocument } from '../contexts/DocumentContext';
 import { useToast } from '../contexts/ToastContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { invoke } from '@tauri-apps/api/core';
 
 function FileItem({ file, level = 0 }) {
+  const { t } = useTranslation();
   const { currentDocument, openDocument, createFile, createFolder, renameItem, deleteItem } = useDocument();
   const { success, error } = useToast();
   const [isExpanded, setIsExpanded] = useState(true);
@@ -20,10 +22,10 @@ function FileItem({ file, level = 0 }) {
       try {
         await openDocument(file.path);
       } catch (e) {
-        error(`Failed to open file: ${e}`);
+        error(t('errors.failedToOpenFile', { error: e }));
       }
     }
-  }, [file, isExpanded, openDocument, error]);
+  }, [file, isExpanded, openDocument, error, t]);
 
   const handleContextMenu = useCallback((e) => {
     e.preventDefault();
@@ -41,29 +43,29 @@ function FileItem({ file, level = 0 }) {
 
   const handleNewFile = useCallback(async () => {
     closeContextMenu();
-    const name = prompt('Enter file name:', 'untitled.md');
+    const name = prompt(t('sidebar.enterFileName'), 'untitled.md');
     if (!name) return;
     
     try {
       await createFile(file.path, name);
-      success('File created successfully');
+      success(t('sidebar.fileCreatedSuccessfully'));
     } catch (e) {
-      error(`Failed to create file: ${e}`);
+      error(t('sidebar.failedToCreateFile', { error: e }));
     }
-  }, [file.path, createFile, success, error, closeContextMenu]);
+  }, [file.path, createFile, success, error, closeContextMenu, t]);
 
   const handleNewFolder = useCallback(async () => {
     closeContextMenu();
-    const name = prompt('Enter folder name:', 'new-folder');
+    const name = prompt(t('sidebar.enterFolderName'), 'new-folder');
     if (!name) return;
     
     try {
       await createFolder(file.path, name);
-      success('Folder created successfully');
+      success(t('sidebar.folderCreatedSuccessfully'));
     } catch (e) {
-      error(`Failed to create folder: ${e}`);
+      error(t('sidebar.failedToCreateFolder', { error: e }));
     }
-  }, [file.path, createFolder, success, error, closeContextMenu]);
+  }, [file.path, createFolder, success, error, closeContextMenu, t]);
 
   const handleRename = useCallback(() => {
     closeContextMenu();
@@ -84,25 +86,25 @@ function FileItem({ file, level = 0 }) {
     
     try {
       await renameItem(file.path, newName);
-      success('Renamed successfully');
+      success(t('sidebar.renamedSuccessfully'));
     } catch (e) {
-      error(`Failed to rename: ${e}`);
+      error(t('sidebar.failedToRename', { error: e }));
     }
     setIsRenaming(false);
-  }, [newName, file.path, file.name, renameItem, success, error]);
+  }, [newName, file.path, file.name, renameItem, success, error, t]);
 
   const handleDelete = useCallback(async () => {
     closeContextMenu();
-    const confirmed = confirm(`Are you sure you want to delete "${file.name}"?`);
+    const confirmed = confirm(t('sidebar.deleteConfirm', { name: file.name }));
     if (!confirmed) return;
     
     try {
       await deleteItem(file.path);
-      success('Deleted successfully');
+      success(t('sidebar.deletedSuccessfully'));
     } catch (e) {
-      error(`Failed to delete: ${e}`);
+      error(t('sidebar.failedToDelete', { error: e }));
     }
-  }, [file.path, file.name, deleteItem, success, error, closeContextMenu]);
+  }, [file.path, file.name, deleteItem, success, error, closeContextMenu, t]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter') {
@@ -179,6 +181,7 @@ function FileItem({ file, level = 0 }) {
 }
 
 function ContextMenu({ x, y, file, onClose, onNewFile, onNewFolder, onRename, onDelete }) {
+  const { t } = useTranslation();
   const { success, error } = useToast();
   const [inputName, setInputName] = useState('');
   const [inputMode, setInputMode] = useState(null);
@@ -186,33 +189,33 @@ function ContextMenu({ x, y, file, onClose, onNewFile, onNewFolder, onRename, on
   const { refreshWorkspace } = useDocument();
 
   const handleNewFile = useCallback(async () => {
-    const name = prompt('Enter file name:', 'untitled.md');
+    const name = prompt(t('sidebar.enterFileName'), 'untitled.md');
     if (!name) return;
     
     try {
       await createFile(file.path, name);
-      success('File created successfully');
+      success(t('sidebar.fileCreatedSuccessfully'));
     } catch (e) {
-      error(`Failed to create file: ${e}`);
+      error(t('sidebar.failedToCreateFile', { error: e }));
     }
     onClose();
-  }, [file.path, createFile, success, error, onClose]);
+  }, [file.path, createFile, success, error, onClose, t]);
 
   const handleNewFolder = useCallback(async () => {
-    const name = prompt('Enter folder name:', 'new-folder');
+    const name = prompt(t('sidebar.enterFolderName'), 'new-folder');
     if (!name) return;
     
     try {
       await createFolder(file.path, name);
-      success('Folder created successfully');
+      success(t('sidebar.folderCreatedSuccessfully'));
     } catch (e) {
-      error(`Failed to create folder: ${e}`);
+      error(t('sidebar.failedToCreateFolder', { error: e }));
     }
     onClose();
-  }, [file.path, createFolder, success, error, onClose]);
+  }, [file.path, createFolder, success, error, onClose, t]);
 
   const handleRename = useCallback(async () => {
-    const name = prompt('Enter new name:', file.name);
+    const name = prompt(t('sidebar.enterNewName'), file.name);
     if (!name || name === file.name) {
       onClose();
       return;
@@ -220,15 +223,15 @@ function ContextMenu({ x, y, file, onClose, onNewFile, onNewFolder, onRename, on
     
     try {
       await renameItem(file.path, name);
-      success('Renamed successfully');
+      success(t('sidebar.renamedSuccessfully'));
     } catch (e) {
-      error(`Failed to rename: ${e}`);
+      error(t('sidebar.failedToRename', { error: e }));
     }
     onClose();
-  }, [file.path, file.name, renameItem, success, error, onClose]);
+  }, [file.path, file.name, renameItem, success, error, onClose, t]);
 
   const handleDelete = useCallback(async () => {
-    const confirmed = confirm(`Are you sure you want to delete "${file.name}"?`);
+    const confirmed = confirm(t('sidebar.deleteConfirm', { name: file.name }));
     if (!confirmed) {
       onClose();
       return;
@@ -236,12 +239,12 @@ function ContextMenu({ x, y, file, onClose, onNewFile, onNewFolder, onRename, on
     
     try {
       await deleteItem(file.path);
-      success('Deleted successfully');
+      success(t('sidebar.deletedSuccessfully'));
     } catch (e) {
-      error(`Failed to delete: ${e}`);
+      error(t('sidebar.failedToDelete', { error: e }));
     }
     onClose();
-  }, [file.path, file.name, deleteItem, success, error, onClose]);
+  }, [file.path, file.name, deleteItem, success, error, onClose, t]);
 
   return (
     <>
@@ -266,14 +269,14 @@ function ContextMenu({ x, y, file, onClose, onNewFile, onNewFolder, onRename, on
               className="w-full px-4 py-2 text-sm text-left hover:bg-[var(--bg-hover)]"
               style={{ color: 'var(--text-primary)' }}
             >
-              📄 New File
+              📄 {t('sidebar.newFile')}
             </button>
             <button
               onClick={handleNewFolder}
               className="w-full px-4 py-2 text-sm text-left hover:bg-[var(--bg-hover)]"
               style={{ color: 'var(--text-primary)' }}
             >
-              📁 New Folder
+              📁 {t('sidebar.newFolder')}
             </button>
             <div className="my-1 border-t" style={{ borderColor: 'var(--border-color)' }} />
           </>
@@ -283,13 +286,13 @@ function ContextMenu({ x, y, file, onClose, onNewFile, onNewFolder, onRename, on
           className="w-full px-4 py-2 text-sm text-left hover:bg-[var(--bg-hover)]"
           style={{ color: 'var(--text-primary)' }}
         >
-          ✏️ Rename
+          ✏️ {t('sidebar.rename')}
         </button>
         <button
           onClick={handleDelete}
           className="w-full px-4 py-2 text-sm text-left hover:bg-[var(--bg-hover)] text-red-500"
         >
-          🗑️ Delete
+          🗑️ {t('sidebar.delete')}
         </button>
       </div>
     </>
@@ -297,34 +300,35 @@ function ContextMenu({ x, y, file, onClose, onNewFile, onNewFolder, onRename, on
 }
 
 function WorkspaceContextMenu({ x, y, rootPath, onClose }) {
+  const { t } = useTranslation();
   const { success, error } = useToast();
   const { createFile, createFolder, refreshWorkspace } = useDocument();
 
   const handleNewFile = useCallback(async () => {
-    const name = prompt('Enter file name:', 'untitled.md');
+    const name = prompt(t('sidebar.enterFileName'), 'untitled.md');
     if (!name) return;
     
     try {
       await createFile(rootPath, name);
-      success('File created successfully');
+      success(t('sidebar.fileCreatedSuccessfully'));
     } catch (e) {
-      error(`Failed to create file: ${e}`);
+      error(t('sidebar.failedToCreateFile', { error: e }));
     }
     onClose();
-  }, [rootPath, createFile, success, error, onClose]);
+  }, [rootPath, createFile, success, error, onClose, t]);
 
   const handleNewFolder = useCallback(async () => {
-    const name = prompt('Enter folder name:', 'new-folder');
+    const name = prompt(t('sidebar.enterFolderName'), 'new-folder');
     if (!name) return;
     
     try {
       await createFolder(rootPath, name);
-      success('Folder created successfully');
+      success(t('sidebar.folderCreatedSuccessfully'));
     } catch (e) {
-      error(`Failed to create folder: ${e}`);
+      error(t('sidebar.failedToCreateFolder', { error: e }));
     }
     onClose();
-  }, [rootPath, createFolder, success, error, onClose]);
+  }, [rootPath, createFolder, success, error, onClose, t]);
 
   return (
     <>
@@ -347,14 +351,14 @@ function WorkspaceContextMenu({ x, y, rootPath, onClose }) {
           className="w-full px-4 py-2 text-sm text-left hover:bg-[var(--bg-hover)]"
           style={{ color: 'var(--text-primary)' }}
         >
-          📄 New File
+          📄 {t('sidebar.newFile')}
         </button>
         <button
           onClick={handleNewFolder}
           className="w-full px-4 py-2 text-sm text-left hover:bg-[var(--bg-hover)]"
           style={{ color: 'var(--text-primary)' }}
         >
-          📁 New Folder
+          📁 {t('sidebar.newFolder')}
         </button>
       </div>
     </>
@@ -362,6 +366,7 @@ function WorkspaceContextMenu({ x, y, rootPath, onClose }) {
 }
 
 export default function Sidebar() {
+  const { t } = useTranslation();
   const { workspace, openWorkspace, currentDocument, setCurrentDocument } = useDocument();
   const { settings, clearRecentFiles } = useSettings();
   const { success, error } = useToast();
@@ -389,19 +394,19 @@ export default function Sidebar() {
         filePath: doc.file_path || null,
         isDirty: doc.is_dirty,
       });
-      success('Opened recent file');
+      success(t('sidebar.openedRecentFile'));
     } catch (e) {
-      error(`Failed to open file: ${e}`);
+      error(t('errors.failedToOpenFile', { error: e }));
     }
-  }, [setCurrentDocument, success, error]);
+  }, [setCurrentDocument, success, error, t]);
 
   const handleClearRecentFiles = useCallback(() => {
     clearRecentFiles();
-    success('Cleared recent files');
-  }, [clearRecentFiles, success]);
+    success(t('sidebar.clearedRecentFiles'));
+  }, [clearRecentFiles, success, t]);
 
   const getFileName = (filePath) => {
-    if (!filePath) return 'Unknown';
+    if (!filePath) return t('sidebar.unknown');
     const parts = filePath.split('/');
     return parts[parts.length - 1];
   };
@@ -429,14 +434,14 @@ export default function Sidebar() {
           <div
             className="px-4 py-3 font-semibold flex items-center justify-between"
           >
-            <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>Recent</span>
+            <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>{t('sidebar.recent')}</span>
             <button
               onClick={handleClearRecentFiles}
               className="text-xs px-2 py-0.5 rounded hover:bg-[var(--bg-hover)]"
               style={{ color: 'var(--text-secondary)' }}
-              title="Clear recent files"
+              title={t('sidebar.clearRecentFiles')}
             >
-              Clear
+              {t('sidebar.clear')}
             </button>
           </div>
           <div className="max-h-48 overflow-y-auto">
@@ -462,13 +467,13 @@ export default function Sidebar() {
         className="px-4 py-4 font-semibold border-b flex items-center justify-between"
         style={{ borderColor: 'var(--border-color)' }}
       >
-        <span>Files</span>
+        <span>{t('sidebar.files')}</span>
         {workspace && (
           <button
             onClick={handleRootContextMenu}
             className="text-xs px-2 py-1 rounded hover:bg-[var(--bg-hover)]"
             style={{ color: 'var(--text-secondary)' }}
-            title="New File/Folder"
+            title={t('sidebar.newFileFolder')}
           >
             +
           </button>
@@ -478,7 +483,7 @@ export default function Sidebar() {
       <div className="flex-1 overflow-y-auto p-2">
         {!workspace ? (
           <div className="text-sm p-2" style={{ color: 'var(--text-secondary)' }}>
-            <p className="mb-2">No workspace open</p>
+            <p className="mb-2">{t('sidebar.noWorkspaceOpen')}</p>
             <button
               onClick={openWorkspace}
               className="px-3 py-1.5 text-sm border rounded cursor-pointer w-full"
@@ -488,7 +493,7 @@ export default function Sidebar() {
                 color: 'var(--text-primary)',
               }}
             >
-              Open Workspace
+              {t('sidebar.openWorkspace')}
             </button>
           </div>
         ) : (

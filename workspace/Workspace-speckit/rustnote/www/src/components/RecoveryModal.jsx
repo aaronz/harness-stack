@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function RecoveryModal({ 
   isVisible, 
@@ -8,6 +9,7 @@ export default function RecoveryModal({
   onDeleteSnapshot,
   isLoading 
 }) {
+  const { t } = useTranslation();
   const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
@@ -41,10 +43,10 @@ export default function RecoveryModal({
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    if (diffMins < 1) return t('recovery.justNow');
+    if (diffMins < 60) return t('recovery.minutesAgo', { count: diffMins, count_plural: diffMins > 1 ? 's' : '' });
+    if (diffHours < 24) return t('recovery.hoursAgo', { count: diffHours, count_plural: diffHours > 1 ? 's' : '' });
+    if (diffDays < 7) return t('recovery.daysAgo', { count: diffDays, count_plural: diffDays > 1 ? 's' : '' });
     
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   };
@@ -91,9 +93,9 @@ export default function RecoveryModal({
               </svg>
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Crash Recovery</h2>
+              <h2 className="text-lg font-semibold">{t('recovery.title')}</h2>
               <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                Found {snapshots?.length || 0} recovery snapshot{snapshots?.length !== 1 ? 's' : ''}
+                {t('recovery.foundSnapshots', { count: snapshots?.length || 0, count_plural: snapshots?.length !== 1 ? 's' : '' })}
               </p>
             </div>
           </div>
@@ -129,7 +131,7 @@ export default function RecoveryModal({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                          {snapshot.title || 'Untitled'}
+                          {snapshot.title || t('recovery.untitled')}
                         </h3>
                         {snapshot.file_path && (
                           <span 
@@ -150,7 +152,7 @@ export default function RecoveryModal({
                         className="text-sm truncate" 
                         style={{ color: 'var(--text-secondary)' }}
                       >
-                        {snapshot.content_preview || 'No content preview'}
+                        {snapshot.content_preview || t('recovery.noContentPreview')}
                       </p>
                     </div>
                     <button
@@ -160,7 +162,7 @@ export default function RecoveryModal({
                       }}
                       className="flex-shrink-0 p-1 opacity-60 hover:opacity-100"
                       style={{ color: 'var(--text-secondary)' }}
-                      title="Delete this snapshot"
+                      title={t('recovery.deleteSnapshot')}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -172,7 +174,7 @@ export default function RecoveryModal({
             </div>
           ) : (
             <div className="text-center py-8" style={{ color: 'var(--text-secondary)' }}>
-              <p>No recovery snapshots found.</p>
+              <p>{t('recovery.noSnapshots')}</p>
             </div>
           )}
         </div>
@@ -191,7 +193,7 @@ export default function RecoveryModal({
               color: 'var(--text-primary)',
             }}
           >
-            Start Fresh
+            {t('recovery.startFresh')}
           </button>
           <button
             onClick={handleRecover}
@@ -203,7 +205,7 @@ export default function RecoveryModal({
               color: 'white',
             }}
           >
-            {isLoading ? 'Recovering...' : 'Recover Selected'}
+            {isLoading ? t('recovery.recovering') : t('recovery.recover')}
           </button>
         </div>
       </div>
