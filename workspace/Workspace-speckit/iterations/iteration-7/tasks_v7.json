@@ -1616,7 +1616,7 @@
       "priority": "P2",
       "title": "Rust-Side Autosave Backup",
       "description": "Implement Rust-side autosave with debounce independent of frontend, test crash recovery scenario.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "cargo test autosave passes",
         "Crash recovery test passes",
@@ -1694,7 +1694,7 @@
       "priority": "P2",
       "title": "Command Enum Usage Consistency",
       "description": "Audit editor operations to ensure Command enum is the primary dispatch mechanism, refactor inconsistencies.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Command enum is primary dispatch mechanism",
         "No editor operations bypass Command enum"
