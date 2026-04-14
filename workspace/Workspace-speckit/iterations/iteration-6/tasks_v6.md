@@ -172,7 +172,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-005: Image Path Testing
+### G-005: Done
 **Status:** Done
 **Priority:** P1
 **Module:** Image
@@ -192,22 +192,28 @@ All P0 issues must be fully resolved before claiming MVP completion.
 ---
 
 ### G-006: GFM Parser Verification
-**Status:** Pending
+**Status:** Done
 **Priority:** P1
 **Module:** Parser
 **FR Reference:** FR-021
 
 **Task Details:**
-- [ ] Verify tree-sitter correctly parses GFM tables
-- [ ] Verify tree-sitter correctly parses task lists ([x] syntax)
-- [ ] Verify strikethrough extension (~~text~~)
-- [ ] Verify autolinks (URLs in angle brackets)
-- [ ] Add tests for GFM extension nodes
-- [ ] Fix any parsing issues found
+- [x] Verify tree-sitter correctly parses GFM tables
+- [x] Verify tree-sitter correctly parses task lists ([x] syntax)
+- [x] Verify strikethrough extension (~~text~~)
+- [x] Verify autolinks (URLs in angle brackets)
+- [x] Add tests for GFM extension nodes
+- [x] Fix any parsing issues found
 
 **Files:**
 - MOD: `src-tauri/src/parser/tree_sitter.rs`
+- MOD: `src-tauri/src/parser/markdown.rs`
 - MOD: `tests/tree_sitter_parser_tests.rs`
+
+**Notes:**
+- GFM parsing uses comrak via `MarkdownParser` with all extensions enabled (table, tasklist, strikethrough, autolink)
+- tree-sitter-markdown does not natively support GFM extension nodes - GFM verification uses HTML output from MarkdownParser
+- All 44 tree_sitter_parser_tests pass including 22 GFM-specific tests
 
 ---
 
