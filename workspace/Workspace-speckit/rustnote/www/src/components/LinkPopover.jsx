@@ -1,5 +1,57 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+/**
+ * Validates URL protocol for security.
+ * Blocks dangerous protocols: javascript:, data:, vbscript:
+ * Allows safe protocols: http:, https:, mailto:
+ * 
+ * @param {string} url - The URL to validate
+ * @returns {{ valid: boolean, error: string | null }}
+ */
+export function validateUrlProtocol(url) {
+  if (!url || !url.trim()) {
+    return { valid: false, error: 'URL is required' };
+  }
+  
+  const trimmedUrl = url.trim().toLowerCase();
+  
+  // List of dangerous protocols to block
+  const dangerousProtocols = [
+    'javascript:',
+    'data:',
+    'vbscript:',
+  ];
+  
+  for (const protocol of dangerousProtocols) {
+    if (trimmedUrl.startsWith(protocol)) {
+      return { 
+        valid: false, 
+        error: `Invalid URL protocol. '${protocol}' is not allowed for security reasons.` 
+      };
+    }
+  }
+  
+  // List of allowed protocols
+  const allowedProtocols = [
+    'http://',
+    'https://',
+    'mailto:',
+  ];
+  
+  const hasAllowedProtocol = allowedProtocols.some(protocol => 
+    trimmedUrl.startsWith(protocol.toLowerCase())
+  );
+  
+  if (!hasAllowedProtocol) {
+    return { 
+      valid: false, 
+      error: 'Invalid URL protocol. Only http://, https://, and mailto: are allowed.' 
+    };
+  }
+  
+  return { valid: true, error: null };
+}
+
 export default function LinkPopover({
   isVisible,
   position,
@@ -11,6 +63,7 @@ export default function LinkPopover({
 }) {
   const [url, setUrl] = useState(initialUrl);
   const [text, setText] = useState(initialText);
+  const [urlError, setUrlError] = useState(null);
   const urlInputRef = useRef(null);
   const popoverRef = useRef(null);
 
@@ -18,6 +71,7 @@ export default function LinkPopover({
     if (isVisible) {
       setUrl(initialUrl);
       setText(initialText);
+      setUrlError(null);
       setTimeout(() => {
         urlInputRef.current?.focus();
         urlInputRef.current?.select();
@@ -29,7 +83,13 @@ export default function LinkPopover({
     if (e.key === 'Enter') {
       e.preventDefault();
       if (url.trim()) {
-        onSave(url.trim(), text.trim());
+        const validation = validateUrlProtocol(url.trim());
+        if (validation.valid) {
+          setUrlError(null);
+          onSave(url.trim(), text.trim());
+        } else {
+          setUrlError(validation.error);
+        }
       }
     } else if (e.key === 'Escape') {
       e.preventDefault();
@@ -88,15 +148,32 @@ export default function LinkPopover({
             type="text"
             id="link-popover-url"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              if (urlError) {
+                const validation = validateUrlProtocol(e.target.value);
+                if (validation.valid) {
+                  setUrlError(null);
+                }
+              }
+            }}
             placeholder="https://example.com"
             className="w-full px-3 py-2 text-sm border rounded outline-none"
             style={{
               backgroundColor: 'var(--bg-primary)',
-              borderColor: 'var(--border-color)',
+              borderColor: urlError ? '#dc2626' : 'var(--border-color)',
               color: 'var(--text-primary)',
             }}
           />
+          {urlError && (
+            <p 
+              id="link-popover-error"
+              className="text-xs mt-1" 
+              style={{ color: '#dc2626' }}
+            >
+              {urlError}
+            </p>
+          )}
           </div>
 
           <div>
@@ -160,7 +237,13 @@ export default function LinkPopover({
             id="btn-link-save"
             onClick={() => {
               if (url.trim()) {
-                onSave(url.trim(), text.trim());
+                const validation = validateUrlProtocol(url.trim());
+                if (validation.valid) {
+                  setUrlError(null);
+                  onSave(url.trim(), text.trim());
+                } else {
+                  setUrlError(validation.error);
+                }
               }
             }}
             disabled={!url.trim()}

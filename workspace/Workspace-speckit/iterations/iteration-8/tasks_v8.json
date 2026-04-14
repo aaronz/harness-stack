@@ -831,7 +831,7 @@
       "priority": "P1",
       "title": "i18n Architecture \u2014 Install i18next",
       "description": "Install i18next, react-i18next, i18next-browser-languagedetector packages, configure i18next with language detection and resource loading, externalize all UI strings to locales/en.json, and prioritize Toolbar, Sidebar, PreferencesModal, ExportModal.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "All user-facing strings in locales/en.json",
         "No hardcoded strings in priority components",
@@ -912,7 +912,7 @@
       "priority": "P1",
       "title": "LinkPopover \u2014 URL Validation",
       "description": "Add URL validation in LinkPopover.jsx: block javascript:, data:, vbscript: dangerous protocols, allow http, https, mailto, validate before invoking Tauri commands, show error for invalid URLs, and add URL validation tests.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "LinkPopover blocks dangerous URLs",
         "Valid URLs (http, https, mailto) accepted",
@@ -984,7 +984,7 @@
         ],
         "browser_features": []
       },
-      "impl_notes": "LinkPopover doesn't validate URLs. Need validation function that blocks javascript:, data:, vbscript: and allows http, https, mailto. PRD-12 Section 12.4.3 referenced.",
+      "impl_notes": "Implemented validateUrlProtocol function in LinkPopover.jsx. Blocks javascript:, data:, vbscript: protocols. Allows http://, https://, mailto:. Shows error message for invalid URLs. Test file created at www/__tests__/link-popover.test.jsx with 339 total tests passing.",
       "dependencies": []
     },
     {
