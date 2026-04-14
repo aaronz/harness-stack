@@ -595,7 +595,7 @@
       "priority": "P1",
       "title": "Image Relative Path Handling \u2014 Edge Cases for Subdirectories",
       "description": "Audit image path calculation, add subdirectory test cases, fix path calculation, add comprehensive tests.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "cargo test image_path passes all subdirectory tests",
         "Manual test: insert image in subdirectory document \u2192 correct relative path"
@@ -692,7 +692,7 @@
       "priority": "P1",
       "title": "Tree-Sitter GFM Parsing Verification",
       "description": "Create GFM test fixtures, verify tree-sitter GFM parsing, define clear parsing strategy, add GFM parser tests.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "cargo test tree_sitter passes GFM tests",
         "GFM features render correctly in editor",
