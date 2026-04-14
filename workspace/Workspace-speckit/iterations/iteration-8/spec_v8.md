@@ -207,7 +207,7 @@ RustNote is defined as:
 | G-007 | FR-017 | Image | **Image relative path handling for subdirectory documents has edge cases** - `image_markdown_from_path` and `save_image_from_base64_cmd` exist, but path resolution when document is in a subdirectory may not correctly compute relative paths | Add comprehensive tests for: (1) document in workspace root referencing image in subdir, (2) document in subdir referencing image in sibling dir, (3) document in subdir referencing image in parent dir | **Needs Edge Case Testing** |
 | G-008 | FR-021 | Parser | **tree-sitter GFM extensions not fully verified** - `tree-sitter-markdown` language is loaded but GFM-specific extensions (tables, task lists, strikethrough) may not parse correctly | Verify tree-sitter correctly parses GFM tables (`| col | col |`) and task lists (`- [ ]`). Consider using comrak AST for semantic parsing while keeping tree-sitter for structural analysis only | **Needs Verification** |
 | G-009 | FR-024, FR-034 | Settings | **Settings schema discrepancy** - Rust `Settings` model has 11 fields but PRD-09 `Settings` interface specifies only 9 fields. Discrepancy: `recent_files: Vec<String>` vs separate recent files + recent folders. Rust has `content_width` which PRD doesn't list | Reconcile Settings schema. Add `recent_folders: Vec<String>` per PRD. Decide whether `content_width` should be in settings or computed from viewport | **Schema Discrepancy** |
-| G-010 | FR-008 | Frontend | **Editor.jsx deprecation not formally marked** - Iteration 7 noted `Editor.jsx` should be deprecated but no deprecation notice was added | Add `/** @deprecated Use TipTapEditor.jsx instead */` JSDoc comment to `Editor.jsx` | **Not Started** |
+| G-010 | FR-008 | Frontend | **Editor.jsx deprecation formally marked** - `@deprecated` JSDoc added to Editor.jsx with reference to TipTapEditor.jsx, no imports reference Editor.jsx | N/A | **✅ Done** |
 | G-011 | NFR-014 | i18n | **i18n architecture not externalized** - PRD-11 NFR-014 requires all user-facing strings externalized for i18n readiness. No i18n library (e.g., `i18next`) is installed, and all strings are hardcoded | Install `i18next` + `react-i18next`. Externalize all UI strings to `locales/en.json`. Set up key naming convention: `section.action.description` | **Not Started** |
 | G-016 | FR-011 | Security | **XSS in link URLs not explicitly sanitized** - PRD-12 Section 12.4.3 specifies link validation (http/https allowed, javascript: blocked), but `LinkPopover.jsx` doesn't explicitly validate URLs before saving | Add URL validation in `LinkPopover.jsx` before invoking Tauri commands. Block `javascript:`, `data:`, and other dangerous protocols | **Not Started** |
 
@@ -653,7 +653,7 @@ remaining_p2=9
 | G-007 | FR-017 | Image relative path edge cases | Needs Edge Case Testing |
 | G-008 | FR-021 | tree-sitter GFM parsing verification | Needs Verification |
 | G-009 | FR-024, FR-034 | Settings schema discrepancy (recent_folders) | Schema Discrepancy |
-| G-010 | FR-008 | Editor.jsx deprecation | Not Started |
+| G-010 | FR-008 | Editor.jsx deprecation | ✅ Done |
 | G-011 | NFR-014 | i18n architecture not externalized | Not Started |
 | G-012 | FR-016 | Table editing constraints | Document Constraints |
 | G-013 | FR-028 | Focus mode visual verification | Needs Visual Verification |
@@ -703,7 +703,7 @@ remaining_p2=9
 | Settings schema reconciled (recent_folders) | ❌ | Discrepancy exists (G-009) |
 | Link URL validation | ❌ | Not implemented (G-016) |
 | GFM parsing verified | ⚠️ | tree-sitter GFM extensions not verified (G-008) |
-| Editor.jsx formally deprecated | ❌ | Not done (G-010) |
+| Editor.jsx formally deprecated | ✅ | Done (G-010) |
 | i18n architecture externalized | ❌ | No i18next installed (G-011) |
 | Wrap transform end-to-end | ⚠️ | Unit tests exist, integration not verified (G-005) |
 

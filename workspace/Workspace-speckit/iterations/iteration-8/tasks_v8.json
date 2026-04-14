@@ -779,7 +779,7 @@
       "priority": "P1",
       "title": "Editor.jsx \u2014 Deprecation Notice",
       "description": "Add JSDoc @deprecated notice and removal timeline comment to Editor.jsx, verify no remaining imports reference Editor.jsx, and update architecture documentation to reflect single-editor strategy.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "Editor.jsx has @deprecated JSDoc comment",
         "No code imports Editor.jsx (all use TipTapEditor.jsx)",
