@@ -275,7 +275,7 @@
       "priority": "P0",
       "title": "Verify and Improve PDF Export Quality",
       "description": "Create test fixtures, generate and inspect PDFs, fix rendering issues, add automated quality checks and visual regression baselines.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "All complex Markdown renders correctly in PDF",
         "NFR-006 passes (< 5s for 10-page document)",

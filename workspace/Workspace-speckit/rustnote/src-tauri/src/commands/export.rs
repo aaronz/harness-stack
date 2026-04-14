@@ -467,13 +467,22 @@ fn extract_code_block_with_lang<'a>(lines: &'a [&str], index: &mut usize) -> (St
     let mut language = String::new();
     
     let first_line = lines[*index];
-    if let Some(class_start) = first_line.find("class=\"") {
-        if let Some(class_end) = first_line[class_start..].find('"') {
-            let class_value = &first_line[class_start + 7..class_start + class_end];
-            if let Some(lang_start) = class_value.find("language-") {
-                language = class_value[lang_start + 10..].split_whitespace().next().unwrap_or("").to_string();
-            } else if let Some(lang_start) = class_value.find("lang-") {
-                language = class_value[lang_start + 5..].split_whitespace().next().unwrap_or("").to_string();
+    
+    if let Some(class_attr_start) = first_line.find("class=\"") {
+        let open_quote = class_attr_start + 6;
+        
+        if open_quote < first_line.len() {
+            let remaining = &first_line[open_quote..];
+            if let Some(close_offset) = remaining.find('"') {
+                if close_offset > 0 {
+                    let class_value = &remaining[1..close_offset];
+                    
+                    if let Some(lang_pos) = class_value.find("language-") {
+                        language = class_value[lang_pos + 9..].split_whitespace().next().unwrap_or("").to_string();
+                    } else if let Some(lang_pos) = class_value.find("lang-") {
+                        language = class_value[lang_pos + 5..].split_whitespace().next().unwrap_or("").to_string();
+                    }
+                }
             }
         }
     }
