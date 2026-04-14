@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
 
 const FONT_FAMILIES = ['System', 'Serif', 'Monospace'];
@@ -13,6 +13,9 @@ const MAX_TAB_SIZE = 8;
 
 export default function PreferencesModal({ isVisible, onClose }) {
   const { settings, setSettings } = useSettings();
+  const modalRef = useRef(null);
+  const closeButtonRef = useRef(null);
+  const previousActiveElement = useRef(null);
   
   const [localSettings, setLocalSettings] = useState({
     theme: 'light',
@@ -30,6 +33,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
 
   useEffect(() => {
     if (isVisible) {
+      previousActiveElement.current = document.activeElement;
       setLocalSettings({
         theme: settings.theme,
         autoSave: settings.autoSave,
@@ -43,6 +47,11 @@ export default function PreferencesModal({ isVisible, onClose }) {
         tabSize: settings.tabSize || 4,
         contentWidth: settings.contentWidth,
       });
+      setTimeout(() => {
+        closeButtonRef.current?.focus();
+      }, 0);
+    } else if (previousActiveElement.current) {
+      previousActiveElement.current.focus();
     }
   }, [isVisible, settings]);
 
@@ -50,19 +59,38 @@ export default function PreferencesModal({ isVisible, onClose }) {
     return null;
   }
 
-  const handleSave = () => {
-    setSettings(prev => ({
-      ...prev,
-      ...localSettings,
-    }));
+  const handleSave = useCallback(() => {
+    setSettings(localSettings);
     onClose();
-  };
+  }, [localSettings, setSettings, onClose]);
 
-  const handleKeyDown = (e) => {
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') {
-      onClose();
+      e.preventDefault();
+      handleClose();
     }
-  };
+    if (e.key === 'Tab') {
+      const focusableElements = modalRef.current?.querySelectorAll(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusableElements || focusableElements.length === 0) return;
+      
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    }
+  }, [handleClose]);
 
   const autoSaveIntervalSeconds = localSettings.autoSaveInterval / 1000;
 
@@ -70,13 +98,17 @@ export default function PreferencesModal({ isVisible, onClose }) {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
       onKeyDown={handleKeyDown}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="preferences-title"
     >
       <div
         className="absolute inset-0 bg-black/50"
-        onClick={onClose}
+        onClick={handleClose}
       />
 
       <div
+        ref={modalRef}
         className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col"
         style={{
           backgroundColor: 'var(--bg-primary)',
@@ -89,10 +121,12 @@ export default function PreferencesModal({ isVisible, onClose }) {
         >
           <h2 id="preferences-title" className="text-lg font-semibold">Preferences</h2>
           <button
+            ref={closeButtonRef}
             id="btn-preferences-close"
-            onClick={onClose}
-            className="text-2xl leading-none opacity-60 hover:opacity-100"
+            onClick={handleClose}
+            className="text-2xl leading-none opacity-60 hover:opacity-100 focus:outline-none focus:ring-2"
             style={{ color: 'var(--text-primary)' }}
+            aria-label="Close preferences"
           >
             ×
           </button>
@@ -416,7 +450,7 @@ export default function PreferencesModal({ isVisible, onClose }) {
         >
           <button
             id="btn-preferences-cancel"
-            onClick={onClose}
+            onClick={handleClose}
             className="px-4 py-2 text-sm border rounded cursor-pointer transition-colors"
             style={{
               backgroundColor: 'var(--bg-primary)',

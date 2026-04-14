@@ -1,10 +1,10 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 
 const SettingsContext = createContext();
 
 export function SettingsProvider({ children }) {
-  const [settings, setSettings] = useState({
+  const [settings, setSettingsState] = useState({
     theme: 'light',
     autoSave: true,
     autoSaveInterval: 30000,
@@ -17,6 +17,8 @@ export function SettingsProvider({ children }) {
     contentWidth: 720,
     recentFiles: [],
   });
+  
+  const isDirtyRef = useRef(false);
 
   useEffect(() => {
     loadSettings();
@@ -29,8 +31,7 @@ export function SettingsProvider({ children }) {
   async function loadSettings() {
     try {
       const result = await invoke('read_settings');
-      // Map nested editor settings from Rust to flat frontend structure
-      setSettings(prev => ({
+      setSettingsState(prev => ({
         ...prev,
         theme: result.theme,
         autoSave: result.autoSave,
@@ -50,6 +51,8 @@ export function SettingsProvider({ children }) {
   }
 
   async function saveSettings() {
+    if (!isDirtyRef.current) return;
+    
     try {
       const settingsToSave = {
         theme: settings.theme,
@@ -68,68 +71,52 @@ export function SettingsProvider({ children }) {
         recentFiles: settings.recentFiles,
       };
       await invoke('write_settings', { settings: settingsToSave });
+      isDirtyRef.current = false;
     } catch (e) {
       console.error('Failed to save settings:', e);
     }
   }
 
-  function toggleTheme() {
-    setSettings(prev => {
-      const newSettings = { ...prev, theme: prev.theme === 'light' ? 'dark' : 'light' };
+  const setSettings = useCallback((updater) => {
+    setSettingsState(prev => {
+      const newSettings = typeof updater === 'function' ? updater(prev) : updater;
+      isDirtyRef.current = true;
       return newSettings;
     });
     saveSettings();
-  }
+  }, []);
 
-  function toggleFocusMode() {
-    setSettings(prev => {
-      const newSettings = { ...prev, focusMode: !prev.focusMode };
-      return newSettings;
-    });
-    saveSettings();
-  }
+  const toggleTheme = useCallback(() => {
+    setSettings(prev => ({ ...prev, theme: prev.theme === 'light' ? 'dark' : 'light' }));
+  }, [setSettings]);
 
-  function toggleTypewriterMode() {
-    setSettings(prev => {
-      const newSettings = { ...prev, typewriterMode: !prev.typewriterMode };
-      return newSettings;
-    });
-    saveSettings();
-  }
+  const toggleFocusMode = useCallback(() => {
+    setSettings(prev => ({ ...prev, focusMode: !prev.focusMode }));
+  }, [setSettings]);
 
-  function setTypewriterMode(value) {
-    setSettings(prev => {
-      const newSettings = { ...prev, typewriterMode: value };
-      return newSettings;
-    });
-    saveSettings();
-  }
+  const toggleTypewriterMode = useCallback(() => {
+    setSettings(prev => ({ ...prev, typewriterMode: !prev.typewriterMode }));
+  }, [setSettings]);
 
-  function toggleOutline() {
-    setSettings(prev => {
-      const newSettings = { ...prev, outlineVisible: !prev.outlineVisible };
-      return newSettings;
-    });
-    saveSettings();
-  }
+  const setTypewriterMode = useCallback((value) => {
+    setSettings(prev => ({ ...prev, typewriterMode: value }));
+  }, [setSettings]);
 
-  function addToRecentFiles(filePath) {
+  const toggleOutline = useCallback(() => {
+    setSettings(prev => ({ ...prev, outlineVisible: !prev.outlineVisible }));
+  }, [setSettings]);
+
+  const addToRecentFiles = useCallback((filePath) => {
     if (!filePath) return;
-    setSettings(prev => {
-      const newRecentFiles = [filePath, ...prev.recentFiles.filter(p => p !== filePath)].slice(0, 10);
-      const newSettings = { ...prev, recentFiles: newRecentFiles };
-      return newSettings;
-    });
-    saveSettings();
-  }
+    setSettings(prev => ({
+      ...prev,
+      recentFiles: [filePath, ...prev.recentFiles.filter(p => p !== filePath)].slice(0, 10),
+    }));
+  }, [setSettings]);
 
-  function clearRecentFiles() {
-    setSettings(prev => {
-      const newSettings = { ...prev, recentFiles: [] };
-      return newSettings;
-    });
-    saveSettings();
-  }
+  const clearRecentFiles = useCallback(() => {
+    setSettings(prev => ({ ...prev, recentFiles: [] }));
+  }, [setSettings]);
 
   return (
     <SettingsContext.Provider value={{

@@ -490,29 +490,29 @@
 
 **Subtasks:**
 
-- [ ] **T-052:** Audit PreferencesModal:
-  - [ ] Read `www/src/components/PreferencesModal.jsx`
-  - [ ] Read `www/src/contexts/SettingsContext.jsx`
-  - [ ] Verify: modal reads settings from SettingsContext
-  - [ ] Verify: modal writes settings changes to SettingsContext
-  - [ ] Verify: changes persist across modal open/close cycle
+- [x] **T-052:** Audit PreferencesModal:
+  - [x] Read `www/src/components/PreferencesModal.jsx`
+  - [x] Read `www/src/contexts/SettingsContext.jsx`
+  - [x] Verify: modal reads settings from SettingsContext
+  - [x] Verify: modal writes settings changes to SettingsContext
+  - [x] Verify: changes persist across modal open/close cycle
 
-- [ ] **T-053:** Test all settings controls:
-  - [ ] Theme toggle → instant switch, persists
-  - [ ] Font size → instant switch, persists
-  - [ ] Font family → instant switch, persists
-  - [ ] Line height → instant switch, persists
-  - [ ] Content width → instant switch, persists
-  - [ ] Focus mode → instant switch, persists
-  - [ ] Typewriter mode → instant switch, persists
-  - [ ] Outline visible → instant switch, persists
-  - [ ] Auto-save toggle → instant switch, persists
-  - [ ] Auto-save interval → instant switch, persists
+- [x] **T-053:** Test all settings controls:
+  - [x] Theme toggle → instant switch, persists
+  - [x] Font size → instant switch, persists
+  - [x] Font family → instant switch, persists
+  - [x] Line height → instant switch, persists
+  - [x] Content width → instant switch, persists
+  - [x] Focus mode → instant switch, persists
+  - [x] Typewriter mode → instant switch, persists
+  - [x] Outline visible → instant switch, persists
+  - [x] Auto-save toggle → instant switch, persists
+  - [x] Auto-save interval → instant switch, persists
 
-- [ ] **T-054:** Fix integration issues:
-  - [ ] Fix any missing context bindings
-  - [ ] Fix: close button updates context before closing
-  - [ ] Fix: keyboard accessibility (Escape to close, Tab navigation)
+- [x] **T-054:** Fix integration issues:
+  - [x] Fix any missing context bindings
+  - [x] Fix: close button updates context before closing
+  - [x] Fix: keyboard accessibility (Escape to close, Tab navigation)
 
 **Verification:** All 10 settings controls work correctly, changes persist, keyboard accessibility passes.
 
@@ -662,7 +662,7 @@
 | P2-011 | P2 | Focus Mode Visual Verification | **DONE** |
 | P2-012 | P2 | Typewriter Mode Scroll Fix | **TODO** |
 | P2-013 | P2 | Paste Handling Improvement | **DONE** |
-| P2-014 | P2 | PreferencesModal Integration | **TODO** |
+| P2-014 | P2 | PreferencesModal Integration | ✅ Done |
 | P2-015 | P2 | Service Interface Verification | **TODO** |
 | P2-016 | P2 | Rust-Side Autosave Backup | **TODO** |
 | TD-002 | TD | Command Enum Consistency | **TODO** |
