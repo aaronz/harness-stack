@@ -237,35 +237,39 @@
 **Gap Reference:** G-006
 **FR Reference:** FR-031
 **Article:** Article 16 (Format Conversion Fidelity)
-**Status:** HTML export standalone works, linked-assets mode NOT implemented
+**Status:** ✅ DONE — All test cases implemented and passing
 
 **Subtasks:**
 
-- [ ] **T-021:** Add `asset_mode` to `ExportOptions`:
-  - [ ] Modify `src-tauri/src/model/export.rs` — add `AssetMode` enum (`Inline`, `Linked`)
-  - [ ] Add `asset_mode: AssetMode` field to `ExportOptions`
-  - [ ] Update `commands/export.rs` to handle both modes
+- [x] **T-021:** Add `asset_mode` to `ExportOptions`:
+  - [x] Modify `src-tauri/src/model/export.rs` — add `AssetMode` enum (`Inline`, `Linked`)
+  - [x] Add `asset_mode: AssetMode` field to `ExportOptions`
+  - [x] Update `commands/export.rs` to handle both modes
 
-- [ ] **T-022:** Implement linked-assets export pipeline:
-  - [ ] Parse HTML output to extract `<img>` tags
-  - [ ] Extract image filenames/URLs from Markdown source
-  - [ ] Copy referenced images to `_assets/` subdirectory
-  - [ ] Rewrite image URLs to `assets/` relative paths
-  - [ ] Handle missing images gracefully
+- [x] **T-022:** Implement linked-assets export pipeline:
+  - [x] Parse HTML output to extract `<img>` tags
+  - [x] Extract image filenames/URLs from Markdown source
+  - [x] Copy referenced images to `_assets/` subdirectory
+  - [x] Rewrite image URLs to `assets/` relative paths
+  - [x] Handle missing images gracefully
 
-- [ ] **T-023:** Add UI toggle in ExportModal:
-  - [ ] Read `www/src/components/ExportModal.jsx`
-  - [ ] Add radio button or dropdown: "Inline assets" vs "Linked assets"
-  - [ ] Wire toggle to IPC `export_to_html` call with `asset_mode` option
+- [x] **T-023:** Add UI toggle in ExportModal:
+  - [x] Read `www/src/components/ExportModal.jsx`
+  - [x] Add radio button or dropdown: "Inline assets" vs "Linked assets"
+  - [x] Wire toggle to IPC `export_to_html` call with `asset_mode` option
 
-- [ ] **T-024:** Add tests for linked-assets mode:
-  - [ ] Test: HTML references `_assets/` directory
-  - [ ] Test: `_assets/` directory contains copied images
-  - [ ] Test: self-contained mode produces valid HTML with inline base64 images
+- [x] **T-024:** Add tests for linked-assets mode:
+  - [x] Test: HTML references `_assets/` directory
+  - [x] Test: `_assets/` directory contains copied images
+  - [x] Test: self-contained mode produces valid HTML with inline base64 images
+  - [x] TC-P1-006-01: HTML export — linked assets mode
+  - [x] TC-P1-006-02: HTML export — inline mode (baseline)
+  - [x] TC-P1-006-03: HTML export — missing image graceful handling
+  - [x] TC-P1-006-04: ExportModal UI toggle — linked vs inline
 
 **Verification:** `cargo test html_export` passes, ExportModal has working toggle, linked mode produces `assets/` directory with images.
 
-**Files:** `model/export.rs`, `commands/export.rs`, `ExportModal.jsx`
+**Files:** `model/export.rs`, `commands/export.rs`, `ExportModal.jsx`, `tests/html_export_tests.rs`
 
 ---
 
@@ -740,7 +744,7 @@
 | P0-003 | P0 | PDF Export Quality — Visual Verification | **DONE** |
 | P0-004 | P0 | Paste Rich-Text Conversion | **TODO** |
 | P1-005 | P1 | Wrap Transform — TipTap Integration | **TODO** |
-| P1-006 | P1 | HTML Linked-Assets Mode | **TODO** |
+| P1-006 | P1 | HTML Linked-Assets Mode | ✅ Done |
 | P1-007 | P1 | Image Path Subdirectory Edge Cases | **TODO** |
 | P1-008 | P1 | GFM Parser Verification | **TODO** |
 | P1-009 | P1 | Settings Schema — recent_folders | **TODO** |

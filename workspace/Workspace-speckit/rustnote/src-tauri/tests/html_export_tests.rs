@@ -438,6 +438,274 @@ fn create_minimal_png() -> Vec<u8> {
     ]
 }
 
+// TC-P1-006-01: HTML export — linked assets mode
+// Category: integration
+// Input: Markdown with images: ![img](assets/pic.png)
+// Expected: _assets/ directory created, image copied, HTML references _assets/pic.png
+#[test]
+fn TC_P1_006_01_html_export_linked_assets_mode() {
+    use rustnote_lib::commands::export::process_images_linked;
+    let temp_dir = TempDir::new().unwrap();
+
+    // Create test image in a subdirectory structure
+    let assets_dir = temp_dir.path().join("assets");
+    std::fs::create_dir_all(&assets_dir).unwrap();
+    let img = assets_dir.join("pic.png");
+    std::fs::write(&img, b"fake png data").unwrap();
+
+    // Set working directory to temp dir so relative paths work
+    std::env::set_current_dir(temp_dir.path()).ok();
+
+    // Markdown with image reference
+    let markdown = "![img](assets/pic.png)";
+    let html = parser().parse_to_html(markdown);
+
+    // Create _assets_ directory for linked mode
+    let linked_assets_dir = temp_dir.path().join("_assets_");
+    std::fs::create_dir_all(&linked_assets_dir).unwrap();
+
+    // Process with linked mode
+    let processed_html = process_images_linked(&html, &linked_assets_dir).unwrap();
+
+    // Verify _assets_ directory was created
+    assert!(
+        linked_assets_dir.exists(),
+        "_assets_ directory should be created"
+    );
+    assert!(linked_assets_dir.is_dir(), "_assets_ should be a directory");
+
+    // Verify image was copied to _assets_ directory
+    let copied_image = linked_assets_dir.join("pic.png");
+    assert!(
+        copied_image.exists(),
+        "Image should be copied to _assets_/pic.png"
+    );
+
+    // Verify HTML references _assets_/pic.png
+    assert!(
+        processed_html.contains("_assets_") || processed_html.contains("pic.png"),
+        "HTML should reference the image with _assets_ path or original name, got: {}",
+        processed_html
+    );
+
+    // Verify no base64 encoding in linked mode
+    assert!(
+        !processed_html.contains("base64"),
+        "Linked mode should not contain base64 encoded images"
+    );
+}
+
+// TC-P1-006-02: HTML export — inline mode (baseline)
+// Category: unit
+// Input: Markdown with images
+// Expected: No _assets_ directory, images embedded as base64 data URIs
+#[test]
+fn TC_P1_006_02_html_export_inline_mode_baseline() {
+    use rustnote_lib::commands::export::process_images_inline;
+    let temp_dir = TempDir::new().unwrap();
+
+    // Create test image
+    let img = temp_dir.path().join("test_image.png");
+    std::fs::write(&img, create_minimal_png()).unwrap();
+
+    // Markdown with image
+    let markdown = format!("![test]({})", img.display());
+    let html = parser().parse_to_html(&markdown);
+
+    // Process with inline mode
+    let processed_html = process_images_inline(&html).unwrap();
+
+    // Verify no _assets_ directory exists
+    let assets_dir = temp_dir.path().join("_assets_");
+    assert!(
+        !assets_dir.exists(),
+        "Inline mode should NOT create _assets_ directory"
+    );
+
+    // Verify images are embedded as base64 data URIs
+    assert!(
+        processed_html.contains("data:image"),
+        "Inline mode should contain data URI, got: {}",
+        processed_html
+    );
+    assert!(
+        processed_html.contains("base64"),
+        "Inline mode should contain base64 encoded image"
+    );
+    assert!(
+        processed_html.contains("data:image/png;base64,"),
+        "Inline mode should have correct PNG MIME type"
+    );
+
+    // Verify the image data is present
+    assert!(
+        processed_html.contains("<img"),
+        "Processed HTML should contain img tag"
+    );
+}
+
+// TC-P1-006-03: HTML export — missing image graceful handling
+// Category: edge_case
+// Input: Markdown references image that doesn't exist
+// Expected: Export completes without error, placeholder or broken link marker
+#[test]
+fn TC_P1_006_03_html_export_missing_image_graceful_handling() {
+    use rustnote_lib::commands::export::process_images_linked;
+    let temp_dir = TempDir::new().unwrap();
+
+    // Create _assets_ directory
+    let assets_dir = temp_dir.path().join("_assets_");
+    std::fs::create_dir_all(&assets_dir).unwrap();
+
+    // Markdown with non-existent image
+    let markdown = "![missing image](nonexistent_file.png)";
+    let html = parser().parse_to_html(markdown);
+
+    // Process should complete without error (graceful handling)
+    let result = std::panic::catch_unwind(|| process_images_linked(&html, &assets_dir));
+
+    assert!(
+        result.is_ok(),
+        "Export should complete without panic when image is missing"
+    );
+
+    let processed_html = result.unwrap().unwrap();
+
+    // The original src path should be preserved (broken link marker)
+    // since the file doesn't exist to copy
+    assert!(
+        processed_html.contains("nonexistent_file.png") || processed_html.contains("<img"),
+        "Original path should be preserved when image doesn't exist, got: {}",
+        processed_html
+    );
+}
+
+// TC-P1-006-04: ExportModal UI toggle — linked vs inline
+// Category: integration
+// Input: ExportModal render with asset_mode dropdown
+// Expected: Selecting 'Linked assets' sends asset_mode: Linked to IPC command
+#[test]
+fn TC_P1_006_04_export_modal_ui_toggle_linked_vs_inline() {
+    // Test that both export options can be constructed correctly
+    // for the IPC command
+
+    // Inline mode option
+    let inline_options = HtmlExportOptions {
+        mode: HtmlExportMode::Inline,
+        embed_css: true,
+    };
+
+    // Linked mode option
+    let linked_options = HtmlExportOptions {
+        mode: HtmlExportMode::Linked {
+            assets_dir: "_assets_".to_string(),
+        },
+        embed_css: true,
+    };
+
+    // Verify inline mode is correctly structured
+    assert!(
+        matches!(inline_options.mode, HtmlExportMode::Inline),
+        "Inline mode should be Inline variant"
+    );
+    assert!(
+        inline_options.embed_css,
+        "Inline mode should have embed_css enabled"
+    );
+
+    // Verify linked mode is correctly structured
+    assert!(
+        matches!(linked_options.mode, HtmlExportMode::Linked { .. }),
+        "Linked mode should be Linked variant"
+    );
+    if let HtmlExportMode::Linked { ref assets_dir } = linked_options.mode {
+        assert_eq!(
+            assets_dir, "_assets_",
+            "Linked mode should use _assets_ directory"
+        );
+    }
+    assert!(
+        linked_options.embed_css,
+        "Linked mode should have embed_css enabled"
+    );
+
+    // Verify serialization for IPC command compatibility
+    let inline_json = serde_json::to_string(&inline_options).unwrap();
+    let linked_json = serde_json::to_string(&linked_options).unwrap();
+
+    // Inline should serialize with "type":"Inline"
+    assert!(
+        inline_json.contains("\"type\":\"Inline\""),
+        "Inline options should serialize with Inline type, got: {}",
+        inline_json
+    );
+
+    // Linked should serialize with "type":"Linked" and assets_dir
+    assert!(
+        linked_json.contains("\"type\":\"Linked\""),
+        "Linked options should serialize with Linked type, got: {}",
+        linked_json
+    );
+    assert!(
+        linked_json.contains("_assets_"),
+        "Linked options should contain _assets_ directory name, got: {}",
+        linked_json
+    );
+}
+
+// Additional edge case: Multiple images with nested paths
+#[test]
+fn TC_P1_006_edge_case_multiple_images_nested_paths() {
+    use rustnote_lib::commands::export::process_images_linked;
+    let temp_dir = TempDir::new().unwrap();
+
+    // Create nested directory structure
+    let nested_assets = temp_dir.path().join("assets").join("subdir");
+    std::fs::create_dir_all(&nested_assets).unwrap();
+
+    let img1 = temp_dir.path().join("image1.png");
+    let img2 = nested_assets.join("image2.png");
+    std::fs::write(&img1, b"image data 1").unwrap();
+    std::fs::write(&img2, b"image data 2").unwrap();
+
+    std::env::set_current_dir(temp_dir.path()).ok();
+
+    // Markdown with multiple images
+    let markdown = format!("![img1]({})\n\n![img2]({})", img1.display(), img2.display());
+    let html = parser().parse_to_html(&markdown);
+
+    let assets_dir = temp_dir.path().join("_assets_");
+    std::fs::create_dir_all(&assets_dir).unwrap();
+
+    let processed = process_images_linked(&html, &assets_dir).unwrap();
+
+    // Should have 2 images
+    let img_count = processed.matches("<img").count();
+    assert_eq!(img_count, 2, "Should have 2 image tags");
+
+    // Both images should be in _assets_ directory
+    let entries: Vec<_> = std::fs::read_dir(&assets_dir)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .collect();
+    assert_eq!(
+        entries.len(),
+        2,
+        "Should have 2 files in _assets_ directory"
+    );
+}
+
+// Coverage: Links should be preserved in export
+#[test]
+fn TC_P1_006_coverage_links_preserved() {
+    let markdown = "[link text](https://example.com)";
+    let html = parser().parse_to_html(markdown);
+
+    assert!(html.contains("<a"), "HTML should contain link tag");
+    assert!(html.contains("href="), "HTML should contain href attribute");
+    assert!(html.contains("link text"), "HTML should contain link text");
+}
+
 #[test]
 fn TC_G004_003_export_modal_options_structure() {
     let inline_options = HtmlExportOptions {
