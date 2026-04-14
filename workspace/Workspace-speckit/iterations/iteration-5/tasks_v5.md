@@ -408,7 +408,7 @@ All P0 issues must be fully resolved before claiming MVP completion.
 
 ---
 
-### G-018: Syntax Highlighter
+### G-018: Done
 **Status:** Pending
 **Priority:** P2
 **Module:** Editor

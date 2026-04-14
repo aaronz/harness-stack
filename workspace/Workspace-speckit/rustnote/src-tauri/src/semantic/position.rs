@@ -46,23 +46,55 @@ impl CursorMapping {
         result
     }
 
-    /// Convert a DOM offset back to source offset
+    /// Convert a DOM offset back to source offset using the cursor mappings.
+    /// This is used for DOM→source conversion (bidirectional).
+    ///
+    /// Uses binary search to find the appropriate mapping and accounts for
+    /// HTML insertions that occurred during Markdown rendering.
     pub fn dom_to_source(mappings: &[CursorMapping], dom_offset: usize) -> usize {
         if mappings.is_empty() {
             return dom_offset;
         }
 
-        // Find the largest mapping with dom_offset <= target
-        let mut result = mappings[0].source_offset;
-        for mapping in mappings {
-            if mapping.dom_offset <= dom_offset {
-                let delta = dom_offset - mapping.dom_offset;
-                result = mapping.source_offset + delta;
+        // Find the largest mapping with dom_offset <= target using binary search
+        let mut left = 0;
+        let mut right = mappings.len();
+
+        while left < right {
+            let mid = (left + right + 1) / 2;
+            if mappings[mid - 1].dom_offset <= dom_offset {
+                left = mid;
             } else {
-                break;
+                right = mid - 1;
             }
         }
-        result
+
+        if left >= mappings.len() {
+            return mappings[mappings.len() - 1].source_offset;
+        }
+
+        let mapping = &mappings[left];
+        if left == 0 {
+            return mapping.source_offset.saturating_add(dom_offset);
+        }
+
+        let prev_mapping = &mappings[left - 1];
+
+        // Calculate how far we are into this segment
+        let segment_dom_length = mapping.dom_offset - prev_mapping.dom_offset;
+        if segment_dom_length == 0 {
+            return mapping.source_offset;
+        }
+
+        // Calculate relative position in segment (0.0 to 1.0)
+        let relative_pos =
+            (dom_offset - prev_mapping.dom_offset) as f64 / segment_dom_length as f64;
+
+        // Map back to source position
+        let segment_source_length = mapping.source_offset - prev_mapping.source_offset;
+        let source_delta = (relative_pos * segment_source_length as f64) as usize;
+
+        prev_mapping.source_offset + source_delta
     }
 }
 

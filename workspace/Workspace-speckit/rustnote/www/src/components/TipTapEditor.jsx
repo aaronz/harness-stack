@@ -162,6 +162,65 @@ function taskListHtmlToMarkdown(html) {
 }
 
 const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3, 4, 5, 6],
+        },
+        code: {
+          HTMLAttributes: {
+            class: 'px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-sm font-mono',
+          },
+        },
+        codeBlock: false,
+        blockquote: {
+          HTMLAttributes: {
+            class: 'border-l-4 border-gray-400 dark:border-gray-600 pl-4 italic my-2',
+          },
+        },
+        bulletList: {
+          HTMLAttributes: {
+            class: 'list-disc list-inside my-2',
+          },
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: 'list-decimal list-inside my-2',
+          },
+        },
+        listItem: {
+          HTMLAttributes: {
+            class: 'my-1',
+          },
+        },
+        taskList: {
+          HTMLAttributes: {
+            class: 'contains-task-list',
+          },
+        },
+        taskItem: {
+          HTMLAttributes: {
+            class: 'task-list-item',
+          },
+          nested: true,
+        },
+      }),
+      Highlight.configure({
+        multicolor: true,
+      }),
+      Placeholder.configure({
+        placeholder: 'Start typing...',
+      }),
+    ],
+    editorProps: {
+      attributes: {
+        id: 'editor-content',
+        class: 'flex-1 p-5 font-sans text-base leading-relaxed overflow-y-auto whitespace-pre-wrap break-word outline-none',
+      },
+    },
+  });
+
   const { currentDocument, updateContent, saveDocument } = useDocument();
   const { settings } = useSettings();
   const { searchQuery, currentMatch, matchCount } = useSearch();
@@ -196,7 +255,7 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
         p.classList.remove('active');
       }
     });
-  }, [editor, settings.focusMode, activeParagraph]);
+  }, [settings.focusMode, activeParagraph]);
 
   useEffect(() => {
     if (!editor || !settings.focusMode) return;
@@ -229,7 +288,10 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
   }, [editor, settings.focusMode]);
 
   useEffect(() => {
-    updateActiveParagraphClass();
+    const timer = setTimeout(() => {
+      updateActiveParagraphClass();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [updateActiveParagraphClass]);
 
   useEffect(() => {
@@ -281,243 +343,6 @@ const TipTapEditor = forwardRef(function TipTapEditor(props, ref) {
       observer.disconnect();
     };
   }, [editor, settings.focusMode, updateActiveParagraphClass]);
-
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3, 4, 5, 6],
-        },
-        code: {
-          HTMLAttributes: {
-            class: 'px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-sm font-mono',
-          },
-        },
-        codeBlock: false,
-        blockquote: {
-          HTMLAttributes: {
-            class: 'border-l-4 border-gray-400 dark:border-gray-600 pl-4 italic my-2',
-          },
-        },
-        bulletList: {
-          HTMLAttributes: {
-            class: 'list-disc list-inside my-2',
-          },
-        },
-        orderedList: {
-          HTMLAttributes: {
-            class: 'list-decimal list-inside my-2',
-          },
-        },
-        listItem: {
-          HTMLAttributes: {
-            class: 'my-1',
-          },
-        },
-        taskList: {
-          HTMLAttributes: {
-            class: 'contains-task-list',
-          },
-        },
-        taskItem: {
-          HTMLAttributes: {
-            class: 'task-list-item',
-          },
-          nested: true,
-        },
-      }),
-      CodeBlockHighlight,
-      TaskList,
-      TaskItem.configure({
-        HTMLAttributes: {
-          class: 'task-list-item',
-        },
-      }),
-      Highlight.configure({
-        multicolor: true,
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'cursor-pointer',
-        },
-      }),
-      Placeholder.configure({
-        placeholder: 'Start typing...',
-      }),
-    ],
-    content: '',
-    editorProps: {
-      attributes: {
-        id: 'editor-content',
-        class: 'flex-1 p-5 font-sans text-base leading-relaxed overflow-y-auto whitespace-pre-wrap break-word outline-none',
-      },
-      handleKeyDown: (view, event) => {
-        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        const modifier = isMac ? event.metaKey : event.ctrlKey;
-
-        if (modifier && event.key === 's') {
-          event.preventDefault();
-          saveDocument();
-          return true;
-        }
-
-        if (modifier && event.key === 'b') {
-          event.preventDefault();
-          editor.chain().focus().toggleBold().run();
-          return true;
-        }
-
-        if (modifier && event.key === 'i') {
-          event.preventDefault();
-          editor.chain().focus().toggleItalic().run();
-          return true;
-        }
-
-        if (modifier && event.key === 'z') {
-          event.preventDefault();
-          editor.chain().focus().undo().run();
-          return true;
-        }
-
-        if (modifier && event.key === 'y') {
-          event.preventDefault();
-          editor.chain().focus().redo().run();
-          return true;
-        }
-
-        return false;
-      },
-      handleClick: (view, event) => {
-        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        const modifier = isMac ? event.metaKey : event.ctrlKey;
-
-        const link = event.target.closest('a');
-        if (!link) {
-          if (linkPopover.isVisible) {
-            setLinkPopover((prev) => ({ ...prev, isVisible: false }));
-          }
-          return false;
-        }
-
-        const href = link.getAttribute('href');
-
-        if (modifier) {
-          event.preventDefault();
-          if (href) {
-            window.open(href, '_blank', 'noopener,noreferrer');
-          }
-          return true;
-        }
-
-        event.preventDefault();
-
-        const rect = link.getBoundingClientRect();
-        const editorDom = editor.view.dom;
-        const editorRect = editorDom.getBoundingClientRect();
-
-        setLinkPopover({
-          isVisible: true,
-          position: {
-            left: rect.left - editorRect.left + rect.width / 2,
-            top: rect.bottom - editorRect.top + 8,
-          },
-          url: href || '',
-          text: link.textContent || '',
-          linkElement: link,
-        });
-
-        return true;
-      },
-      handlePaste: (view, event) => {
-        const items = event.clipboardData?.items;
-        if (!items) return false;
-
-        for (const item of items) {
-          if (item.type.startsWith('image/')) {
-            event.preventDefault();
-            const blob = item.getAsFile();
-            if (blob) {
-              const reader = new FileReader();
-              reader.onload = async (e) => {
-                const base64 = e.target.result;
-                const workspacePath = currentDocument?.filePath
-                  ? currentDocument.filePath.substring(0, currentDocument.filePath.lastIndexOf('/'))
-                  : null;
-
-                if (!workspacePath) {
-                  console.error('Cannot paste image: document has not been saved to a workspace');
-                  return;
-                }
-
-                try {
-                  const imageInfo = await invoke('save_image_from_base64_cmd', {
-                    base64_data: base64,
-                    workspace_path: workspacePath,
-                  });
-
-                  const markdown = `![${imageInfo.file_name}](${imageInfo.relative_path})`;
-                  editor.chain().focus().insertContent(markdown).run();
-                } catch (err) {
-                  console.error('Failed to save image:', err);
-                }
-              };
-              reader.readAsDataURL(blob);
-            }
-            return true;
-          }
-
-          if (item.type === 'text/html' || item.type === 'text/plain') {
-            event.preventDefault();
-            const getPasteContent = async () => {
-              if (item.type === 'text/html') {
-                const html = event.clipboardData.getData('text/html');
-                if (html && html.trim()) {
-                  let markdown = turndownService.turndown(html);
-                  markdown = processPastedMarkdown(markdown);
-                  return markdown;
-                }
-              }
-              const text = event.clipboardData.getData('text/plain');
-              if (text) {
-                if (looksLikeMarkdown(text)) {
-                  return text;
-                }
-                return text;
-              }
-              return null;
-            };
-
-            getPasteContent().then((content) => {
-              if (content) {
-                editor.chain().focus().insertContent(content).run();
-              }
-            });
-            return true;
-          }
-        }
-        return false;
-      },
-    },
-    onUpdate: ({ editor }) => {
-      if (isInternalUpdateRef.current) {
-        return;
-      }
-
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
-      }
-
-      updateTimeoutRef.current = setTimeout(() => {
-        const html = editor.getHTML();
-        const processedHtml = taskListHtmlToMarkdown(html);
-        const markdown = marked(processedHtml);
-        const currentFrontmatter = frontmatterRef.current;
-        const fullContent = currentFrontmatter ? currentFrontmatter + markdown : markdown;
-        updateContent(fullContent);
-      }, 150);
-    },
-  });
 
   useEffect(() => {
     if (editor && currentDocument?.content !== undefined) {

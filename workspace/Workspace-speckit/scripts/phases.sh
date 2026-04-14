@@ -273,6 +273,81 @@ run_phase_implementation() {
     done
 }
 
+detect_project_info() {
+    local root="${1:-.}"
+    local info='{}'
+    
+    # === Ecosystem Detection ===
+    if [ -f "$root/package.json" ]; then
+        info=$(echo "$info" | jq '.has_package_json = true' 2>/dev/null || echo '{}')
+        
+        # Detect package manager
+        [ -f "$root/pnpm-lock.yaml" ] && info=$(echo "$info" | jq '.package_manager = "pnpm"' 2>/dev/null)
+        [ -f "$root/yarn.lock" ] && info=$(echo "$info" | jq '.package_manager = "yarn"' 2>/dev/null)
+        [ -f "$root/package-lock.json" ] && info=$(echo "$info" | jq '.package_manager = "npm"' 2>/dev/null)
+        [ -f "$root/bun.lockb" ] && info=$(echo "$info" | jq '.package_manager = "bun"' 2>/dev/null)
+        
+        # Detect frontend framework
+        local pkg=$(cat "$root/package.json" 2>/dev/null)
+        echo "$pkg" | grep -q '"react"' && info=$(echo "$info" | jq '.framework = "react"' 2>/dev/null)
+        echo "$pkg" | grep -q '"vue"' && info=$(echo "$info" | jq '.framework = "vue"' 2>/dev/null)
+        echo "$pkg" | grep -q '"next"' && info=$(echo "$info" | jq '.framework = "next"' 2>/dev/null)
+        echo "$pkg" | grep -q '"svelte"' && info=$(echo "$info" | jq '.framework = "svelte"' 2>/dev/null)
+        
+        # Detect dev server command
+        local dev_cmd=$(echo "$pkg" | jq -r '.scripts.dev // .scripts.start // empty' 2>/dev/null)
+        [ -n "$dev_cmd" ] && [ "$dev_cmd" != "null" ] && info=$(echo "$info" | jq ".dev_server = \"$dev_cmd\"" 2>/dev/null)
+        
+        # Detect frontend test framework
+        echo "$pkg" | grep -q '"vitest"' && info=$(echo "$info" | jq '.test_frameworks += ["vitest"]' 2>/dev/null)
+        echo "$pkg" | grep -q '"jest"' && info=$(echo "$info" | jq '.test_frameworks += ["jest"]' 2>/dev/null)
+        echo "$pkg" | grep -q '"@playwright/test"' && info=$(echo "$info" | jq '.test_frameworks += ["playwright"]' 2>/dev/null)
+        echo "$pkg" | grep -q '"cypress"' && info=$(echo "$info" | jq '.test_frameworks += ["cypress"]' 2>/dev/null)
+    fi
+    
+    if [ -f "$root/Cargo.toml" ]; then
+        info=$(echo "$info" | jq '.has_cargo = true' 2>/dev/null || echo '{}')
+        local pkg_name=$(grep '^name = ' "$root/Cargo.toml" 2>/dev/null | head -1 | sed 's/name = "//' | sed 's/"//' | tr -d ' ')
+        [ -n "$pkg_name" ] && info=$(echo "$info" | jq ".cargo_package = \"$pkg_name\"" 2>/dev/null)
+        [ -d "$root/tests" ] && info=$(echo "$info" | jq '.test_frameworks += ["cargo"]' 2>/dev/null)
+    fi
+    
+    if [ -f "$root/go.mod" ]; then
+        info=$(echo "$info" | jq '.has_go_mod = true' 2>/dev/null || echo '{}')
+        [ -d "$root" ] && info=$(echo "$info" | jq '.test_frameworks += ["go"]' 2>/dev/null)
+    fi
+    
+    if [ -f "$root/pyproject.toml" ] || [ -f "$root/requirements.txt" ]; then
+        info=$(echo "$info" | jq '.has_python = true' 2>/dev/null || echo '{}')
+        [ -f "$root/pytest.ini" ] && info=$(echo "$info" | jq '.test_frameworks += ["pytest"]' 2>/dev/null)
+    fi
+    
+    # === Tauri Detection ===
+    if [ -d "$root/src-tauri" ] || [ -f "$root/tauri.conf.json" ]; then
+        info=$(echo "$info" | jq '.is_tauri = true' 2>/dev/null || echo '{}')
+    fi
+    
+    # === Test Framework Detection via Files ===
+    [ -f "$root/vitest.config.ts" ] || [ -f "$root/vitest.config.js" ] || [ -f "$root/vite.config.ts" ] && \
+        info=$(echo "$info" | jq '.test_frameworks += ["vitest"]' 2>/dev/null)
+    [ -f "$root/playwright.config.ts" ] || [ -f "$root/playwright.config.js" ] && \
+        info=$(echo "$info" | jq '.test_frameworks += ["playwright"]' 2>/dev/null)
+    [ -f "$root/jest.config.ts" ] || [ -f "$root/jest.config.js" ] && \
+        info=$(echo "$info" | jq '.test_frameworks += ["jest"]' 2>/dev/null)
+    [ -f "$root/cypress.config.ts" ] || [ -f "$root/cypress.config.js" ] || [ -f "$root/cypress.json" ] && \
+        info=$(echo "$info" | jq '.test_frameworks += ["cypress"]' 2>/dev/null)
+    
+    # === Initialize test_frameworks array if empty ===
+    if ! echo "$info" | jq '.test_frameworks' >/dev/null 2>&1; then
+        info=$(echo "$info" | jq '.test_frameworks = []' 2>/dev/null)
+    fi
+    
+    # === Deduplicate test_frameworks ===
+    info=$(echo "$info" | jq '.test_frameworks = (.test_frameworks | unique)' 2>/dev/null)
+    
+    echo "$info" | jq '.' 2>/dev/null || echo '{}'
+}
+
 verify_test_coverage() {
     local tasks_json="$1"
     local output_dir="$2"
@@ -389,16 +464,104 @@ run_phase_verification() {
     fi
 
     echo ""
-    echo "[6/6a] Running test coverage verification..."
+    echo "[6/6] Project auto-discovery and LLM-guided verification..."
+    
+    local project_info=$(detect_project_info "$WORKSPACE_DIR")
+    echo "Detected project info:"
+    echo "$project_info" | jq '.' 2>/dev/null || echo "$project_info"
+    
+    local has_frontend=$(echo "$project_info" | jq -r '.has_package_json' 2>/dev/null)
+    local frameworks=$(echo "$project_info" | jq -r '.test_frameworks | join(", ")' 2>/dev/null)
+    local is_tauri=$(echo "$project_info" | jq -r '.is_tauri' 2>/dev/null)
+    
+    echo "Has frontend: $has_frontend"
+    echo "Test frameworks: ${frameworks:-none}"
+    echo "Is Tauri: $is_tauri"
+    
     verify_test_coverage "$tasks_json" "$output_dir"
 
-    PROMPT_VERIFICATION="Generate iteration verification report and write report to file: $verif_file
+    PROMPT_VERIFICATION="## LLM-Guided Project Verification
+
+You are running verification for this project. Your job is to:
+1. Run actual tests using detected frameworks
+2. Verify the app works in a browser (if frontend)
+3. Analyze results and provide actionable feedback
 
 ## Important Constraints
+- You MUST use the bash tool to actually execute tests, not just describe what to do
+- You MUST run real commands and report actual pass/fail results
 - Do NOT use subagent or task tools to spawn other agents
-- Do NOT delegate work to other agents
-- Must complete all verification work directly in current session
-- Use only Read, Write, Edit, Grep, LSP, Bash and other direct tools
+
+## Project Auto-Discovery Results
+$(echo "$project_info" | jq '.' 2>/dev/null || echo "{}")
+
+## Detected Test Frameworks
+Based on the project structure, run appropriate tests:
+- vitest: \`npx vitest run --reporter=verbose\`
+- playwright: \`npx playwright test\`
+- jest: \`npm test\`
+- cargo: \`cargo test\`
+- go: \`go test ./...\`
+- pytest: \`python -m pytest\`
+
+## Verification Steps
+
+### Step 1: Run Unit/Integration Tests
+Execute test commands for detected frameworks. Use bash tool to run them.
+
+### Step 2: Browser Smoke Test (CRITICAL for Frontend/Tauri)
+If the project has a frontend (\$has_package_json = true), you MUST verify the app loads in browser:
+
+1. Start dev server:
+   \`cd www && npm run dev &\`
+   Wait 8 seconds for server to start
+
+2. Use node with playwright to check:
+   \`\`\`javascript
+   const { chromium } = require('playwright');
+   (async () => {
+     const browser = await chromium.launch({ headless: true });
+     const page = await browser.newPage();
+     const errors = [];
+     page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
+     page.on('pageerror', err => errors.push(err.message));
+     await page.goto('http://localhost:1420', { waitUntil: 'networkidle', timeout: 15000 });
+     await page.waitForTimeout(2000);
+     const hasApp = await page.locator('#app').count() > 0;
+     const hasEditor = await page.locator('#editor-content').count() > 0;
+     await browser.close();
+     const realErrors = errors.filter(e => !e.includes('invoke') && !e.includes('tauri'));
+     console.log(JSON.stringify({ hasApp, hasEditor, errors: realErrors }));
+   })();
+   \`\`\`
+
+3. Check results - app should have #app and #editor-content elements, no critical JS errors
+
+4. Kill dev server: \`pkill -f "vite" || true\`
+
+### Step 3: Analyze and Report
+Write verification report to: $verif_file
+
+Report format:
+## Verification Results
+
+### Test Execution
+| Framework | Command | Result |
+|-----------|---------|--------|
+| vitest | npx vitest run | PASSED/FAILED |
+
+### Browser Smoke Test
+| Check | Result |
+|-------|--------|
+| Page loads | ✓/✗ |
+| #app exists | ✓/✗ |
+| Critical JS errors | ✓/✗ |
+
+### Issues Found
+- List actual failures with error messages
+
+### Recommendations
+- If issues found, suggest specific fixes
 
 ## Gap Analysis
 $(cat $gap_analysis)
@@ -412,20 +575,16 @@ $(cat $tasks_json 2>/dev/null || echo "{}")
 ## Test Coverage Report
 $(cat $test_cov_file 2>/dev/null || echo "No test coverage data available")
 
-## Implementation Status
-Check ./iterations/src/ directory for code and git commit history
-
 ## Output Requirements
 Write the complete iteration verification report to: $verif_file
 
 Report must include:
-1. P0 issue status (table: Issue | Status | Notes)
-2. Constitution compliance check
-3. PRD completeness evaluation
-4. Test coverage status (table: Task | Planned Tests | Implemented Tests | Coverage %)
-5. Missing test cases list
-6. Remaining issues list
-7. Next steps suggestions"
+1. Actual test execution results (real pass/fail from running commands)
+2. Browser smoke test results (if frontend)
+3. P0 issue status (table: Issue | Status | Notes)
+4. Test coverage status
+5. Issues found with severity
+6. Recommendations for fixes"
 
     generate_if_missing "$verif_file" "$PROMPT_VERIFICATION" 5
 }

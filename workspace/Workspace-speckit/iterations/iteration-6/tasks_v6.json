@@ -1,0 +1,2097 @@
+{
+  "tasks": [
+    {
+      "id": "G-001",
+      "priority": "P0",
+      "title": "Complete Cursor Mapping Bidirectional Conversion",
+      "description": "Review and fix cursor mapping edge cases in dom_to_source() including nested formatting, multi-byte characters, CRLF line endings, HTML entity encoding, empty nodes, and document boundary positions. Ensure bidirectional round-trip accuracy.",
+      "status": "done",
+      "test_criteria": [
+        "All edge case tests pass",
+        "Round-trip accuracy verified: source\u2192DOM\u2192source = original",
+        "Round-trip accuracy verified: DOM\u2192source\u2192DOM = equivalent",
+        "cargo test passes for cursor_mapping module"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote cursor_mapping",
+        "cargo test --package rustnote --lib -- semantic::position"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G001-001",
+          "name": "Nested formatting conversion",
+          "category": "edge_case",
+          "description": "Verify cursor position maps correctly when nested formatting exists",
+          "input": "**bold *italic bold***",
+          "expected_behavior": "Cursor at any position in nested structure maps correctly between source and DOM"
+        },
+        {
+          "id": "TC-G001-002",
+          "name": "Unicode multi-byte characters",
+          "category": "edge_case",
+          "description": "Verify cursor maps correctly with Unicode emojis and accented characters",
+          "input": "Hello \ud83c\udf0d World caf\u00e9 na\u00efve",
+          "expected_behavior": "Cursor positions remain accurate with multi-byte Unicode characters"
+        },
+        {
+          "id": "TC-G001-003",
+          "name": "CRLF line endings handling",
+          "category": "edge_case",
+          "description": "Verify cursor mapping handles CRLF (\\r\\n) line endings correctly",
+          "input": "Line 1\\r\\nLine 2\\r\\nLine 3",
+          "expected_behavior": "CRLF normalized to LF without cursor position drift"
+        },
+        {
+          "id": "TC-G001-004",
+          "name": "HTML entity encoding",
+          "category": "edge_case",
+          "description": "Verify HTML entities (&amp;, &lt;, &gt;, &quot;) map correctly",
+          "input": "&amp; &lt; &gt; &quot;test&quot;",
+          "expected_behavior": "HTML entities converted correctly in both directions"
+        },
+        {
+          "id": "TC-G001-005",
+          "name": "Empty and zero-width nodes",
+          "category": "edge_case",
+          "description": "Verify cursor mapping handles empty nodes (empty strong, empty em)",
+          "input": "**\\|\\|** and *|*>",
+          "expected_behavior": "Empty formatting nodes handled without crash or position errors"
+        },
+        {
+          "id": "TC-G001-006",
+          "name": "Document boundary positions",
+          "category": "edge_case",
+          "description": "Verify cursor at document start and end maps correctly",
+          "input": "Start text\n\nMore text",
+          "expected_behavior": "Cursor at position 0 and end-of-document maps correctly"
+        },
+        {
+          "id": "TC-G001-007",
+          "name": "Round-trip source\u2192DOM\u2192source",
+          "category": "integration",
+          "description": "Verify source\u2192DOM\u2192source produces original content",
+          "input": "**bold** and *italic* with `code`",
+          "expected_behavior": "After source\u2192DOM\u2192source conversion, content equals original"
+        },
+        {
+          "id": "TC-G001-008",
+          "name": "Round-trip DOM\u2192source\u2192DOM",
+          "category": "integration",
+          "description": "Verify DOM\u2192source\u2192DOM produces equivalent structure",
+          "input": "Complex nested: **bold *italic bold***",
+          "expected_behavior": "After DOM\u2192source\u2192DOM conversion, structure is semantically equivalent"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "bold",
+          "italic",
+          "code",
+          "links"
+        ],
+        "edge_cases": [
+          "nested_markup",
+          "unicode_content",
+          "crlf_line_endings",
+          "html_entities",
+          "empty_nodes",
+          "boundary_positions"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Focus on dom_to_source() edge cases. Review CursorMapping struct, build_cursor_mapping(), and dom_to_source() implementations. Add comprehensive tests for all identified edge cases.",
+      "dependencies": []
+    },
+    {
+      "id": "G-002",
+      "priority": "P0",
+      "title": "Verify and Fix PDF Export Quality",
+      "description": "Test current PDF export with complex Markdown (tables, code blocks, images, nested blockquotes, task lists) and fix any rendering quality issues.",
+      "status": "todo",
+      "test_criteria": [
+        "All complex Markdown structures render correctly in PDF",
+        "Code blocks have syntax highlighting",
+        "Images render at correct sizes",
+        "Multi-page documents paginate correctly",
+        "cargo test passes for export module"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote export",
+        "npm run build"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G002-001",
+          "name": "PDF table rendering with borders",
+          "category": "render",
+          "description": "Verify tables render with correct borders and alignment",
+          "input": "| Header 1 | Header 2 |\\n|---------|---------|\\n| Cell 1  | Cell 2  |",
+          "expected_behavior": "PDF shows table with borders, header row distinguished, cells aligned"
+        },
+        {
+          "id": "TC-G002-002",
+          "name": "PDF code block syntax highlighting",
+          "category": "render",
+          "description": "Verify code blocks render with colored syntax highlighting",
+          "input": "```rust\\nfn main() {\\n    println!(\\\"Hello\\\");\\n}\\n```",
+          "expected_behavior": "PDF shows code with syntax colors preserved"
+        },
+        {
+          "id": "TC-G002-003",
+          "name": "PDF image sizing and positioning",
+          "category": "render",
+          "description": "Verify images render at correct sizes and positions",
+          "input": "![alt text](image.png){width=400 height=300}",
+          "expected_behavior": "Image in PDF is 400x300 pixels (or proportionally scaled)"
+        },
+        {
+          "id": "TC-G002-004",
+          "name": "PDF nested blockquote rendering",
+          "category": "render",
+          "description": "Verify nested blockquotes render with correct indentation",
+          "input": "> Level 1\\n>> Level 2\\n>>> Level 3",
+          "expected_behavior": "Blockquotes show correct nesting indentation in PDF"
+        },
+        {
+          "id": "TC-G002-005",
+          "name": "PDF task list rendering",
+          "category": "render",
+          "description": "Verify task lists ([x] checkbox syntax) render correctly",
+          "input": "- [x] Completed task\\n- [ ] Pending task\\n- [ ] Another pending",
+          "expected_behavior": "Checkboxes render as checked/unchecked in PDF"
+        },
+        {
+          "id": "TC-G002-006",
+          "name": "PDF multi-page pagination",
+          "category": "render",
+          "description": "Verify long documents paginate correctly without content cut-off",
+          "input": "Long document with 50+ paragraphs",
+          "expected_behavior": "Content flows across pages without cutting mid-paragraph"
+        },
+        {
+          "id": "TC-G002-007",
+          "name": "PDF complex document layout",
+          "category": "render",
+          "description": "Verify complex document with multiple element types renders correctly",
+          "input": "Document with tables, code blocks, images, blockquotes, lists",
+          "expected_behavior": "All element types render correctly in single PDF"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "table",
+          "code_block",
+          "image",
+          "blockquote",
+          "task_list"
+        ],
+        "edge_cases": [
+          "long_lines",
+          "nested_structures",
+          "large_images"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Evaluate HTML-to-PDF pipeline options if issues found: webview print (native), html2pdf crate, or temp HTML file + system print dialog.",
+      "dependencies": []
+    },
+    {
+      "id": "G-003",
+      "priority": "P1",
+      "title": "Wrap Transform Integration Verification",
+      "description": "Verify Transform::Wrap works end-to-end with TipTap selection. Test wrap with bold, italic, code, and link markers. Test wrap without selection (insert markers at cursor).",
+      "status": "todo",
+      "test_criteria": [
+        "Transform::Wrap works with bold markers",
+        "Transform::Wrap works with italic markers",
+        "Transform::Wrap works with code markers",
+        "Transform::Wrap works with link markers",
+        "Transform::Wrap without selection inserts markers at cursor"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote wrap",
+        "cargo test --package rustnote transform"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G003-001",
+          "name": "Wrap selection with bold markers",
+          "category": "integration",
+          "description": "Wrap selected text with **bold** markers",
+          "input": "Select 'text' -> apply wrap with **",
+          "expected_behavior": "Result: **text**"
+        },
+        {
+          "id": "TC-G003-002",
+          "name": "Wrap selection with italic markers",
+          "category": "integration",
+          "description": "Wrap selected text with *italic* markers",
+          "input": "Select 'text' -> apply wrap with *",
+          "expected_behavior": "Result: *text*"
+        },
+        {
+          "id": "TC-G003-003",
+          "name": "Wrap selection with code markers",
+          "category": "integration",
+          "description": "Wrap selected text with `code` markers",
+          "input": "Select 'code' -> apply wrap with `",
+          "expected_behavior": "Result: `code`"
+        },
+        {
+          "id": "TC-G003-004",
+          "name": "Wrap selection with link markers",
+          "category": "integration",
+          "description": "Wrap selected text with [text](url) markers",
+          "input": "Select 'link text' -> apply wrap with [text](url)",
+          "expected_behavior": "Result: [link text](url)"
+        },
+        {
+          "id": "TC-G003-005",
+          "name": "Wrap without selection at cursor",
+          "category": "integration",
+          "description": "Apply wrap without selection should insert markers at cursor",
+          "input": "Cursor at position in 'hello world' -> apply ** wrap",
+          "expected_behavior": "Result: **| (cursor between markers)"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "bold",
+          "italic",
+          "code",
+          "links"
+        ],
+        "edge_cases": [
+          "empty_selection",
+          "cursor_at_boundary"
+        ],
+        "browser_features": [
+          "selection"
+        ]
+      },
+      "impl_notes": "Verify Rust transform engine is properly wired to frontend. Check editor.rs commands and TipTapEditor.jsx integration.",
+      "dependencies": []
+    },
+    {
+      "id": "G-004",
+      "priority": "P1",
+      "title": "HTML Export Linked-Assets Mode",
+      "description": "Implement 'linked-assets mode' for HTML export. In linked mode, keep assets as external references. In inline mode, embed assets as base64 data URIs. Add UI toggle in ExportModal.",
+      "status": "todo",
+      "test_criteria": [
+        "Linked mode keeps assets as external references",
+        "Inline mode embeds assets as base64 data URIs",
+        "UI toggle in ExportModal works correctly",
+        "Both modes produce valid HTML"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote export",
+        "npm run build"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G004-001",
+          "name": "Linked mode keeps images external",
+          "category": "integration",
+          "description": "In linked mode, images should reference external files",
+          "input": "![img](image.png) in a document",
+          "expected_behavior": "HTML output contains <img src='image.png'> (external reference)"
+        },
+        {
+          "id": "TC-G004-002",
+          "name": "Inline mode embeds images as base64",
+          "category": "integration",
+          "description": "In inline mode, images should be embedded as base64 data URIs",
+          "input": "![img](image.png) in a document",
+          "expected_behavior": "HTML output contains <img src='data:image/png;base64,...'>"
+        },
+        {
+          "id": "TC-G004-003",
+          "name": "ExportModal toggle UI",
+          "category": "unit",
+          "description": "Verify ExportModal has working linked/inline toggle",
+          "input": "ExportModal component",
+          "expected_behavior": "Toggle switches between linked and inline modes"
+        },
+        {
+          "id": "TC-G004-004",
+          "name": "Linked mode with multiple assets",
+          "category": "integration",
+          "description": "Multiple images in linked mode",
+          "input": "![img1](a.png) ![img2](b.png)",
+          "expected_behavior": "Both images remain as external references"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "image"
+        ],
+        "edge_cases": [
+          "multiple_images",
+          "missing_files"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Modify export.rs to support both modes. Update ExportModal.jsx with toggle UI.",
+      "dependencies": []
+    },
+    {
+      "id": "G-005",
+      "priority": "P1",
+      "title": "Image Path Testing",
+      "description": "Add tests for relative path handling in subdirectory documents, URL-encoded paths, cross-platform path separators, and paths with ../ traversal.",
+      "status": "todo",
+      "test_criteria": [
+        "Relative path handling in subdirectory documents works",
+        "URL-encoded paths (%20 for spaces) work",
+        "Cross-platform path separators work",
+        "Paths with ../ traversal work",
+        "resolve_relative_path() handles all cases"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote image",
+        "cargo test --package rustnote --lib -- commands::image"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G005-001",
+          "name": "Relative path in subdirectory",
+          "category": "unit",
+          "description": "Document in subfolder references image with relative path",
+          "input": "Document at /docs/guide/intro.md references ../images/diagram.png",
+          "expected_behavior": "Image path resolves to /docs/images/diagram.png"
+        },
+        {
+          "id": "TC-G005-002",
+          "name": "URL-encoded spaces in path",
+          "category": "unit",
+          "description": "Path with %20 encoding for spaces",
+          "input": "![img](My%20Images/photo.png)",
+          "expected_behavior": "Path resolves correctly, spaces handled"
+        },
+        {
+          "id": "TC-G005-003",
+          "name": "Cross-platform path separators",
+          "category": "unit",
+          "description": "Test Windows and Unix path separators",
+          "input": "Path with / separators, Path with \\\\ separators",
+          "expected_behavior": "Both resolve to correct absolute path on current OS"
+        },
+        {
+          "id": "TC-G005-004",
+          "name": "Parent directory traversal",
+          "category": "unit",
+          "description": "Path with ../ traversal",
+          "input": "![img](../assets/logo.png) from /docs/guide/intro.md",
+          "expected_behavior": "Resolves to /docs/assets/logo.png"
+        },
+        {
+          "id": "TC-G005-005",
+          "name": "Deep nested traversal",
+          "category": "edge_case",
+          "description": "Multiple ../ in path",
+          "input": "![img](../../images/photo.png) from /a/b/c/doc.md",
+          "expected_behavior": "Resolves to /a/images/photo.png"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "image"
+        ],
+        "edge_cases": [
+          "url_encoding",
+          "path_traversal",
+          "cross_platform"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Verify resolve_relative_path() in image.rs handles all edge cases. Add tests to image_path_tests.rs.",
+      "dependencies": []
+    },
+    {
+      "id": "G-006",
+      "priority": "P1",
+      "title": "GFM Parser Verification",
+      "description": "Verify tree-sitter correctly parses GFM tables, task lists, strikethrough extension, and autolinks. Add tests for GFM extension nodes.",
+      "status": "todo",
+      "test_criteria": [
+        "Tree-sitter parses GFM tables correctly",
+        "Tree-sitter parses task lists ([x] syntax) correctly",
+        "Strikethrough extension (~~text~~) works",
+        "Autolinks (URLs in angle brackets) work",
+        "All GFM parsing tests pass"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote tree_sitter",
+        "cargo test --package rustnote parser"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G006-001",
+          "name": "GFM table parsing",
+          "category": "unit",
+          "description": "Verify tree-sitter parses GFM tables correctly",
+          "input": "| Header | Header |\\n|--------|--------|\\n| Cell   | Cell   |",
+          "expected_behavior": "Parser produces correct AST nodes for table structure"
+        },
+        {
+          "id": "TC-G006-002",
+          "name": "Task list parsing",
+          "category": "unit",
+          "description": "Verify task list [x] syntax parses correctly",
+          "input": "- [x] Done\\n- [ ] Not done",
+          "expected_behavior": "Parser identifies checked and unchecked states"
+        },
+        {
+          "id": "TC-G006-003",
+          "name": "Strikethrough parsing",
+          "category": "unit",
+          "description": "Verify strikethrough ~~text~~ parses correctly",
+          "input": "~~deleted text~~",
+          "expected_behavior": "Parser produces strikethrough node"
+        },
+        {
+          "id": "TC-G006-004",
+          "name": "Autolink parsing",
+          "category": "unit",
+          "description": "Verify autolinks <URL> parse correctly",
+          "input": "<https://example.com>",
+          "expected_behavior": "Parser produces autolink node with URL"
+        },
+        {
+          "id": "TC-G006-005",
+          "name": "Complex GFM document",
+          "category": "integration",
+          "description": "Document with multiple GFM features",
+          "input": "| Table | ~~strikethrough~~ |\\n|--------|------------------|\\n| Cell   | [x] done        |",
+          "expected_behavior": "All GFM elements parse correctly in combination"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "table",
+          "task_list",
+          "strikethrough",
+          "autolink"
+        ],
+        "edge_cases": [
+          "malformed_tables",
+          "nested_gfm"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Check tree_sitter.rs for GFM extension configuration. Add tests to tree_sitter_parser_tests.rs.",
+      "dependencies": []
+    },
+    {
+      "id": "G-007",
+      "priority": "P1",
+      "title": "Settings Schema Verification",
+      "description": "Review PRD-09 Settings interface specification. Verify Settings model uses flat structure (not nested editor struct). Fix if nested editor struct found.",
+      "status": "todo",
+      "test_criteria": [
+        "Settings model uses flat structure",
+        "No nested editor struct in settings",
+        "All required fields from PRD-09 present",
+        "Settings persists correctly with rusqlite"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote settings",
+        "cargo build --package rustnote"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G007-001",
+          "name": "Flat settings structure",
+          "category": "unit",
+          "description": "Verify Settings model is flat, not nested",
+          "input": "model/settings.rs",
+          "expected_behavior": "No nested 'editor' struct, all fields at top level"
+        },
+        {
+          "id": "TC-G007-002",
+          "name": "Required settings fields present",
+          "category": "unit",
+          "description": "Verify all PRD-09 required fields exist",
+          "input": "PRD-09 specification",
+          "expected_behavior": "All required fields present in Settings model"
+        },
+        {
+          "id": "TC-G007-003",
+          "name": "Settings persistence",
+          "category": "integration",
+          "description": "Verify settings save and load correctly",
+          "input": "Update settings -> restart app",
+          "expected_behavior": "Settings persist across app restarts"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Review settings.rs and model/settings.rs. Ensure flat structure matches PRD-09.",
+      "dependencies": []
+    },
+    {
+      "id": "G-008",
+      "priority": "P1",
+      "title": "Editor Consolidation",
+      "description": "Read Editor.jsx and TipTapEditor.jsx. Understand distinction and purpose. Either consolidate if duplication or add comments if intentional.",
+      "status": "todo",
+      "test_criteria": [
+        "Editor.jsx and TipTapEditor.jsx relationship documented",
+        "No unintended duplication",
+        "Consolidation done if makes sense"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G008-001",
+          "name": "Editor component relationship",
+          "category": "unit",
+          "description": "Document relationship between Editor.jsx and TipTapEditor.jsx",
+          "input": "Editor.jsx and TipTapEditor.jsx",
+          "expected_behavior": "Clear documentation of which to use when"
+        },
+        {
+          "id": "TC-G008-002",
+          "name": "Consolidation check",
+          "category": "integration",
+          "description": "If duplication found, verify consolidation works",
+          "input": "Both components handle same functionality",
+          "expected_behavior": "Single consolidated component works correctly"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Read both files, compare functionality, document relationship clearly.",
+      "dependencies": []
+    },
+    {
+      "id": "G-009",
+      "priority": "P2",
+      "title": "Table Editing Constraints",
+      "description": "Document table editing constraints per PRD note. Add tests for data integrity during table editing. Ensure TipTap default behavior is constrained but safe.",
+      "status": "todo",
+      "test_criteria": [
+        "Table editing constraints documented",
+        "Data integrity tests pass",
+        "TipTap behavior is constrained but safe"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote table"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G009-001",
+          "name": "Table data integrity on edit",
+          "category": "unit",
+          "description": "Verify data integrity when editing table cells",
+          "input": "Table with data -> edit cell",
+          "expected_behavior": "Other cells remain unchanged, structure preserved"
+        },
+        {
+          "id": "TC-G009-002",
+          "name": "Table row/col operations",
+          "category": "edge_case",
+          "description": "Test add/remove rows and columns",
+          "input": "Table -> add row -> add column -> remove row",
+          "expected_behavior": "Table structure remains valid"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "table"
+        ],
+        "edge_cases": [
+          "cell_merging",
+          "row_operations"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Document per PRD note. Add data integrity tests.",
+      "dependencies": []
+    },
+    {
+      "id": "G-010",
+      "priority": "P2",
+      "title": "Focus Mode Visual Verification",
+      "description": "Verify CSS-based focus mode properly dims non-current paragraphs. Test with various document lengths. Fix visual issues if found.",
+      "status": "todo",
+      "test_criteria": [
+        "CSS-based focus mode dims non-current paragraphs",
+        "Works with various document lengths",
+        "Distraction reduction per FR-028"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote focus",
+        "npm run build"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G010-001",
+          "name": "Non-current paragraph dimming",
+          "category": "render",
+          "description": "Verify non-active paragraphs are dimmed",
+          "input": "Document with 10 paragraphs, cursor in paragraph 3",
+          "expected_behavior": "Paragraph 3 full opacity, others dimmed"
+        },
+        {
+          "id": "TC-G010-002",
+          "name": "Focus mode with long document",
+          "category": "render",
+          "description": "Verify focus mode works with 100+ paragraph document",
+          "input": "Document with 100 paragraphs",
+          "expected_behavior": "Only current paragraph visible/clear, others dim"
+        },
+        {
+          "id": "TC-G010-003",
+          "name": "Focus mode toggle",
+          "category": "integration",
+          "description": "Verify focus mode toggles on/off correctly",
+          "input": "Toggle focus mode",
+          "expected_behavior": "Dimming appears/disappears correctly"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "long_documents",
+          "nested_content"
+        ],
+        "browser_features": [
+          "scroll"
+        ]
+      },
+      "impl_notes": "CSS-based approach. Test with various document lengths.",
+      "dependencies": []
+    },
+    {
+      "id": "G-011",
+      "priority": "P2",
+      "title": "Typewriter Mode Scroll Verification",
+      "description": "Verify scroll behavior keeps cursor at vertical center during navigation. Test with various document lengths. Fix scroll issues if found.",
+      "status": "todo",
+      "test_criteria": [
+        "Cursor stays at vertical center during navigation",
+        "Works with various document lengths",
+        "Smooth scroll behavior"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote typewriter",
+        "npm run build"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G011-001",
+          "name": "Typewriter scroll position",
+          "category": "render",
+          "description": "Cursor stays at vertical center when typing",
+          "input": "Type in document with typewriter mode enabled",
+          "expected_behavior": "Active line stays at vertical center of viewport"
+        },
+        {
+          "id": "TC-G011-002",
+          "name": "Navigation with typewriter mode",
+          "category": "render",
+          "description": "Arrow key navigation keeps cursor centered",
+          "input": "Press up/down arrows with typewriter mode",
+          "expected_behavior": "Cursor stays at vertical center, document scrolls"
+        },
+        {
+          "id": "TC-G011-003",
+          "name": "Typewriter with long document",
+          "category": "render",
+          "description": "Typewriter mode with 100+ page document",
+          "input": "Navigate long document with typewriter mode",
+          "expected_behavior": "Smooth scrolling, cursor always centered"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "long_documents",
+          "scroll_anchoring"
+        ],
+        "browser_features": [
+          "scroll",
+          "keyboard_navigation"
+        ]
+      },
+      "impl_notes": "Verify scroll behavior per FR-029. Test with various document lengths.",
+      "dependencies": []
+    },
+    {
+      "id": "G-012",
+      "priority": "P2",
+      "title": "Paste Handling Polish",
+      "description": "Improve rich text paste conversion for common formats. Test with various paste sources (Word, web, other editors). Ensure Markdown conversion fidelity.",
+      "status": "todo",
+      "test_criteria": [
+        "Rich text from Word pastes correctly",
+        "Web content pastes correctly",
+        "Markdown fidelity maintained",
+        "Works from various editors"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote paste"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G012-001",
+          "name": "Paste from Microsoft Word",
+          "category": "integration",
+          "description": "Paste content copied from Word document",
+          "input": "Bold, italic, lists from Word",
+          "expected_behavior": "Content converts to Markdown correctly"
+        },
+        {
+          "id": "TC-G012-002",
+          "name": "Paste from web browser",
+          "category": "integration",
+          "description": "Paste content from web page",
+          "input": "Formatted content from web",
+          "expected_behavior": "Web formatting converts to Markdown appropriately"
+        },
+        {
+          "id": "TC-G012-003",
+          "name": "Paste from another editor",
+          "category": "integration",
+          "description": "Paste from other Markdown editor",
+          "input": "Markdown from another editor",
+          "expected_behavior": "Markdown fidelity maintained"
+        },
+        {
+          "id": "TC-G012-004",
+          "name": "Paste preserves code blocks",
+          "category": "edge_case",
+          "description": "Paste content with code blocks",
+          "input": "Code block with syntax highlighting",
+          "expected_behavior": "Code block structure preserved"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "bold",
+          "italic",
+          "code",
+          "lists",
+          "headings"
+        ],
+        "edge_cases": [
+          "html_paste",
+          "rtf_paste",
+          "cross_editor"
+        ],
+        "browser_features": [
+          "clipboard_paste"
+        ]
+      },
+      "impl_notes": "Improve rich text paste conversion. Test with various sources.",
+      "dependencies": []
+    },
+    {
+      "id": "G-013",
+      "priority": "P2",
+      "title": "Preferences UI",
+      "description": "Consider adding dedicated settings/preferences panel. If implementing, include all settings from PRD-09. Current uses toolbar buttons only.",
+      "status": "todo",
+      "test_criteria": [
+        "All PRD-09 settings accessible",
+        "Preferences panel UI works correctly",
+        "Settings persist correctly"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G013-001",
+          "name": "Preferences panel access",
+          "category": "integration",
+          "description": "Open preferences panel",
+          "input": "Click preferences menu item",
+          "expected_behavior": "Preferences panel opens with all settings"
+        },
+        {
+          "id": "TC-G013-002",
+          "name": "All PRD-09 settings present",
+          "category": "unit",
+          "description": "Verify all PRD-09 settings are in panel",
+          "input": "PRD-09 settings list",
+          "expected_behavior": "All settings present in preferences UI"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Consider dedicated panel if current toolbar-only approach insufficient.",
+      "dependencies": []
+    },
+    {
+      "id": "G-014",
+      "priority": "P2",
+      "title": "Service Interface Verification",
+      "description": "Verify service trait implementations match PRD-10 specification. Check DocumentService, EditorService, WorkspaceService, ExportService, RecoveryService.",
+      "status": "todo",
+      "test_criteria": [
+        "All service traits match PRD-10 signatures",
+        "DocumentService interface correct",
+        "EditorService interface correct",
+        "WorkspaceService interface correct",
+        "ExportService interface correct",
+        "RecoveryService interface correct"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G014-001",
+          "name": "DocumentService trait signature",
+          "category": "unit",
+          "description": "Verify DocumentService matches PRD-10",
+          "input": "services/mod.rs DocumentService trait",
+          "expected_behavior": "All methods match PRD-10 specification"
+        },
+        {
+          "id": "TC-G014-002",
+          "name": "EditorService trait signature",
+          "category": "unit",
+          "description": "Verify EditorService matches PRD-10",
+          "input": "services/mod.rs EditorService trait",
+          "expected_behavior": "All methods match PRD-10 specification"
+        },
+        {
+          "id": "TC-G014-003",
+          "name": "WorkspaceService trait signature",
+          "category": "unit",
+          "description": "Verify WorkspaceService matches PRD-10",
+          "input": "services/mod.rs WorkspaceService trait",
+          "expected_behavior": "All methods match PRD-10 specification"
+        },
+        {
+          "id": "TC-G014-004",
+          "name": "ExportService trait signature",
+          "category": "unit",
+          "description": "Verify ExportService matches PRD-10",
+          "input": "services/mod.rs ExportService trait",
+          "expected_behavior": "All methods match PRD-10 specification"
+        },
+        {
+          "id": "TC-G014-005",
+          "name": "RecoveryService trait signature",
+          "category": "unit",
+          "description": "Verify RecoveryService matches PRD-10",
+          "input": "services/mod.rs RecoveryService trait",
+          "expected_behavior": "All methods match PRD-10 specification"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Check all service traits in services/mod.rs against PRD-10.",
+      "dependencies": []
+    },
+    {
+      "id": "G-015",
+      "priority": "P2",
+      "title": "Autosave Reliability",
+      "description": "Consider Rust-side autosave with debounce as backup. Verify crash recovery still works if app crashes before frontend timer fires. Test crash scenarios.",
+      "status": "todo",
+      "test_criteria": [
+        "Rust-side autosave works with debounce",
+        "Crash recovery works even if crash before frontend timer",
+        "Autosave doesn't interfere with normal editing"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote autosave",
+        "cargo test --package rustnote recovery"
+      ],
+      "test_cases": [
+        {
+          "id": "TC-G015-001",
+          "name": "Rust autosave triggers",
+          "category": "integration",
+          "description": "Rust autosave triggers after debounce",
+          "input": "Edit document -> wait for debounce",
+          "expected_behavior": "File saved automatically after debounce period"
+        },
+        {
+          "id": "TC-G015-002",
+          "name": "Crash recovery",
+          "category": "integration",
+          "description": "Recovery works after crash before frontend timer",
+          "input": "Edit -> crash before frontend autosave",
+          "expected_behavior": "Edited content recoverable from crash"
+        },
+        {
+          "id": "TC-G015-003",
+          "name": "Autosave doesn't interfere",
+          "category": "integration",
+          "description": "Autosave doesn't interrupt editing",
+          "input": "Continuous typing with autosave enabled",
+          "expected_behavior": "No lag or interruption from autosave"
+        }
+      ],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "crash_during_edit",
+          "rapid_editing"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Consider Rust-side backup autosave with debounce per FR-005.",
+      "dependencies": []
+    },
+    {
+      "id": "ARCH-001",
+      "priority": "P1",
+      "title": "rusqlite Settings Persistence",
+      "description": "services/settings.rs now uses rusqlite for persistent settings storage",
+      "status": "done",
+      "test_criteria": [
+        "Settings persist correctly with rusqlite"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote settings"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "ARCH-002",
+      "priority": "P1",
+      "title": "Tree-sitter Incremental Parsing",
+      "description": "parser/tree_sitter.rs implements incremental parsing",
+      "status": "done",
+      "test_criteria": [
+        "Incremental parsing works correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote tree_sitter"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "all"
+        ],
+        "edge_cases": [
+          "incremental_updates"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "ARCH-003",
+      "priority": "P1",
+      "title": "Ropey Text Buffer",
+      "description": "buffer/mod.rs now uses ropey for efficient text buffer",
+      "status": "done",
+      "test_criteria": [
+        "Ropey text buffer works correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote buffer"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "ARCH-004",
+      "priority": "P1",
+      "title": "Service Trait Definitions",
+      "description": "services/mod.rs defines trait interfaces for all services",
+      "status": "done",
+      "test_criteria": [
+        "Service traits defined correctly"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "TRANS-001",
+      "priority": "P1",
+      "title": "Transform::Enter",
+      "description": "General enter with smart list/blockquote/heading detection",
+      "status": "done",
+      "test_criteria": [
+        "Transform::Enter works with smart detection"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote transform"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "list",
+          "blockquote",
+          "heading"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "TRANS-002",
+      "priority": "P1",
+      "title": "Transform::Backspace",
+      "description": "Smart backspace at structural boundaries",
+      "status": "done",
+      "test_criteria": [
+        "Smart backspace works at boundaries"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote transform"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "boundary_handling"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "TRANS-003",
+      "priority": "P1",
+      "title": "Transform::Tab / ShiftTab",
+      "description": "List indentation with Tab/ShiftTab",
+      "status": "done",
+      "test_criteria": [
+        "Tab/ShiftTab indent list items correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote transform"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "list"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "TRANS-004",
+      "priority": "P1",
+      "title": "Transform::EnterInListItem",
+      "description": "Dedicated list enter handling",
+      "status": "done",
+      "test_criteria": [
+        "List item enter creates new list item"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote transform"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "list"
+        ],
+        "edge_cases": [
+          "nested_lists"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "TRANS-005",
+      "priority": "P1",
+      "title": "Transform::EnterInBlockQuote",
+      "description": "Dedicated blockquote enter handling",
+      "status": "done",
+      "test_criteria": [
+        "Blockquote enter continues blockquote"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote transform"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "blockquote"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "TRANS-006",
+      "priority": "P1",
+      "title": "Transform::EnterInHeading",
+      "description": "Dedicated heading enter handling",
+      "status": "done",
+      "test_criteria": [
+        "Heading enter exits heading to new line"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote transform"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "heading"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "TRANS-007",
+      "priority": "P1",
+      "title": "Transform::Wrap",
+      "description": "Text selection wrapping with markers",
+      "status": "done",
+      "test_criteria": [
+        "Wrap transforms selection with markers"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote transform"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "bold",
+          "italic",
+          "code",
+          "links"
+        ],
+        "edge_cases": [
+          "empty_selection"
+        ],
+        "browser_features": [
+          "selection"
+        ]
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "TEST-001",
+      "priority": "P1",
+      "title": "Cursor Mapping Tests",
+      "description": "tests/cursor_mapping_tests.rs with 6 test cases",
+      "status": "done",
+      "test_criteria": [
+        "cursor_mapping_tests.rs exists with 6 test cases"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote cursor_mapping"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "bold",
+          "italic",
+          "code"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "TEST-002",
+      "priority": "P1",
+      "title": "Focus Mode Tests",
+      "description": "tests/focus_mode_tests.rs with 9 test cases",
+      "status": "done",
+      "test_criteria": [
+        "focus_mode_tests.rs exists with 9 test cases"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote focus_mode"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "long_documents"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "TEST-003",
+      "priority": "P1",
+      "title": "Typewriter Mode Tests",
+      "description": "tests/typewriter_mode_tests.rs",
+      "status": "done",
+      "test_criteria": [
+        "typewriter_mode_tests.rs exists and passes"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote typewriter_mode"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "scroll_anchoring"
+        ],
+        "browser_features": [
+          "scroll"
+        ]
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "TEST-004",
+      "priority": "P1",
+      "title": "Settings Persistence Tests",
+      "description": "tests/settings_persistence_tests.rs",
+      "status": "done",
+      "test_criteria": [
+        "settings_persistence_tests.rs exists and passes"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote settings_persistence"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "TEST-005",
+      "priority": "P1",
+      "title": "Tree-sitter Parser Tests",
+      "description": "tests/tree_sitter_parser_tests.rs",
+      "status": "done",
+      "test_criteria": [
+        "tree_sitter_parser_tests.rs exists and passes"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote tree_sitter_parser"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "all"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "TEST-006",
+      "priority": "P1",
+      "title": "Editor Undo/Redo Tests",
+      "description": "tests/editor_undo_redo_tests.rs",
+      "status": "done",
+      "test_criteria": [
+        "editor_undo_redo_tests.rs exists and passes"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor_undo_redo"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed in previous iteration",
+      "dependencies": []
+    },
+    {
+      "id": "FR-001",
+      "priority": "P0",
+      "title": "New file - create untitled, save to chosen location",
+      "description": "FR-001: New file - create untitled, save to chosen location",
+      "status": "done",
+      "test_criteria": [
+        "New file creates untitled document",
+        "Save to chosen location works"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote document"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-002",
+      "priority": "P0",
+      "title": "Open file - open Markdown from disk, drag-and-drop",
+      "description": "FR-002: Open file - open Markdown from disk, drag-and-drop",
+      "status": "done",
+      "test_criteria": [
+        "Open file works",
+        "Drag and drop works"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote document"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": [
+          "drag_drop"
+        ]
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-003",
+      "priority": "P0",
+      "title": "Open folder - workspace with sidebar file tree",
+      "description": "FR-003: Open folder - workspace with sidebar file tree",
+      "status": "done",
+      "test_criteria": [
+        "Open folder creates workspace",
+        "Sidebar file tree displays"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote workspace"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-004",
+      "priority": "P0",
+      "title": "Save - manual save, atomic write",
+      "description": "FR-004: Save - manual save, atomic write",
+      "status": "done",
+      "test_criteria": [
+        "Manual save works",
+        "Atomic write prevents corruption"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote document"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "concurrent_writes"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-005",
+      "priority": "P0",
+      "title": "Auto-save - configurable, dirty-state indication",
+      "description": "FR-005: Auto-save - configurable, dirty-state indication",
+      "status": "done",
+      "test_criteria": [
+        "Auto-save configurable",
+        "Dirty state indicator works"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote autosave"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-006",
+      "priority": "P0",
+      "title": "Recovery - restore after crash/force close",
+      "description": "FR-006: Recovery - restore after crash/force close",
+      "status": "done",
+      "test_criteria": [
+        "Crash recovery works",
+        "Restore after force close works"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote recovery"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [
+          "crash_during_edit"
+        ],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-007",
+      "priority": "P0",
+      "title": "External changes - detect, prompt user",
+      "description": "FR-007: External changes - detect, prompt user",
+      "status": "done",
+      "test_criteria": [
+        "External change detection works",
+        "User prompt appears"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote watcher"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-008",
+      "priority": "P0",
+      "title": "Single-pane live rendering",
+      "description": "FR-008: Single-pane live rendering",
+      "status": "done",
+      "test_criteria": [
+        "Live rendering works in single pane"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "all"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-009",
+      "priority": "P0",
+      "title": "Heading behavior",
+      "description": "FR-009: Heading behavior",
+      "status": "done",
+      "test_criteria": [
+        "Headings render correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "heading"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-010",
+      "priority": "P0",
+      "title": "Emphasis behavior",
+      "description": "FR-010: Emphasis behavior",
+      "status": "done",
+      "test_criteria": [
+        "Bold and italic render correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "bold",
+          "italic"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-012",
+      "priority": "P0",
+      "title": "List behavior",
+      "description": "FR-012: List behavior",
+      "status": "done",
+      "test_criteria": [
+        "Lists render and edit correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "list"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-013",
+      "priority": "P0",
+      "title": "Task list behavior",
+      "description": "FR-013: Task list behavior",
+      "status": "done",
+      "test_criteria": [
+        "Task lists render and toggle correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "task_list"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-014",
+      "priority": "P0",
+      "title": "Blockquote behavior",
+      "description": "FR-014: Blockquote behavior",
+      "status": "done",
+      "test_criteria": [
+        "Blockquotes render correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "blockquote"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-015",
+      "priority": "P0",
+      "title": "Code fence behavior",
+      "description": "FR-015: Code fence behavior",
+      "status": "done",
+      "test_criteria": [
+        "Code fences render with syntax highlighting"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "code_block"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-016",
+      "priority": "P0",
+      "title": "Table behavior (constrained but safe)",
+      "description": "FR-016: Table behavior (constrained but safe)",
+      "status": "done",
+      "test_criteria": [
+        "Tables render correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "table"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed - constrained but safe per PRD",
+      "dependencies": []
+    },
+    {
+      "id": "FR-017",
+      "priority": "P0",
+      "title": "Image behavior",
+      "description": "FR-017: Image behavior",
+      "status": "done",
+      "test_criteria": [
+        "Images render correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "image"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-018",
+      "priority": "P0",
+      "title": "Paste behavior",
+      "description": "FR-018: Paste behavior",
+      "status": "done",
+      "test_criteria": [
+        "Paste converts rich text to Markdown"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": [
+          "clipboard_paste"
+        ]
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-019",
+      "priority": "P0",
+      "title": "Undo/redo",
+      "description": "FR-019: Undo/redo",
+      "status": "done",
+      "test_criteria": [
+        "Undo/redo works correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-020",
+      "priority": "P1",
+      "title": "Required syntax support",
+      "description": "FR-020: Required syntax support",
+      "status": "done",
+      "test_criteria": [
+        "All required syntax supported"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote parser"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "all"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-021",
+      "priority": "P1",
+      "title": "Markdown flavor (CommonMark + GFM)",
+      "description": "FR-021: Markdown flavor (CommonMark + GFM)",
+      "status": "done",
+      "test_criteria": [
+        "CommonMark and GFM supported"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote parser"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "all_gfm"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-022",
+      "priority": "P1",
+      "title": "Serialization fidelity",
+      "description": "FR-022: Serialization fidelity",
+      "status": "done",
+      "test_criteria": [
+        "Markdown round-trip preserves content"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote serializer"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "all"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-023",
+      "priority": "P1",
+      "title": "File tree - CRUD, refresh",
+      "description": "FR-023: File tree - CRUD, refresh",
+      "status": "done",
+      "test_criteria": [
+        "File tree CRUD operations work",
+        "Refresh works"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote workspace"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-024",
+      "priority": "P1",
+      "title": "Recent items",
+      "description": "FR-024: Recent items",
+      "status": "done",
+      "test_criteria": [
+        "Recent items tracked and displayed"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote workspace"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-025",
+      "priority": "P1",
+      "title": "Find/replace",
+      "description": "FR-025: Find/replace",
+      "status": "done",
+      "test_criteria": [
+        "Find/replace works correctly"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-026",
+      "priority": "P1",
+      "title": "Outline/TOC panel",
+      "description": "FR-026: Outline/TOC panel",
+      "status": "done",
+      "test_criteria": [
+        "Outline/TOC panel displays headings"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote editor"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "heading"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-027",
+      "priority": "P1",
+      "title": "Themes - light and dark",
+      "description": "FR-027: Themes - light and dark",
+      "status": "done",
+      "test_criteria": [
+        "Light and dark themes work"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-028",
+      "priority": "P1",
+      "title": "Focus mode",
+      "description": "FR-028: Focus mode",
+      "status": "done",
+      "test_criteria": [
+        "Focus mode dims non-active paragraphs"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote focus"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-029",
+      "priority": "P1",
+      "title": "Typewriter mode",
+      "description": "FR-029: Typewriter mode",
+      "status": "done",
+      "test_criteria": [
+        "Typewriter mode keeps cursor centered"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote typewriter"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-030",
+      "priority": "P1",
+      "title": "Typography settings",
+      "description": "FR-030: Typography settings",
+      "status": "done",
+      "test_criteria": [
+        "Typography settings apply correctly"
+      ],
+      "test_commands": [
+        "npm run build"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-031",
+      "priority": "P1",
+      "title": "HTML export",
+      "description": "FR-031: HTML export",
+      "status": "done",
+      "test_criteria": [
+        "HTML export produces valid HTML"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote export"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "all"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-032",
+      "priority": "P1",
+      "title": "PDF export",
+      "description": "FR-032: PDF export",
+      "status": "done",
+      "test_criteria": [
+        "PDF export works"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote export"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [
+          "all"
+        ],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed - see G-002 for quality verification",
+      "dependencies": []
+    },
+    {
+      "id": "FR-033",
+      "priority": "P1",
+      "title": "Export architecture",
+      "description": "FR-033: Export architecture",
+      "status": "done",
+      "test_criteria": [
+        "Export architecture implemented"
+      ],
+      "test_commands": [
+        "cargo build --package rustnote"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    },
+    {
+      "id": "FR-034",
+      "priority": "P1",
+      "title": "Preferences - Settings now uses rusqlite",
+      "description": "FR-034: Preferences - Settings now uses rusqlite",
+      "status": "done",
+      "test_criteria": [
+        "Settings persist with rusqlite"
+      ],
+      "test_commands": [
+        "cargo test --package rustnote settings"
+      ],
+      "test_cases": [],
+      "coverage_requirements": {
+        "markdown_syntax": [],
+        "edge_cases": [],
+        "browser_features": []
+      },
+      "impl_notes": "Completed",
+      "dependencies": []
+    }
+  ]
+}
