@@ -7,6 +7,10 @@ pub struct PasteOptions {
     pub strip_images: bool,
     /// Convert tables from Excel/spreadsheet data
     pub convert_tables: bool,
+    /// Convert HTML tables to Markdown tables
+    pub convert_html_tables: bool,
+    /// Image save directory for pasted images
+    pub image_save_dir: Option<String>,
 }
 
 impl Default for PasteOptions {
@@ -15,8 +19,143 @@ impl Default for PasteOptions {
             preserve_whitespace: false,
             strip_images: false,
             convert_tables: true,
+            convert_html_tables: true,
+            image_save_dir: None,
         }
     }
+}
+
+/// Clipboard content type for format detection
+#[derive(Debug, Clone, PartialEq)]
+pub enum ClipboardFormat {
+    /// Plain text content
+    PlainText,
+    /// HTML formatted content
+    Html,
+    /// Rich Text Format
+    Rtf,
+    /// Tab-separated values (Excel-like)
+    TabSeparatedValues,
+    /// Markdown text
+    Markdown,
+    /// Unknown or unsupported format
+    Unknown,
+}
+
+/// Detect the clipboard content format
+pub fn detect_clipboard_format(content: &str) -> ClipboardFormat {
+    let trimmed = content.trim();
+
+    // Check for empty content
+    if trimmed.is_empty() {
+        return ClipboardFormat::Unknown;
+    }
+
+    // Check for tab-separated values (Excel-style)
+    if looks_like_tsv(trimmed) {
+        return ClipboardFormat::TabSeparatedValues;
+    }
+
+    // Check for HTML content
+    if is_html_content(trimmed) {
+        // Check for Word-specific HTML
+        if is_word_html(trimmed) {
+            return ClipboardFormat::Html; // Word HTML is still HTML
+        }
+        return ClipboardFormat::Html;
+    }
+
+    // Check for RTF content
+    if trimmed.starts_with("{\\rtf") || trimmed.starts_with("{\\rtf1") {
+        return ClipboardFormat::Rtf;
+    }
+
+    // Check for Markdown content
+    if looks_like_markdown(trimmed) {
+        return ClipboardFormat::Markdown;
+    }
+
+    // Default to plain text
+    ClipboardFormat::PlainText
+}
+
+/// Check if content looks like TSV (tab-separated values)
+fn looks_like_tsv(content: &str) -> bool {
+    let lines: Vec<&str> = content.lines().collect();
+    if lines.len() < 2 {
+        return false;
+    }
+
+    // Check if first line has tabs
+    let first_line_tabs = lines[0].matches('\t').count();
+    if first_line_tabs == 0 {
+        return false;
+    }
+
+    // Check if most lines have similar tab counts
+    let valid_lines = lines
+        .iter()
+        .filter(|line| {
+            let tab_count = line.matches('\t').count();
+            tab_count >= first_line_tabs.saturating_sub(1) && tab_count <= first_line_tabs + 1
+        })
+        .count();
+
+    valid_lines as f64 / lines.len() as f64 > 0.7
+}
+
+/// Check if content is HTML
+fn is_html_content(content: &str) -> bool {
+    content.starts_with('<')
+        && (content.contains("</")
+            || content.contains("/>")
+            || content.starts_with("<html")
+            || content.starts_with("<body")
+            || content.starts_with("<div")
+            || content.starts_with("<p")
+            || content.starts_with("<table")
+            || content.starts_with("<ul")
+            || content.starts_with("<ol")
+            || content.starts_with("<h1")
+            || content.starts_with("<h2")
+            || content.starts_with("<h3"))
+}
+
+/// Check if content is from Microsoft Word
+fn is_word_html(content: &str) -> bool {
+    content.contains("msonormal")
+        || content.contains("<o:p>")
+        || content.contains("</o:p>")
+        || content.contains("xml:lang")
+        || content.contains("MsoNormal")
+        || content.contains("<!--[if")
+}
+
+/// Check if content looks like Markdown
+fn looks_like_markdown(content: &str) -> bool {
+    let markdown_indicators = [
+        "**",    // bold
+        "__",    // bold alt
+        "* ",    // italic or list
+        "_",     // italic
+        "`",     // code
+        "```",   // code block
+        "# ",    // heading
+        "## ",   // heading
+        "### ",  // heading
+        "- [ ]", // task list unchecked
+        "- [x]", // task list checked
+        "> ",    // blockquote
+        "| ",    // table
+        "---",   // horizontal rule
+    ];
+
+    let match_count = markdown_indicators
+        .iter()
+        .filter(|ind| content.contains(*ind))
+        .count();
+
+    match_count >= 2
 }
 
 pub struct HtmlToMarkdownConverter {
@@ -92,6 +231,154 @@ impl HtmlToMarkdownConverter {
         result.trim().to_string()
     }
 
+    /// Convert HTML table to Markdown table
+    pub fn convert_html_table(&self, html: &str) -> Option<String> {
+        let bytes = html.as_bytes();
+        let len = bytes.len();
+
+        let mut rows: Vec<Vec<String>> = Vec::new();
+        let mut current_row: Vec<String> = Vec::new();
+        let mut current_cell = String::new();
+
+        let mut i = 0;
+        while i < len {
+            // Check for closing table tag
+            if i + 8 <= len {
+                let slice = std::str::from_utf8(&bytes[i..]).ok()?;
+                if slice.starts_with("</table>") {
+                    // Push final cell
+                    let cell_content = current_cell.trim();
+                    if !cell_content.is_empty() {
+                        current_row.push(cell_content.to_string());
+                    }
+                    current_cell.clear();
+                    // Push final row
+                    if !current_row.is_empty() {
+                        rows.push(current_row.clone());
+                    }
+                    break;
+                }
+            }
+
+            // Check for row end
+            if i + 5 <= len {
+                let slice = std::str::from_utf8(&bytes[i..]).ok()?;
+                if slice.starts_with("</tr>") {
+                    // Push current cell
+                    let cell_content = current_cell.trim();
+                    if !cell_content.is_empty() {
+                        current_row.push(cell_content.to_string());
+                    }
+                    current_cell.clear();
+                    // Push current row
+                    if !current_row.is_empty() {
+                        rows.push(current_row.clone());
+                        current_row.clear();
+                    }
+                    i += 5;
+                    continue;
+                }
+            }
+
+            // Check for cell end tags
+            if i + 5 <= len {
+                let slice = std::str::from_utf8(&bytes[i..]).ok()?;
+                if slice.starts_with("</td>") || slice.starts_with("</th>") {
+                    // Push current cell
+                    let cell_content = current_cell.trim();
+                    if !cell_content.is_empty() {
+                        current_row.push(cell_content.to_string());
+                    }
+                    current_cell.clear();
+                    i += 5;
+                    continue;
+                }
+            }
+
+            // Skip all tags - find the end of any tag starting with <
+            if bytes[i] == b'<' {
+                // Skip to end of tag
+                let mut j = i;
+                while j < len && bytes[j] != b'>' {
+                    j += 1;
+                }
+                if j < len {
+                    i = j + 1;
+                    continue;
+                }
+            }
+
+            // Collect text content
+            current_cell.push(bytes[i] as char);
+            i += 1;
+        }
+
+        // Need at least 2 rows
+        if rows.len() < 2 {
+            return None;
+        }
+
+        let mut result = String::new();
+        let num_cols = rows[0].len();
+
+        for (idx, row) in rows.iter().enumerate() {
+            result.push('|');
+            for cell in row {
+                result.push(' ');
+                result.push_str(cell.trim());
+                result.push_str(" |");
+            }
+            result.push('\n');
+
+            if idx == 0 {
+                result.push('|');
+                for _ in 0..num_cols {
+                    result.push_str("---|");
+                }
+                result.push('\n');
+            }
+        }
+
+        Some(result.trim().to_string())
+    }
+
+    /// Extract alt text from img tag
+    fn extract_alt_text(&self, bytes: &[u8], start: usize) -> Option<String> {
+        let mut i = start;
+        let len = bytes.len();
+
+        // Look for alt="
+        while i < len - 5 {
+            if &bytes[i..i + 4] == b"alt=" {
+                i += 4;
+                let quote = bytes[i];
+                if quote == b'"' || quote == b'\'' {
+                    i += 1;
+                    let alt_start = i;
+                    while i < len && bytes[i] != quote {
+                        i += 1;
+                    }
+                    return std::str::from_utf8(&bytes[alt_start..i])
+                        .map(|s| s.to_string())
+                        .ok();
+                }
+            }
+            i += 1;
+        }
+        None
+    }
+
+    /// Generate Markdown image syntax for pasted image
+    fn format_image_markdown(&self, alt: &str, src: Option<&str>) -> String {
+        if let Some(path) = src {
+            format!("![{}]({})", alt, path)
+        } else if !alt.is_empty() {
+            format!("![{}]()", alt)
+        } else {
+            String::new()
+        }
+    }
+
     /// Extract href attribute from an anchor tag
     fn extract_href(&self, bytes: &[u8], start: usize) -> Option<String> {
         let mut i = start;
@@ -152,6 +439,13 @@ impl HtmlToMarkdownConverter {
         // Check for Excel/tab-separated table data first
         if self.options.convert_tables && Self::looks_like_excel_table(html) {
             return self.convert_excel_table(html);
+        }
+
+        // Check for HTML table
+        if self.options.convert_html_tables && html.contains("<table") {
+            if let Some(table_md) = self.convert_html_table(html) {
+                return table_md;
+            }
         }
 
         let mut result = String::new();
@@ -677,13 +971,15 @@ impl HtmlToMarkdownConverter {
                     }
                     continue;
                 }
-                // Handle img tags
+                // Handle img tags - extract alt and src for markdown image
                 if remaining_len >= 4 && &bytes[i..i + 3] == b"<im" {
                     if remaining_len >= 5 && (bytes[i + 3] == b'g' || bytes[i + 3] == b' ') {
                         if !self.options.strip_images {
-                            // Try to extract alt text for markdown image
-                            let alt = self.extract_href(bytes, i).unwrap_or_default();
-                            result.push_str(&format!("![{}]()", alt));
+                            // Try to extract alt text
+                            let alt = self.extract_alt_text(bytes, i).unwrap_or_default();
+                            // Try to extract src
+                            let src = self.extract_src(bytes, i);
+                            result.push_str(&self.format_image_markdown(&alt, src.as_deref()));
                         }
                         i += 3;
                         while i < len && bytes[i] != b'>' {

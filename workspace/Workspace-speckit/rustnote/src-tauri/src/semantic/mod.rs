@@ -8,6 +8,6 @@ pub use ast::{
     HeadingInfo, ListItemInfo, ListType, ParagraphInfo, Position, SemanticDocument, SourceRange,
 };
 pub use frontmatter::{FrontmatterError, YamlFrontmatter};
-pub use paste::HtmlToMarkdownConverter;
+pub use paste::{detect_clipboard_format, ClipboardFormat, HtmlToMarkdownConverter, PasteOptions};
 pub use position::{Anchor, CursorMapping, Selection};
 pub use transform::TransformEngine;

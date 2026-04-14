@@ -199,7 +199,7 @@
       "priority": "P0",
       "title": "PDF Export Quality \u2014 Visual Verification & Fix",
       "description": "Create PDF test Markdown fixtures covering tables, code blocks, images, and nested structures. Generate PDFs using current printpdf pipeline, inspect visually, document issues, fix rendering problems, and add automated PDF quality checks.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "All complex Markdown renders correctly in PDF",
         "NFR-006 passes: PDF export < 5s for 10-page document",
@@ -303,7 +303,7 @@
       "priority": "P0",
       "title": "Paste Rich-Text Conversion \u2014 Complete TurndownService Rules",
       "description": "Audit paste handling in src-tauri/src/semantic/paste.rs and TipTapEditor.jsx, expand TurndownService rules for HTML\u2192Markdown (bold, italic, links, lists, tables, images, code blocks), add Word/Excel clipboard format detection, and add comprehensive paste tests.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "cargo test paste_handling passes",
         "Common rich text paste cases convert to valid Markdown",

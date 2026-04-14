@@ -77,6 +77,11 @@ turndownService.addRule('italic', {
   replacement: (content) => `*${content}*`,
 });
 
+turndownService.addRule('strikethrough', {
+  filter: ['del', 's', 'strike'],
+  replacement: (content) => `~~${content}~~`,
+});
+
 turndownService.addRule('code', {
   filter: (node) => {
     const hasCodeClass = node.classList?.contains('highlight');
@@ -113,6 +118,90 @@ turndownService.addRule('taskListItem', {
     const isChecked = checkbox?.checked;
     return `\n- [${isChecked ? 'x' : ' '}] ${content.trim()}\n`;
   },
+});
+
+// Table rule for Excel/HTML table conversion
+turndownService.addRule('table', {
+  filter: (node) => {
+    return node.nodeName === 'TABLE';
+  },
+  replacement: (content, node) => {
+    // Convert HTML table to Markdown table
+    const rows = [];
+    const headerCells = node.querySelectorAll('thead tr th, thead tr td');
+    const bodyRows = node.querySelectorAll('tbody tr, tr');
+    
+    // Build header row
+    if (headerCells.length > 0) {
+      let header = '|';
+      headerCells.forEach(cell => {
+        header += ' ' + (cell.textContent?.trim() || '') + ' |';
+      });
+      rows.push(header);
+      
+      // Add separator row
+      let separator = '|';
+      for (let i = 0; i < headerCells.length; i++) {
+        separator += '---|';
+      }
+      rows.push(separator);
+    }
+    
+    // Build body rows
+    const dataRows = node.querySelectorAll('tbody tr, tr');
+    dataRows.forEach(row => {
+      const cells = row.querySelectorAll('td, th');
+      if (cells.length > 0) {
+        let rowStr = '|';
+        cells.forEach(cell => {
+          rowStr += ' ' + (cell.textContent?.trim() || '') + ' |';
+        });
+        rows.push(rowStr);
+      }
+    });
+    
+    return rows.length > 0 ? '\n' + rows.join('\n') + '\n' : content;
+  },
+});
+
+// Image rule for pasted images
+turndownService.addRule('image', {
+  filter: 'img',
+  replacement: (content, node) => {
+    const alt = node.alt || '';
+    const src = node.src || '';
+    if (src) {
+      return `![${alt}](${src})`;
+    }
+    return '';
+  },
+});
+
+// Heading rule for all heading levels
+turndownService.addRule('heading', {
+  filter: (node) => {
+    return /^H[1-6]$/.test(node.nodeName);
+  },
+  replacement: (content, node) => {
+    const level = node.nodeName.charAt(1);
+    return '\n' + '#'.repeat(parseInt(level)) + ' ' + content + '\n';
+  },
+});
+
+// Blockquote rule
+turndownService.addRule('blockquote', {
+  filter: 'blockquote',
+  replacement: (content) => {
+    const lines = content.split('\n');
+    const quoted = lines.map(line => '> ' + line).join('\n');
+    return '\n' + quoted + '\n';
+  },
+});
+
+// Horizontal rule rule
+turndownService.addRule('hr', {
+  filter: 'hr',
+  replacement: () => '\n\n---\n\n',
 });
 
 function looksLikeMarkdown(text) {
