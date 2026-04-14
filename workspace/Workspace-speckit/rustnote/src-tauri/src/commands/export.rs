@@ -76,40 +76,53 @@ pub async fn export_to_html(
 
 pub fn process_images_linked(html: &str, assets_dir: &Path) -> Result<String, CommandError> {
     let mut result = html.to_string();
-    let mut img_index = 0;
+    let mut used_names: std::collections::HashSet<String> = std::collections::HashSet::new();
 
-    while let Some(img_start) = result.find("<img ") {
-        if let Some(src_start) = result[img_start..].find("src=\"") {
-            let src_start = img_start + src_start + 5;
-            if let Some(src_end) = result[src_start..].find('"') {
-                let original_src = &result[src_start..src_start + src_end];
-                let extension = Path::new(original_src)
-                    .extension()
-                    .and_then(|e| e.to_str())
-                    .unwrap_or("png");
-                let filename = format!("image_{}.{}", img_index, extension);
+    let mut search_offset = 0;
+    while let Some(img_start) = result[search_offset..].find("<img ") {
+        let actual_start = search_offset + img_start;
+        if let Some(src_start) = result[actual_start..].find("src=\"") {
+            let src_pos = actual_start + src_start + 5;
+            if let Some(src_end) = result[src_pos..].find('"') {
+                let original_src = &result[src_pos..src_pos + src_end];
+                let src_path = Path::new(original_src);
+                
+                let filename = generate_unique_filename(src_path, &mut used_names);
                 let target_path = assets_dir.join(&filename);
 
-                if let Ok(data) = fs::read(original_src) {
+                if let Ok(data) = fs::read(src_path) {
                     fs::write(&target_path, &data)?;
-                    result = format!(
-                        "{}{}",
-                        &result[..src_start],
-                        format!("{}/{}", assets_dir.file_name().unwrap_or_default().to_string_lossy(), filename)
-                    );
+                    let new_src = format!("{}/{}", assets_dir.file_name().unwrap_or_default().to_string_lossy(), filename);
+                    result = format!("{}{}{}", &result[..src_pos], new_src, &result[src_pos + src_end..]);
+                    search_offset = src_pos + new_src.len();
+                    continue;
                 }
-                img_index += 1;
             }
         }
-
-        if let Some(next_tag) = result[img_start + 5..].find("<img ") {
-            result = format!("{}{}", &result[..img_start + 5], &result[img_start + 5..]);
-        } else {
-            break;
-        }
+        search_offset = actual_start + 5;
     }
 
     Ok(result)
+}
+
+fn generate_unique_filename(path: &Path, used_names: &mut std::collections::HashSet<String>) -> String {
+    let stem = path.file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("image");
+    let ext = path.extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("png");
+    
+    let mut filename = format!("{}.{}", stem, ext);
+    let mut counter = 1;
+    
+    while used_names.contains(&filename) {
+        filename = format!("{}_{}.{}", stem, counter, ext);
+        counter += 1;
+    }
+    
+    used_names.insert(filename.clone());
+    filename
 }
 
 pub fn process_images_inline(html: &str) -> Result<String, CommandError> {

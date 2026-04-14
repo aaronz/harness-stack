@@ -395,7 +395,7 @@
       "priority": "P1",
       "title": "Verify and Fix Wrap Transform End-to-End Integration",
       "description": "Audit Transform::Wrap in Rust, trace TipTap integration, add integration tests, verify wrap works from UI to Rust and back.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "cargo test wrap passes",
         "Manual TipTap test: select text \u2192 apply bold wrap \u2192 text wrapped with **"
@@ -504,7 +504,7 @@
       "priority": "P1",
       "title": "Implement HTML Export \u2014 Linked Assets Mode",
       "description": "Add AssetMode enum to ExportOptions, implement linked-assets export pipeline, add UI toggle in ExportModal, add tests for both modes.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "cargo test html_export passes",
         "ExportModal has working toggle",

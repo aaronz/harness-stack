@@ -1,21 +1,23 @@
 use serde::{Deserialize, Serialize};
 
-/// HTML export mode - determines how assets are handled
+pub type AssetMode = HtmlExportMode;
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", content = "value")]
 pub enum HtmlExportMode {
-    /// Linked mode: assets (images, CSS) are separate files
-    Linked {
-        /// Directory to store linked assets (relative to output HTML)
-        assets_dir: String,
-    },
-    /// Inline mode: all assets embedded as base64 in HTML
+    Linked { assets_dir: String },
     Inline,
 }
 
 impl Default for HtmlExportMode {
     fn default() -> Self {
         Self::Inline
+    }
+}
+
+impl HtmlExportMode {
+    pub fn default_assets_dir() -> String {
+        "_assets_".to_string()
     }
 }
 

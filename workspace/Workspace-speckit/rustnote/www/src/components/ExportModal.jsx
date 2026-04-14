@@ -92,7 +92,7 @@ export default function ExportModal({ isVisible, onClose }) {
       } else if (selectedFormat === EXPORT_FORMATS.HTML_LINKED) {
         setProgress(30);
         const linkedOptions = {
-          mode: { type: 'Linked', value: { assets_dir: 'assets' } },
+          mode: { type: 'Linked', value: { assets_dir: '_assets_' } },
           embed_css: true,
         };
         await invoke('export_to_html', { markdown, outputPath, options: linkedOptions });

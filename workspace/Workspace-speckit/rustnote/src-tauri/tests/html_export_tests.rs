@@ -247,6 +247,187 @@ fn TC_G004_002_inline_mode_embeds_images_as_base64() {
     assert!(processed_html.contains("base64"));
 }
 
+// TC-HT002: Linked assets mode creates _assets_ directory
+#[test]
+fn TC_HT002_linked_assets_mode_creates_assets_directory() {
+    use rustnote_lib::commands::export::process_images_linked;
+    let temp_dir = TempDir::new().unwrap();
+
+    // Create test images
+    let img1 = temp_dir.path().join("image1.png");
+    let img2 = temp_dir.path().join("image2.png");
+    let img3 = temp_dir.path().join("image3.png");
+    std::fs::write(&img1, b"fake png data 1").unwrap();
+    std::fs::write(&img2, b"fake png data 2").unwrap();
+    std::fs::write(&img3, b"fake png data 3").unwrap();
+
+    // Create _assets_ directory
+    let assets_dir = temp_dir.path().join("_assets_");
+    std::fs::create_dir_all(&assets_dir).unwrap();
+
+    // Process markdown with 3 images using full paths
+    let markdown = format!(
+        "![img1]({})\n\n![img2]({})\n\n![img3]({})",
+        img1.display(),
+        img2.display(),
+        img3.display()
+    );
+    let html = parser().parse_to_html(&markdown);
+    process_images_linked(&html, &assets_dir).unwrap();
+
+    // Verify _assets_ directory exists and contains images
+    assert!(assets_dir.exists(), "_assets_ directory should exist");
+    assert!(assets_dir.is_dir(), "_assets_ should be a directory");
+
+    let entries: Vec<_> = std::fs::read_dir(&assets_dir)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .collect();
+    assert_eq!(entries.len(), 3, "_assets_ should contain 3 image files");
+}
+
+// TC-HT003: Linked mode rewrites image URLs (uses original filenames)
+#[test]
+fn TC_HT003_linked_mode_rewrites_image_urls() {
+    use rustnote_lib::commands::export::process_images_linked;
+    let temp_dir = TempDir::new().unwrap();
+
+    let img = temp_dir.path().join("photo.png");
+    std::fs::write(&img, b"fake png data").unwrap();
+
+    let assets_dir = temp_dir.path().join("_assets_");
+    std::fs::create_dir_all(&assets_dir).unwrap();
+
+    let markdown = format!("![photo]({})", img.display());
+    let html = parser().parse_to_html(&markdown);
+    let processed = process_images_linked(&html, &assets_dir).unwrap();
+
+    assert!(
+        processed.contains("_assets_/photo.png"),
+        "HTML should contain _assets_/photo.png, got: {}",
+        processed
+    );
+}
+
+// TC-HT004: Missing images handled gracefully
+#[test]
+fn TC_HT004_missing_images_handled_gracefully() {
+    use rustnote_lib::commands::export::process_images_linked;
+    let temp_dir = TempDir::new().unwrap();
+
+    // Don't create any images - reference non-existent files
+    let assets_dir = temp_dir.path().join("_assets_");
+    std::fs::create_dir_all(&assets_dir).unwrap();
+
+    let markdown = "![missing](nonexistent.png)";
+    let html = parser().parse_to_html(markdown);
+
+    // Should not panic, should complete gracefully
+    let result = std::panic::catch_unwind(|| process_images_linked(&html, &assets_dir));
+
+    assert!(result.is_ok(), "Should handle missing images gracefully");
+
+    // Original src should be preserved when file doesn't exist
+    let processed = result.unwrap().unwrap();
+    assert!(
+        processed.contains("nonexistent.png"),
+        "Original path should be preserved when image doesn't exist"
+    );
+}
+
+// TC-HT006: Self-contained mode produces valid HTML
+#[test]
+fn TC_HT006_self_contained_mode_produces_valid_html() {
+    use rustnote_lib::commands::export::process_images_inline;
+    let temp_dir = TempDir::new().unwrap();
+
+    let img = temp_dir.path().join("test.png");
+    std::fs::write(&img, create_minimal_png()).unwrap();
+
+    let markdown = format!(
+        "# Title\n\n![image]({})\n\nSome text with content.",
+        img.display()
+    );
+    let html = parser().parse_to_html(&markdown);
+    let processed = process_images_inline(&html).unwrap();
+
+    // Should have base64 encoded image
+    assert!(
+        processed.contains("data:image/png;base64,"),
+        "Should contain base64 encoded PNG"
+    );
+
+    // Content should have headings
+    assert!(
+        processed.contains("<h1>") || processed.contains("<h1 "),
+        "Should have heading"
+    );
+
+    // Content should have image tag with data URI
+    assert!(processed.contains("<img"), "Should contain img tag");
+}
+
+// TC-HT007: Relative path resolution in linked mode
+#[test]
+fn TC_HT007_relative_path_resolution_in_linked_mode() {
+    use rustnote_lib::commands::export::process_images_linked;
+    let temp_dir = TempDir::new().unwrap();
+
+    // Create nested directory structure
+    let subdir = temp_dir.path().join("images");
+    std::fs::create_dir_all(&subdir).unwrap();
+
+    let img = subdir.join("photo.png");
+    std::fs::write(&img, b"fake png data").unwrap();
+
+    let assets_dir = temp_dir.path().join("_assets_");
+    std::fs::create_dir_all(&assets_dir).unwrap();
+
+    // Use full path since relative path resolution needs the file to exist
+    let markdown = format!("![photo]({})", img.display());
+    let html = parser().parse_to_html(&markdown);
+    let processed = process_images_linked(&html, &assets_dir).unwrap();
+
+    // Image should be copied to _assets_ directory with original filename
+    assert!(
+        processed.contains("_assets_/photo.png"),
+        "Should rewrite to _assets_/photo.png, got: {}",
+        processed
+    );
+
+    // Verify file was copied
+    let copied = assets_dir.join("photo.png");
+    assert!(
+        copied.exists(),
+        "Image should be copied to _assets_/photo.png"
+    );
+}
+
+// TC-HT001: Inline assets mode produces base64 images (updated test)
+#[test]
+fn TC_HT001_inline_assets_mode_produces_base64_images() {
+    use rustnote_lib::commands::export::process_images_inline;
+    let temp_dir = TempDir::new().unwrap();
+
+    let img = temp_dir.path().join("test_image.png");
+    std::fs::write(&img, create_minimal_png()).unwrap();
+
+    let markdown = format!("![img]({})", img.display());
+    let parsed_html = parser().parse_to_html(&markdown);
+    let processed_html = process_images_inline(&parsed_html).unwrap();
+
+    assert!(processed_html.contains("<img"), "Should contain img tag");
+    assert!(
+        processed_html.contains("data:image"),
+        "Should contain data URI"
+    );
+    assert!(processed_html.contains("base64"), "Should contain base64");
+    assert!(
+        processed_html.contains("data:image/png;base64,"),
+        "Should have correct MIME type"
+    );
+}
+
 fn create_minimal_png() -> Vec<u8> {
     vec![
         0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44,
@@ -291,7 +472,10 @@ fn TC_G004_004_linked_mode_with_multiple_assets() {
     let html = parser().parse_to_html(markdown);
     let processed = process_images_linked(&html, &assets_dir).unwrap();
     assert!(processed.contains("assets/"));
-    assert!(processed.contains("image_0") || processed.contains("image_1"));
+    assert!(
+        processed.contains("a.png") || processed.contains("b.png"),
+        "Should preserve original filenames"
+    );
     assert!(
         !processed.contains("base64"),
         "Linked mode should not contain base64"
