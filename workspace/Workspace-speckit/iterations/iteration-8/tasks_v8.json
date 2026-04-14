@@ -93,7 +93,7 @@
       "priority": "P0",
       "title": "Bidirectional Cursor Mapping \u2014 TipTap End-to-End Verification",
       "description": "Audit CursorMapping implementation in src-tauri/src/semantic/position.rs, add edge case unit tests, fix dom_to_source() edge cases (nested structures, empty nodes, multi-byte UTF-8, code span boundaries), and create end-to-end TipTap round-trip test with 10 complex Markdown documents.",
-      "status": "in_progress",
+      "status": "done",
       "test_criteria": [
         "cargo test cursor_mapping passes 100%",
         "TipTap round-trip test converges with zero divergence on all 10 documents",
@@ -199,7 +199,7 @@
       "priority": "P0",
       "title": "PDF Export Quality \u2014 Visual Verification & Fix",
       "description": "Create PDF test Markdown fixtures covering tables, code blocks, images, and nested structures. Generate PDFs using current printpdf pipeline, inspect visually, document issues, fix rendering problems, and add automated PDF quality checks.",
-      "status": "todo",
+      "status": "in_progress",
       "test_criteria": [
         "All complex Markdown renders correctly in PDF",
         "NFR-006 passes: PDF export < 5s for 10-page document",

@@ -511,12 +511,14 @@ fn get_expected_output_dir() -> PathBuf {
 }
 
 // =============================================================================
-// TC-PDF001: GFM Table with Merged Cells and Borders
+// TC-P0-003-01: PDF export — GFM table with borders
 // Category: render
+// Input: src-tauri/tests/samples/pdf_tables.md
+// Expected: Table borders visible, cell alignment correct, merged cells rendered
 // =============================================================================
 
 #[test]
-fn TC_PDF001_gfm_table_with_merged_cells_and_borders() {
+fn TC_P0_003_01_gfm_table_with_borders() {
     // Read the table test fixture
     let table_fixture = get_samples_dir().join("pdf_tables.md");
     let markdown =
@@ -582,12 +584,14 @@ fn TC_PDF001_verify_table_borders_in_html_export() {
 }
 
 // =============================================================================
-// TC-PDF002: Multi-language Code Blocks with Syntax Highlighting
+// TC-P0-003-02: PDF export — multi-language code blocks
 // Category: render
+// Input: src-tauri/tests/samples/pdf_code.md
+// Expected: Code blocks render with correct font, language detection applied
 // =============================================================================
 
 #[test]
-fn TC_PDF002_multi_language_code_blocks() {
+fn TC_P0_003_02_multi_language_code_blocks() {
     // Read the code block test fixture
     let code_fixture = get_samples_dir().join("pdf_code.md");
     let markdown = fs::read_to_string(&code_fixture).expect("Failed to read pdf_code.md fixture");
@@ -709,12 +713,14 @@ func main() {
 }
 
 // =============================================================================
-// TC-PDF003: Images at Various Sizes and Positions
+// TC-P0-003-03: PDF export — images at various sizes
 // Category: render
+// Input: src-tauri/tests/samples/pdf_images.md
+// Expected: Images present, scaling correct, no truncation
 // =============================================================================
 
 #[test]
-fn TC_PDF003_images_various_sizes_and_positions() {
+fn TC_P0_003_03_images_various_sizes() {
     // Read the image test fixture
     let image_fixture = get_samples_dir().join("pdf_images.md");
     let markdown =
@@ -784,7 +790,7 @@ fn TC_PDF003_image_with_title() {
 }
 
 // =============================================================================
-// TC-PDF004: All Features Combined
+// TC-PDF004: All Features Combined (for visual verification)
 // Category: render
 // =============================================================================
 
@@ -882,12 +888,14 @@ fn TC_PDF004_all_features_combined() {
 }
 
 // =============================================================================
-// TC-PDF005: Nested Blockquotes, Lists, and Code
+// TC-P0-003-04: PDF export — nested structures
 // Category: render
+// Input: src-tauri/tests/samples/pdf_nested.md
+// Expected: Nested structures indent correctly, no content overlap
 // =============================================================================
 
 #[test]
-fn TC_PDF005_nested_blockquotes_lists_and_code() {
+fn TC_P0_003_04_nested_structures() {
     // Read the nested test fixture
     let nested_fixture = get_samples_dir().join("pdf_nested.md");
     let markdown =
@@ -993,12 +1001,14 @@ fn TC_PDF005_nested_list_depth() {
 }
 
 // =============================================================================
-// TC-PDF006: PDF File Size Validation
+// TC-P0-003-05: PDF file size sanity check
 // Category: unit
+// Input: Any generated PDF
+// Expected: PDF file size > 1KB, not 0 bytes, contains valid PDF header
 // =============================================================================
 
 #[test]
-fn TC_PDF006_pdf_file_size_validation() {
+fn TC_P0_003_05_pdf_file_size_sanity() {
     let temp_dir = TempDir::new().expect("Failed to create temp dir");
     let output_path = temp_dir.path().join("test_output.pdf");
 
@@ -1099,12 +1109,14 @@ fn TC_PDF006_minimal_pdf_size() {
 }
 
 // =============================================================================
-// TC-PDF007: PDF Contains Expected Text
+// TC-P0-003-06: PDF text extraction
 // Category: unit
+// Input: PDF with known content
+// Expected: Text extraction finds expected text strings
 // =============================================================================
 
 #[test]
-fn TC_PDF007_pdf_contains_expected_text() {
+fn TC_P0_003_06_pdf_text_extraction() {
     let temp_dir = TempDir::new().expect("Failed to create temp dir");
     let output_path = temp_dir.path().join("text_test.pdf");
 
@@ -1183,12 +1195,14 @@ Some paragraph text with **bold** and *italic*.
 }
 
 // =============================================================================
-// TC-PDF008: PDF Page Count Validation
+// TC-P0-003-07: PDF page count matches expected
 // Category: unit
+// Input: 10-page Markdown document
+// Expected: PDF contains exactly 10 pages (NFR-006 benchmark input)
 // =============================================================================
 
 #[test]
-fn TC_PDF008_pdf_page_count_validation() {
+fn TC_P0_003_07_pdf_page_count() {
     let doc10_fixture = get_samples_dir().join("pdf_10page.md");
     let markdown =
         fs::read_to_string(&doc10_fixture).expect("Failed to read pdf_10page.md fixture");
@@ -1244,12 +1258,14 @@ fn TC_PDF008_single_page_document() {
 }
 
 // =============================================================================
-// TC-PDF009: PDF Export Time < 5s
+// TC-P0-003-08: PDF export performance — NFR-006
 // Category: performance
+// Input: 10-page Markdown document
+// Expected: Export completes in < 5 seconds
 // =============================================================================
 
 #[test]
-fn TC_PDF009_pdf_export_time_under_5_seconds() {
+fn TC_P0_003_08_pdf_export_performance_nfr006() {
     // Read the 10-page test document
     let doc10_fixture = get_samples_dir().join("pdf_10page.md");
     let markdown =
