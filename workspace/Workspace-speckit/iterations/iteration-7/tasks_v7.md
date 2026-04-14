@@ -663,7 +663,7 @@
 | P2-012 | P2 | Typewriter Mode Scroll Fix | **TODO** |
 | P2-013 | P2 | Paste Handling Improvement | **DONE** |
 | P2-014 | P2 | PreferencesModal Integration | ✅ Done |
-| P2-015 | P2 | Service Interface Verification | **TODO** |
+| P2-015 | P2 | Service Interface Verification | **DONE** |
 | P2-016 | P2 | Rust-Side Autosave Backup | **TODO** |
 | TD-002 | TD | Command Enum Consistency | **TODO** |
 | TD-004 | TD | Visual Regression Baselines | **TODO** |

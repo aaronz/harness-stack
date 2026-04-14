@@ -1508,7 +1508,7 @@
       "priority": "P2",
       "title": "Service Interface Verification Against PRD-10",
       "description": "Audit all service traits, compare against PRD-10, fix discrepancies, update service interface tests.",
-      "status": "todo",
+      "status": "done",
       "test_criteria": [
         "cargo test service_interface passes",
         "All traits match PRD-10 exactly",
