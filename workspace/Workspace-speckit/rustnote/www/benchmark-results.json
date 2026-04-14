@@ -1,12 +1,12 @@
 {
-  "timestamp": "2026-04-14T09:05:29.711Z",
+  "timestamp": "2026-04-14T11:51:32.280Z",
   "totalTests": 4,
   "passed": 3,
   "warnings": 0,
   "skipped": 1,
   "results": [
     {
-      "timestamp": "2026-04-14T09:05:29.706Z",
+      "timestamp": "2026-04-14T11:51:32.276Z",
       "name": "keystrokeRender",
       "time": 0,
       "min": 0,
@@ -17,29 +17,29 @@
       "iterations": 100
     },
     {
-      "timestamp": "2026-04-14T09:05:29.710Z",
+      "timestamp": "2026-04-14T11:51:32.279Z",
       "name": "markdownParse",
-      "time": 0.06,
-      "min": 0.04,
-      "max": 0.28,
+      "time": 0.04,
+      "min": 0.01,
+      "max": 0.32,
       "threshold": null,
       "status": "passed",
       "unit": "ms",
       "iterations": 50
     },
     {
-      "timestamp": "2026-04-14T09:05:29.711Z",
+      "timestamp": "2026-04-14T11:51:32.280Z",
       "name": "serialization",
       "time": 0.01,
       "min": 0.01,
-      "max": 0.04,
+      "max": 0.05,
       "threshold": null,
       "status": "passed",
       "unit": "ms",
       "iterations": 100
     },
     {
-      "timestamp": "2026-04-14T09:05:29.711Z",
+      "timestamp": "2026-04-14T11:51:32.280Z",
       "name": "browserBenchmark",
       "status": "skipped",
       "reason": "Browser environment not available - simulation results shown"
